@@ -25,6 +25,8 @@ $households = $householdModel->getAll($status === 'All' ? '' : $status);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage Households</title>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
 </head>
@@ -57,7 +59,7 @@ $households = $householdModel->getAll($status === 'All' ? '' : $status);
                 </form>
 
                 <!-- Change this link later when you create add form -->
-                <a href="/BIS/views/household_add.php" class="btn btn-sm btn-primary">
+                <a href="../views/admin/household_add.php" class="btn btn-sm btn-primary">
                     + Add Household
                 </a>
             </div>
@@ -133,5 +135,28 @@ $households = $householdModel->getAll($status === 'All' ? '' : $status);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const toggleBtn = document.getElementById("toggleSidebar");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function () {
+      const sidebar = document.getElementById("sidebar");
+      const main = document.getElementById("mainContent");
+      const icon = document.getElementById("toggleIcon");
+
+      if (!sidebar || !main || !icon) return;
+
+      sidebar.classList.toggle("collapsed");
+      main.classList.toggle("expanded");
+
+      if (sidebar.classList.contains("collapsed")) {
+        icon.classList.remove("bi-list");
+        icon.classList.add("bi-x-lg");
+      } else {
+        icon.classList.remove("bi-x-lg");
+        icon.classList.add("bi-list");
+      }
+    });
+  }
+  </script>
 </body>
 </html>

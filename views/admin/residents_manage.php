@@ -452,8 +452,31 @@
         document.getElementById('edit_is_active').value = (parseInt(r.is_active || 0) === 1) ? '1' : '0';
 
         document.getElementById('edit_hoh').checked = (parseInt(r.is_head_of_household || 0) === 1);
+
       });
     });
+
+    const toggleBtn = document.getElementById("toggleSidebar");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function () {
+      const sidebar = document.getElementById("sidebar");
+      const main = document.getElementById("mainContent");
+      const icon = document.getElementById("toggleIcon");
+
+      if (!sidebar || !main || !icon) return;
+
+      sidebar.classList.toggle("collapsed");
+      main.classList.toggle("expanded");
+
+      if (sidebar.classList.contains("collapsed")) {
+        icon.classList.remove("bi-list");
+        icon.classList.add("bi-x-lg");
+      } else {
+        icon.classList.remove("bi-x-lg");
+        icon.classList.add("bi-list");
+      }
+    });
+  }
   </script>
 </body>
 </html>
