@@ -1,0 +1,142 @@
+/* =========================
+   GLOBAL
+========================= */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    padding-bottom: 64px; /* Reserve space for fixed footer */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1c2e81 20%, #d6d5d7 80%);
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================
+   BACKGROUND
+========================= */
+body {
+    background: linear-gradient(135deg, #1c2e81 20%, #d6d5d7 80%);
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================
+   REGISTER CONTAINER  */
+#login-container {
+    z-index: 5;
+}
+
+.card {
+    border: none;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* =========================
+   HEADINGS
+========================= */
+.card-title {
+    font-weight: 700;
+}
+
+.text-muted {
+    font-size: 0.9rem;
+}
+
+/* =========================
+   FORM CONTROLS
+========================= */
+.form-label {
+    font-weight: 600;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 0.95rem;
+}
+
+.form-control:focus {
+    border-color: #1c2e81;
+    box-shadow: 0 0 0 0.15rem rgba(28, 46, 129, 0.25);
+}
+
+/* =========================
+   PASSWORD FIELD
+========================= */
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    color: #1c2e81;
+}
+
+/* =========================
+   BUTTON
+========================= */
+.btn-primary {
+    background: linear-gradient(45deg, #3498db, #1c2e81);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+/* =========================
+   ALERTS
+========================= */
+.alert {
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #002D62;
+    color: white;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 0.9rem;
+    border-top: 3px solid #FFD700;
+    z-index: 1000;
+}
+
+.footer a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}

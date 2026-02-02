@@ -1,0 +1,215 @@
+
+body {
+    background: linear-gradient(135deg, #1c2e81 20%, #d6d5d7 80%);
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================
+   FORGET PASSWORD CONTAINER
+========================= */
+#forgetpass-container {
+    width: 100%;
+    z-index: 5;
+    opacity: 1;
+    transform: none;
+}
+/* =========================
+   CARD
+========================= */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    background: rgba(255, 255, 255, 0.96);
+}
+
+/* =========================
+   FORM
+========================= */
+
+.form-control {
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.form-control:focus {
+    border-color: #1c2e81;
+    box-shadow: 0 0 0 0.15rem rgba(28, 46, 129, 0.25);
+}
+
+/* =========================
+   PASSWORD FIELD   
+========================= */
+.password-container {
+    position: relative;
+}
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+}
+.password-toggle:hover {
+    color: #343a40;
+}
+/* =========================
+   FOOTER
+========================= */
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 0.8rem;
+    border-top: none;
+    z-index: 100;
+}
+.footer a {
+    color: #1c2e81;
+    text-decoration: underline;
+}
+.footer a:hover {
+    color: #343a40;
+}
+/* =========================
+   ANIMATIONS
+========================= */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+#forgetpass-container {
+    animation: fadeInUp 0.6s ease forwards;
+}
+/* =========================
+   FORM
+========================= */
+.form-control {
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.form-control:focus {
+    border-color: #1c2e81;
+    box-shadow: 0 0 0 0.15rem rgba(28, 46, 129, 0.25);
+}
+/* =========================
+   BUTTON
+========================= */
+.btn-primary {
+    background: linear-gradient(45deg, #3498db, #1c2e81);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+.btn-primary:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+/* =========================
+   ALERTS
+========================= */
+.alert {
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+}
+/* =========================
+   FOOTER
+========================= */
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #002D62;
+    color: white;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 0.9rem;
+    border-top: 3px solid #FFD700;
+    z-index: 1000;
+}
+
+.footer a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+#forgetpass-container {
+    animation: fadeInUp 0.6s ease forwards;
+}
+/* =========================
+   PASSWORD FIELD
+========================= */
+.password-container {
+    position: relative;
+}
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+}
+.password-toggle:hover {
+    color: #343a40;
+}
+/* =========================
+   BUTTON
+========================= */
+.btn-primary {
+    background: linear-gradient(45deg, #3498db, #1c2e81);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+.btn-primary:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+/* =========================
+   ALERTS
+========================= */
+.alert {
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+}

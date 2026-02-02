@@ -1,0 +1,114 @@
+
+
+
+body {
+    min-height: 100vh; 
+    margin: 0;
+    padding-bottom: 64px; /* Reserve space for fixed footer */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1c2e81 20%, #d6d5d7 80%);
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+/* =========================
+   LOGIN CONTAINER
+========================= */
+#login-container {
+    width: 100%;
+    z-index: 5;
+    opacity: 1;
+    transform: none;
+}
+
+
+/* =========================
+   CARD
+========================= */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    background: rgba(255, 255, 255, 0.96);
+}
+
+/* =========================
+   FORM
+========================= */
+.form-control {
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.form-control:focus {
+    border-color: #1c2e81;
+    box-shadow: 0 0 0 0.15rem rgba(28, 46, 129, 0.25);
+}
+
+/* =========================
+   PASSWORD FIELD
+========================= */
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    color: #1c2e81;
+}
+
+/* =========================
+   BUTTON
+========================= */
+.btn-primary {
+    background: linear-gradient(45deg, #3498db, #2c3e50);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    opacity: 0.95;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #002D62;
+    color: white;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 0.9rem;
+    border-top: 3px solid #FFD700;
+    z-index: 1000;
+}
+
+.footer a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+
