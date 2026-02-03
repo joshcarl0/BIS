@@ -203,261 +203,287 @@
     </div>
   </div>
 
-  <!-- ADD MODAL -->
-  <div class="modal fade" id="addResidentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <form class="modal-content" method="POST" action="/BIS/controller/residents_manage.php">
-        <div class="modal-header">
-          <h5 class="modal-title">Add Resident</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+ <!-- ADD MODAL -->
+<div class="modal fade" id="addResidentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" method="POST" action="/BIS/controller/residents_manage.php">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Resident</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-        <div class="modal-body">
-          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-          <input type="hidden" name="action" value="add">
+      <div class="modal-body">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+        <input type="hidden" name="action" value="add">
 
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Last Name *</label>
-              <input class="form-control" name="last_name" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">First Name *</label>
-              <input class="form-control" name="first_name" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Middle Name</label>
-              <input class="form-control" name="middle_name">
-            </div>
-
-            <div class="col-md-3">
-              <label class="form-label">Suffix</label>
-              <input class="form-control" name="suffix" placeholder="Jr., III">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Birthdate *</label>
-              <input type="date" class="form-control" name="birthdate" required>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Sex</label>
-              <select class="form-select" name="sex">
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Civil Status</label>
-              <select class="form-select" name="civil_status_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['civil_statuses'] ?? []) as $cs): ?>
-                  <option value="<?= (int)$cs['id'] ?>"><?= htmlspecialchars($cs['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Contact Number</label>
-              <input class="form-control" name="contact_number">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" name="email">
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Purok *</label>
-              <select class="form-select" name="purok_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['puroks'] ?? []) as $p): ?>
-                  <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Residency Type *</label>
-              <select class="form-select" name="residency_type_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['residency_types'] ?? []) as $rt): ?>
-                  <option value="<?= (int)$rt['id'] ?>"><?= htmlspecialchars($rt['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Household ID</label>
-              <input class="form-control" name="household_id" placeholder="numeric id (optional)">
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Active</label>
-              <select class="form-select" name="is_active">
-                <option value="1" selected>Active</option>
-                <option value="0">Inactive</option>
-              </select>
-            </div>
-
-            <div class="col-md-8">
-              <div class="form-check mt-4">
-                <input class="form-check-input" type="checkbox" name="is_head_of_household" id="add_hoh" value="1">
-                <label class="form-check-label" for="add_hoh">Household Head</label>
-              </div>
-            </div>
-
-            <!-- ✅ SPECIAL GROUPS (ADD) -->
-            <div class="col-12">
-              <label class="form-label fw-bold">Special Groups</label>
-              <div class="row">
-                <?php foreach (($data['special_groups'] ?? []) as $g): ?>
-                  <div class="col-md-4">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox"
-                             name="special_groups[]" value="<?= (int)$g['id'] ?>"
-                             id="add_sg_<?= (int)$g['id'] ?>">
-                      <label class="form-check-label" for="add_sg_<?= (int)$g['id'] ?>">
-                        <?= htmlspecialchars($g['name']) ?>
-                      </label>
-                    </div>
-                  </div>
-                <?php endforeach; ?>
-              </div>
-            </div>
-
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="add_last_name">Last Name *</label>
+            <input class="form-control" id="add_last_name" name="last_name" required autocomplete="family-name">
           </div>
-        </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary" type="submit">Save</button>
+          <div class="col-md-4">
+            <label class="form-label" for="add_first_name">First Name *</label>
+            <input class="form-control" id="add_first_name" name="first_name" required autocomplete="given-name">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="add_middle_name">Middle Name</label>
+            <input class="form-control" id="add_middle_name" name="middle_name" autocomplete="additional-name">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="add_suffix">Suffix</label>
+            <input class="form-control" id="add_suffix" name="suffix" placeholder="Jr., III" autocomplete="honorific-suffix">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="add_birthdate">Birthdate *</label>
+            <input type="date" class="form-control" id="add_birthdate" name="birthdate" required >
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="add_sex">Sex</label>
+            <select class="form-select" id="add_sex" name="sex" autocomplete="sex">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="add_civil_status_id">Civil Status</label>
+            <select class="form-select" id="add_civil_status_id" name="civil_status_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['civil_statuses'] ?? []) as $cs): ?>
+                <option value="<?= (int)$cs['id'] ?>"><?= htmlspecialchars($cs['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="add_contact_number">Contact Number</label>
+            <input class="form-control" id="add_contact_number" name="contact_number" autocomplete="tel">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="add_email">Email</label>
+            <input type="email" class="form-control" id="add_email" name="email" autocomplete="email">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="add_purok_id">Purok *</label>
+            <select class="form-select" id="add_purok_id" name="purok_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['puroks'] ?? []) as $p): ?>
+                <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="add_residency_type_id">Residency Type *</label>
+            <select class="form-select" id="add_residency_type_id" name="residency_type_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['residency_types'] ?? []) as $rt): ?>
+                <option value="<?= (int)$rt['id'] ?>"><?= htmlspecialchars($rt['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="add_household_id">Household ID</label>
+            <input class="form-control" id="add_household_id" name="household_id" placeholder="numeric id (optional)" autocomplete="off">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="add_is_active">Active</label>
+            <select class="form-select" id="add_is_active" name="is_active">
+              <option value="1" selected>Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" name="is_head_of_household" id="add_hoh" value="1">
+              <label class="form-check-label" for="add_hoh">Household Head</label>
+            </div>
+          </div>
+
+          <!-- ✅ SPECIAL GROUPS (ADD) -->
+          <div class="col-12">
+            <div class="form-label fw-bold">Special Groups</div>
+            <div class="row">
+              <?php foreach (($data['special_groups'] ?? []) as $g): ?>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                           name="special_groups[]" value="<?= (int)$g['id'] ?>"
+                           id="add_sg_<?= (int)$g['id'] ?>">
+                    <label class="form-check-label" for="add_sg_<?= (int)$g['id'] ?>">
+                      <?= htmlspecialchars($g['name']) ?>
+                    </label>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
         </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
   </div>
+</div>
+
 
   <!-- EDIT MODAL -->
-  <div class="modal fade" id="editResidentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <form class="modal-content" method="POST" action="/BIS/controller/residents_manage.php">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Resident</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+<div class="modal fade" id="editResidentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" method="POST" action="/BIS/controller/residents_manage.php">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Resident</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-        <div class="modal-body">
-          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-          <input type="hidden" name="action" value="edit">
-          <input type="hidden" name="id" id="edit_id">
+      <div class="modal-body">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="id" id="edit_id">
 
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Last Name *</label>
-              <input class="form-control" name="last_name" id="edit_last_name" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">First Name *</label>
-              <input class="form-control" name="first_name" id="edit_first_name" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Middle Name</label>
-              <input class="form-control" name="middle_name" id="edit_middle_name">
-            </div>
-
-            <div class="col-md-3">
-              <label class="form-label">Suffix</label>
-              <input class="form-control" name="suffix" id="edit_suffix">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Birthdate *</label>
-              <input type="date" class="form-control" name="birthdate" id="edit_birthdate" required>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Sex</label>
-              <select class="form-select" name="sex" id="edit_sex">
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Civil Status</label>
-              <select class="form-select" name="civil_status_id" id="edit_civil_status_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['civil_statuses'] ?? []) as $cs): ?>
-                  <option value="<?= (int)$cs['id'] ?>"><?= htmlspecialchars($cs['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Contact Number</label>
-              <input class="form-control" name="contact_number" id="edit_contact">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" name="email" id="edit_email">
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Purok *</label>
-              <select class="form-select" name="purok_id" id="edit_purok_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['puroks'] ?? []) as $p): ?>
-                  <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Residency Type *</label>
-              <select class="form-select" name="residency_type_id" id="edit_residency_type_id" required>
-                <option value="">Select</option>
-                <?php foreach (($data['residency_types'] ?? []) as $rt): ?>
-                  <option value="<?= (int)$rt['id'] ?>"><?= htmlspecialchars($rt['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Household ID</label>
-              <input class="form-control" name="household_id" id="edit_household_id">
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Active</label>
-              <select class="form-select" name="is_active" id="edit_is_active">
-                <option value="1">Active</option>
-                <option value="0">Inactive</option>
-              </select>
-            </div>
-
-            <div class="col-md-8">
-              <div class="form-check mt-4">
-                <input class="form-check-input" type="checkbox" name="is_head_of_household" id="edit_hoh" value="1">
-                <label class="form-check-label" for="edit_hoh">Household Head</label>
-              </div>
-            </div>
-
-            <!-- ✅ SPECIAL GROUPS (EDIT) -->
-            <div class="col-12">
-              <label class="form-label fw-bold">Special Groups</label>
-              <div class="row">
-                <?php foreach (($data['special_groups'] ?? []) as $g): ?>
-                  <div class="col-md-4">
-                    <div class="form-check">
-                      <input class="form-check-input edit-special-group"
-                             type="checkbox" name="special_groups[]"
-                             value="<?= (int)$g['id'] ?>"
-                             id="edit_sg_<?= (int)$g['id'] ?>">
-                      <label class="form-check-label" for="edit_sg_<?= (int)$g['id'] ?>">
-                        <?= htmlspecialchars($g['name']) ?>
-                      </label>
-                    </div>
-                  </div>
-                <?php endforeach; ?>
-              </div>
-            </div>
-
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="edit_last_name">Last Name *</label>
+            <input class="form-control" name="last_name" id="edit_last_name" required autocomplete="family-name">
           </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_first_name">First Name *</label>
+            <input class="form-control" name="first_name" id="edit_first_name" required autocomplete="given-name">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_middle_name">Middle Name</label>
+            <input class="form-control" name="middle_name" id="edit_middle_name" autocomplete="additional-name">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="edit_suffix">Suffix</label>
+            <input class="form-control" name="suffix" id="edit_suffix" autocomplete="honorific-suffix">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="edit_birthdate">Birthdate *</label>
+            <input type="date" class="form-control" name="birthdate" id="edit_birthdate" required >
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="edit_sex">Sex</label>
+            <select class="form-select" name="sex" id="edit_sex" autocomplete="sex">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label" for="edit_civil_status_id">Civil Status</label>
+            <select class="form-select" name="civil_status_id" id="edit_civil_status_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['civil_statuses'] ?? []) as $cs): ?>
+                <option value="<?= (int)$cs['id'] ?>"><?= htmlspecialchars($cs['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="edit_contact">Contact Number</label>
+            <input class="form-control" name="contact_number" id="edit_contact" autocomplete="tel">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label" for="edit_email">Email</label>
+            <input type="email" class="form-control" name="email" id="edit_email" autocomplete="email">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_purok_id">Purok *</label>
+            <select class="form-select" name="purok_id" id="edit_purok_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['puroks'] ?? []) as $p): ?>
+                <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_residency_type_id">Residency Type *</label>
+            <select class="form-select" name="residency_type_id" id="edit_residency_type_id" required>
+              <option value="">Select</option>
+              <?php foreach (($data['residency_types'] ?? []) as $rt): ?>
+                <option value="<?= (int)$rt['id'] ?>"><?= htmlspecialchars($rt['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_household_id">Household ID</label>
+            <input class="form-control" name="household_id" id="edit_household_id" autocomplete="off">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label" for="edit_is_active">Active</label>
+            <select class="form-select" name="is_active" id="edit_is_active">
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+
+          <div class="col-md-8">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" name="is_head_of_household" id="edit_hoh" value="1">
+              <label class="form-check-label" for="edit_hoh">Household Head</label>
+            </div>
+          </div>
+
+          <!-- ✅ SPECIAL GROUPS (EDIT) -->
+          <div class="col-12">
+            <div class="form-label fw-bold">Special Groups</div>
+            <div class="row">
+              <?php foreach (($data['special_groups'] ?? []) as $g): ?>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input class="form-check-input edit-special-group"
+                           type="checkbox" name="special_groups[]"
+                           value="<?= (int)$g['id'] ?>"
+                           id="edit_sg_<?= (int)$g['id'] ?>">
+                    <label class="form-check-label" for="edit_sg_<?= (int)$g['id'] ?>">
+                      <?= htmlspecialchars($g['name']) ?>
+                    </label>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
         </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" type="submit">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
         <div class="modal-footer">
           <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
