@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark px-3" style="background:#1C2E81;">
+<nav class="navbar navbar-expand-lg navbar-dark px-3" style="background:#dcb611;">
     <button id="toggleSidebar" class="btn btn-light me-3" type="button">
         <i id="toggleIcon" class="bi bi-list"></i>
     </button>

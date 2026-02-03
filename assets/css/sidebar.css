@@ -2,11 +2,11 @@
 .sidebar-left{
   width: 260px;
   height: 100vh;
-  background: #1C2E81;
+  background: #dcb611; 
   position: fixed;
   left: 0;
   top: 0;
-  color: #fff;
+  color: #1C2E81;      
   overflow-y: auto;
 }
 
@@ -17,7 +17,7 @@
 .sidebar-header{
   padding: 20px;
   text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(28,46,129,0.25); 
 }
 
 /* MENU */
@@ -32,23 +32,30 @@
   align-items:center;
   gap: 12px;
   padding: 12px 18px;
-  color:#fff;
+  color:#1C2E81;       
   text-decoration:none;
   transition: 0.2s;
 }
 
+/* hover normal items (BLUE) */
 .sidebar-menu li a:hover{
-  background:#243A9E;
+  background:#1C2E81;  
+}
+
+/* icons follow text color */
+.sidebar-menu li a i{
+  color: inherit;
 }
 
 .sidebar-left.collapsed .sidebar-menu li a span{
   display:none;
 }
 
-/* LOGOUT */
+/* LOGOUT (keep red) */
 .sidebar-menu li.logout a{
   background:#DC3545;
   margin-top: 15px;
+  color:#fff;
 }
 
 .sidebar-menu li.logout a:hover{
@@ -66,13 +73,12 @@
   margin-left: 70px;
 }
 
-.sidebar-menu li.active a,
-.sidebar-menu li:hover a{
-  background: #dcb611;
-  color: #1a1a1a;
+/* ✅ ACTIVE item = BLUE */
+.sidebar-menu li.active a{
+  background:#1C2E81;  
+  color:#fff;
 }
 
-.sidebar-menu li.active a i,
-.sidebar-menu li:hover a i{
-  color: #1a1a1a;
+.sidebar-menu li.active a i{
+  color:#fff;
 }

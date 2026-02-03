@@ -30,7 +30,7 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
           <h4 class="mb-0">Resident Information</h4>
-          <div class="text-muted">Manage personal details & demographics (clean OOP).</div>
+          <div class="text-muted">Manage personal details & demographics.</div>
         </div>
 
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addResidentModal">

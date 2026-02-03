@@ -37,7 +37,7 @@ $civil_statuses  = fetchLookup($conn, 'civil_statuses', 'id', 'name');
 $puroks          = fetchLookup($conn, 'puroks', 'id', 'name');
 $residency_types = fetchLookup($conn, 'residency_types', 'id', 'name');
 
-// ✅ Special groups list
+//  Special groups list
 $special_groups = $residentModel->getAllSpecialGroups();
 
 /* =========================
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId = $residentModel->createReturnId($_POST);
 
             if ($newId !== false && $newId > 0) {
-                // ✅ save special groups
+                //  save special groups
                 $residentModel->updateSpecialGroups((int)$newId, $selectedGroups);
 
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident added successfully.'];
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = $residentModel->update($id, $_POST);
 
             if ($ok) {
-                // ✅ update special groups
+                //  update special groups
                 $residentModel->updateSpecialGroups($id, $selectedGroups);
 
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident updated successfully.'];
@@ -145,10 +145,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $q = trim($_GET['q'] ?? '');
 $page = (int)($_GET['page'] ?? 1);
 
-// ✅ list with group names (optional display)
+//  list with group names (optional display)
 $list = $residentModel->getPaginatedWithGroups($q, $page, 10);
 
-// ✅ attach group ids CSV per resident (for edit modal auto-check)
+//  attach group ids CSV per resident (for edit modal auto-check)
 $ids = array_map(fn($row) => (int)$row['id'], $list['rows']);
 $map = [];
 if (!empty($ids)) {
@@ -179,7 +179,7 @@ $data['civil_statuses'] = $civil_statuses;
 $data['puroks'] = $puroks;
 $data['residency_types'] = $residency_types;
 
-// ✅ for checkboxes
+//  for checkboxes
 $data['special_groups'] = $special_groups;
 
 // LOAD VIEW
