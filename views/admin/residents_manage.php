@@ -1,6 +1,6 @@
 <?php
 // VIEW ONLY
-// Expected: $data from controller.
+// Expected: $data from controller, plus $flash and $errors
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -104,6 +104,7 @@
                   <th>Purok</th>
                   <th>Residency Type</th>
                   <th>Household</th>
+                  <th>Special Groups</th>
                   <th>Active</th>
                   <th style="width: 240px;">Actions</th>
                 </tr>
@@ -112,7 +113,7 @@
               <tbody>
                 <?php if (empty($data['list']['rows'])): ?>
                   <tr>
-                    <td colspan="9" class="text-center text-muted py-4">No residents found.</td>
+                    <td colspan="10" class="text-center text-muted py-4">No residents found.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($data['list']['rows'] as $r): ?>
@@ -128,6 +129,8 @@
 
                       $purokName = $purokMap[(int)($r['purok_id'] ?? 0)] ?? ($r['purok_id'] ?? '');
                       $resTypeName = $resTypeMap[(int)($r['residency_type_id'] ?? 0)] ?? ($r['residency_type_id'] ?? '');
+                      $groupsText = $r['special_groups'] ?? '';
+                      $groupsCsv  = $r['special_group_ids_csv'] ?? '';
                     ?>
                     <tr>
                       <td><?= (int)($r['id'] ?? 0) ?></td>
@@ -137,6 +140,7 @@
                       <td><?= htmlspecialchars($purokName) ?></td>
                       <td><?= htmlspecialchars($resTypeName) ?></td>
                       <td><?= htmlspecialchars($r['household_id'] ?? '') ?></td>
+                      <td><?= htmlspecialchars($groupsText) ?></td>
                       <td>
                         <span class="badge <?= $isActive ? 'bg-success' : 'bg-secondary' ?>">
                           <?= $isActive ? 'Active' : 'Inactive' ?>
@@ -146,6 +150,7 @@
                         <button class="btn btn-sm btn-outline-primary btn-edit"
                           data-bs-toggle="modal"
                           data-bs-target="#editResidentModal"
+                          data-groups="<?= htmlspecialchars($groupsCsv) ?>"
                           data-resident='<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>'>
                           <i class="bi bi-pencil"></i> Edit
                         </button>
@@ -299,6 +304,25 @@
               </div>
             </div>
 
+            <!-- ✅ SPECIAL GROUPS (ADD) -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Special Groups</label>
+              <div class="row">
+                <?php foreach (($data['special_groups'] ?? []) as $g): ?>
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox"
+                             name="special_groups[]" value="<?= (int)$g['id'] ?>"
+                             id="add_sg_<?= (int)$g['id'] ?>">
+                      <label class="form-check-label" for="add_sg_<?= (int)$g['id'] ?>">
+                        <?= htmlspecialchars($g['name']) ?>
+                      </label>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -412,6 +436,26 @@
               </div>
             </div>
 
+            <!-- ✅ SPECIAL GROUPS (EDIT) -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Special Groups</label>
+              <div class="row">
+                <?php foreach (($data['special_groups'] ?? []) as $g): ?>
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input class="form-check-input edit-special-group"
+                             type="checkbox" name="special_groups[]"
+                             value="<?= (int)$g['id'] ?>"
+                             id="edit_sg_<?= (int)$g['id'] ?>">
+                      <label class="form-check-label" for="edit_sg_<?= (int)$g['id'] ?>">
+                        <?= htmlspecialchars($g['name']) ?>
+                      </label>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -431,7 +475,6 @@
         const r = JSON.parse(btn.getAttribute('data-resident'));
 
         document.getElementById('edit_id').value = r.id || '';
-
         document.getElementById('edit_last_name').value = r.last_name || '';
         document.getElementById('edit_first_name').value = r.first_name || '';
         document.getElementById('edit_middle_name').value = r.middle_name || '';
@@ -448,35 +491,42 @@
         document.getElementById('edit_residency_type_id').value = r.residency_type_id || '';
 
         document.getElementById('edit_household_id').value = r.household_id || '';
-
         document.getElementById('edit_is_active').value = (parseInt(r.is_active || 0) === 1) ? '1' : '0';
-
         document.getElementById('edit_hoh').checked = (parseInt(r.is_head_of_household || 0) === 1);
 
+        // ✅ Special groups auto-check
+        document.querySelectorAll('.edit-special-group').forEach(cb => cb.checked = false);
+
+        const csv = btn.getAttribute('data-groups') || '';
+        const ids = csv ? csv.split(',').map(x => parseInt(x.trim())).filter(Boolean) : [];
+        ids.forEach(id => {
+          const el = document.getElementById('edit_sg_' + id);
+          if (el) el.checked = true;
+        });
       });
     });
 
     const toggleBtn = document.getElementById("toggleSidebar");
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", function () {
-      const sidebar = document.getElementById("sidebar");
-      const main = document.getElementById("mainContent");
-      const icon = document.getElementById("toggleIcon");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", function () {
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("mainContent");
+        const icon = document.getElementById("toggleIcon");
 
-      if (!sidebar || !main || !icon) return;
+        if (!sidebar || !main || !icon) return;
 
-      sidebar.classList.toggle("collapsed");
-      main.classList.toggle("expanded");
+        sidebar.classList.toggle("collapsed");
+        main.classList.toggle("expanded");
 
-      if (sidebar.classList.contains("collapsed")) {
-        icon.classList.remove("bi-list");
-        icon.classList.add("bi-x-lg");
-      } else {
-        icon.classList.remove("bi-x-lg");
-        icon.classList.add("bi-list");
-      }
-    });
-  }
+        if (sidebar.classList.contains("collapsed")) {
+          icon.classList.remove("bi-list");
+          icon.classList.add("bi-x-lg");
+        } else {
+          icon.classList.remove("bi-x-lg");
+          icon.classList.add("bi-list");
+        }
+      });
+    }
   </script>
 </body>
 </html>

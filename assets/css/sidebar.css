@@ -65,3 +65,14 @@
 .main-content.expanded{
   margin-left: 70px;
 }
+
+.sidebar-menu li.active a,
+.sidebar-menu li:hover a{
+  background: #dcb611;
+  color: #1a1a1a;
+}
+
+.sidebar-menu li.active a i,
+.sidebar-menu li:hover a i{
+  color: #1a1a1a;
+}
