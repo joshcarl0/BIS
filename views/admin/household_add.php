@@ -324,6 +324,94 @@ unset($_SESSION['error']);
   </select>
 </div>
 
+<!-- ===================== GOVERNMENT PROGRAMS ===================== -->
+<div class="col-12 mt-2">
+  <h5 class="mb-0">Government Programs</h5>
+  <hr class="mt-2">
+</div>
+
+<div class="col-md-3">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="is_4ps_beneficiary" name="is_4ps_beneficiary" value="1">
+    <label class="form-check-label" for="is_4ps_beneficiary">4Ps Beneficiary</label>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="is_social_pension" name="is_social_pension" value="1">
+    <label class="form-check-label" for="is_social_pension">Social Pension</label>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="is_tupad_beneficiary" name="is_tupad_beneficiary" value="1">
+    <label class="form-check-label" for="is_tupad_beneficiary">TUPAD Beneficiary</label>
+  </div>
+</div>
+
+<div class="col-md-3">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="is_akap_beneficiary" name="is_akap_beneficiary" value="1">
+    <label class="form-check-label" for="is_akap_beneficiary">AKAP Beneficiary</label>
+  </div>
+</div>
+
+<div class="col-md-4">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="is_solo_parent_assistance" name="is_solo_parent_assistance" value="1">
+    <label class="form-check-label" for="is_solo_parent_assistance">Solo Parent Assistance</label>
+  </div>
+</div>
+
+<!-- ===================== HOUSEHOLD ASSETS ===================== -->
+<div class="col-12 mt-2">
+  <h5 class="mb-0">Household Assets</h5>
+  <hr class="mt-2">
+</div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_vehicle" name="has_vehicle" value="1">
+  <label class="form-check-label" for="has_vehicle">Has Vehicle</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_motorcycle" name="has_motorcycle" value="1">
+  <label class="form-check-label" for="has_motorcycle">Has Motorcycle</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_refrigerator" name="has_refrigerator" value="1">
+  <label class="form-check-label" for="has_refrigerator">Has Refrigerator</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_tv" name="has_tv" value="1">
+  <label class="form-check-label" for="has_tv">Has TV</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_washing_machine" name="has_washing_machine" value="1">
+  <label class="form-check-label" for="has_washing_machine">Has Washing Machine</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_aircon" name="has_aircon" value="1">
+  <label class="form-check-label" for="has_aircon">Has Aircon</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_computer" name="has_computer" value="1">
+  <label class="form-check-label" for="has_computer">Has Computer</label>
+</div></div>
+
+<div class="col-md-3"><div class="form-check">
+  <input class="form-check-input" type="checkbox" id="has_smartphone" name="has_smartphone" value="1">
+  <label class="form-check-label" for="has_smartphone">Has Smartphone</label>
+</div></div>
+
+
 
 <!-- ===================== OTHER INFO ===================== -->
 <div class="col-12 mt-2">

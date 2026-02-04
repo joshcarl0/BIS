@@ -1,6 +1,6 @@
 <?php
 /**
- * /BIS/views/households_manage.php
+ * /BIS/controller/households_manage.php
  * Manage Households (List + Search + Status Filter)
  */
 session_start();
@@ -16,11 +16,10 @@ require_once __DIR__ . '/../models/Household.php';
 $householdModel = new Household($conn);
 
 // Filters
-$status = $_GET['status'] ?? 'Active'; // Active | Inactive | Dissolved | All
+$status = $_GET['status'] ?? 'Active';
 $q = trim($_GET['q'] ?? '');
 
-// Normalize status param for UI
-$allowed = ['Active','Inactive','Dissolved','All'];
+$allowed = ['Active', 'Inactive', 'Dissolved', 'All'];
 if (!in_array($status, $allowed, true)) $status = 'Active';
 
 // Fetch
@@ -30,18 +29,6 @@ $households = $householdModel->getAll($status === 'All' ? '' : $status, $q);
 $success = $_SESSION['success'] ?? '';
 $error   = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
-
-// helper: keep qs for back links
-function qs_keep(array $extra = []): string {
-    $base = [
-        'status' => $_GET['status'] ?? 'Active',
-        'q'      => $_GET['q'] ?? '',
-    ];
-    $merged = array_merge($base, $extra);
-    // remove empties
-    $merged = array_filter($merged, fn($v) => $v !== '' && $v !== null);
-    return http_build_query($merged);
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,8 +37,8 @@ function qs_keep(array $extra = []): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage Households</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Your admin theme -->
     <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
@@ -59,11 +46,13 @@ function qs_keep(array $extra = []): string {
 
 <body style="background:#D6D5D7;">
 
+<!-- TOP NAVBAR -->
+<?php require_once __DIR__ . '/../views/navbar_top.php'; ?>
+
 <!-- LEFT SIDEBAR -->
 <?php require_once __DIR__ . '/../views/navbaradmin_leftside.php'; ?>
 
 <div class="main-content" id="mainContent">
-
     <div class="container-fluid py-4">
 
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
@@ -73,7 +62,7 @@ function qs_keep(array $extra = []): string {
             </div>
 
             <div class="d-flex flex-wrap gap-2">
-                <a href="/../BIS/views/admin/household_add.php" class="btn btn-primary btn-sm">
+                <a href="/BIS/views/admin/household_add.php" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-lg"></i> Add Household
                 </a>
             </div>
@@ -108,21 +97,21 @@ function qs_keep(array $extra = []): string {
 
                     <div class="col-8 col-md-3">
                         <select class="form-select form-select-sm" name="status">
-                            <option value="Active" <?= $status==='Active'?'selected':'' ?>>Active</option>
+                            <option value="Active"   <?= $status==='Active'?'selected':'' ?>>Active</option>
                             <option value="Inactive" <?= $status==='Inactive'?'selected':'' ?>>Inactive</option>
-                            <option value="Dissolved" <?= $status==='Dissolved'?'selected':'' ?>>Dissolved</option>
-                            <option value="All" <?= $status==='All'?'selected':'' ?>>All</option>
+                            <option value="Dissolved"<?= $status==='Dissolved'?'selected':'' ?>>Dissolved</option>
+                            <option value="All"      <?= $status==='All'?'selected':'' ?>>All</option>
                         </select>
                     </div>
 
                     <div class="col-4 col-md-2 d-grid">
-                        <button class="btn btn-outline-dark btn-sm">
+                        <button class="btn btn-outline-dark btn-sm" type="submit">
                             <i class="bi bi-search"></i> Search
                         </button>
                     </div>
 
                     <div class="col-12 col-md-2 d-grid">
-                        <a class="btn btn-outline-secondary btn-sm" href="/BIS/views/households_manage.php?status=Active">
+                        <a class="btn btn-outline-secondary btn-sm" href="/BIS/controller/households_manage.php?status=Active">
                             <i class="bi bi-x-circle"></i> Reset
                         </a>
                     </div>
@@ -151,7 +140,6 @@ function qs_keep(array $extra = []): string {
                         <?php if (!empty($households)): ?>
                             <?php foreach ($households as $h): ?>
                                 <?php
-                                    $hid = (int)($h['id'] ?? 0);
                                     $hStatus = $h['status'] ?? '';
                                     $badge = 'bg-secondary';
                                     if ($hStatus === 'Active') $badge = 'bg-success';
@@ -171,40 +159,38 @@ function qs_keep(array $extra = []): string {
                                         </span>
                                     </td>
                                     <td class="text-end">
-                                <a class="btn btn-sm btn-outline-primary"
-                                    href="/BIS/views/admin/household_view.php?id=<?= (int)$h['id'] ?>">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="/BIS/views/admin/household_view.php?id=<?= (int)$h['id'] ?>">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
 
-                                <a class="btn btn-sm btn-outline-secondary"
-                                    href="/BIS/views/admin/household_edit.php?id=<?= (int)$h['id'] ?>">
-                                    <i class="bi bi-pencil-square"></i> Edit
-                                </a>
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="/BIS/views/admin/household_edit.php?id=<?= (int)$h['id'] ?>">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
 
-                                <?php if (($h['status'] ?? '') === 'Active'): ?>
-                                    <a class="btn btn-sm btn-outline-danger"
-                                    href="/BIS/controller/household_deactivate.php?id=<?= (int)$h['id'] ?>"
-                                    onclick="return confirm('Deactivate this household?')">
-                                    <i class="bi bi-slash-circle"></i>
-                                    </a>
-                                <?php elseif (($h['status'] ?? '') === 'Inactive'): ?>
-                                    <a class="btn btn-sm btn-outline-success"
-                                    href="/BIS/controller/household_activate.php?id=<?= (int)$h['id'] ?>"
-                                    onclick="return confirm('Activate this household?')">
-                                    <i class="bi bi-check2-circle"></i>
-                                    </a>
-                                <?php endif; ?>
+                                        <?php if (($h['status'] ?? '') === 'Active'): ?>
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               href="/BIS/controller/admin/household_deactivate.php?id=<?= (int)$h['id'] ?>"
+                                               onclick="return confirm('Deactivate this household?');">
+                                                <i class="bi bi-slash-circle"></i>
+                                            </a>
+                                        <?php elseif (($h['status'] ?? '') === 'Inactive'): ?>
+                                            <a class="btn btn-sm btn-outline-success"
+                                               href="/BIS/controller/admin/household_activate.php?id=<?= (int)$h['id'] ?>"
+                                               onclick="return confirm('Activate this household?');">
+                                                <i class="bi bi-check2-circle"></i>
+                                            </a>
+                                        <?php endif; ?>
 
-                                <?php if (($h['status'] ?? '') !== 'Dissolved'): ?>
-                                    <a class="btn btn-sm btn-outline-dark"
-                                    href="/BIS/controller/household_dissolve.php?id=<?= (int)$h['id'] ?>"
-                                    onclick="return confirm('Dissolve this household?')">
-                                    <i class="bi bi-house-x"></i>
-                                    </a>
-                                <?php endif; ?>
-                                </td>
-
-
+                                        <?php if (($h['status'] ?? '') !== 'Dissolved'): ?>
+                                            <a class="btn btn-sm btn-outline-dark"
+                                               href="/BIS/controller/admin/household_dissolve.php?id=<?= (int)$h['id'] ?>"
+                                               onclick="return confirm('Dissolve this household?');">
+                                                <i class="bi bi-house-x"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -224,34 +210,26 @@ function qs_keep(array $extra = []): string {
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Sidebar toggle icon fix (optional) -->
 <script>
 (() => {
   const toggleBtn = document.getElementById("toggleSidebar");
-  if (!toggleBtn) return;
+  const sidebar = document.getElementById("sidebar");
+  const main = document.getElementById("mainContent");
+  const icon = document.getElementById("toggleIcon");
 
-  toggleBtn.addEventListener("click", function () {
-    const sidebar = document.getElementById("sidebar");
-    const main = document.getElementById("mainContent");
-    const icon = document.getElementById("toggleIcon");
-    if (!sidebar || !main) return;
+  if (!toggleBtn || !sidebar || !main || !icon) return;
 
+  toggleBtn.addEventListener("click", () => {
     sidebar.classList.toggle("collapsed");
     main.classList.toggle("expanded");
 
-    if (!icon) return;
-
-    if (sidebar.classList.contains("collapsed")) {
-      icon.classList.remove("bi-x-lg");
-      icon.classList.add("bi-list");
-    } else {
-      icon.classList.remove("bi-list");
-      icon.classList.add("bi-x-lg");
-    }
+    icon.classList.toggle("bi-list");
+    icon.classList.toggle("bi-x-lg");
   });
 })();
 </script>
+
 </body>
 </html>
