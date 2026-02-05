@@ -82,3 +82,8 @@
 .sidebar-menu li.active a i{
   color:#fff;
 }
+
+/* when sidebar is collapsed, move content left */
+.sidebar-left.collapsed ~ .main-content {
+  margin-left: 70px;
+}

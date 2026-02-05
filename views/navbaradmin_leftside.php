@@ -5,7 +5,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-
 $current = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
 function activeMenu($file, $current) {
@@ -35,8 +34,8 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('BarangayManagement.php', $current) ?>">
-            <a href="/BIS/views/BarangayManagement.php">
+        <li class="<?= activeMenu('Barangay_officials.php', $current) ?>">
+            <a href="/BIS/controller/officials.php">
                 <i class="bi bi-building"></i>
                 <span>Officials</span>
             </a>
@@ -59,7 +58,7 @@ function activeMenu($file, $current) {
         <li class="<?= activeMenu('Dailynewsreport.php', $current) ?>">
             <a href="/BIS/views/Dailynewsreport.php">
                 <i class="bi bi-newspaper"></i>
-                <span>Daily News Report</span>
+                <span>News Announcement</span>
             </a>
         </li>
 
