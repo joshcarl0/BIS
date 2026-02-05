@@ -1,235 +1,245 @@
 <?php
-/**
- * /BIS/controller/households_manage.php
- * Manage Households (List + Search + Status Filter)
- */
-session_start();
-
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
-    header("Location: /BIS/views/login.php");
-    exit();
-}
-
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../models/Household.php';
-
-$householdModel = new Household($conn);
-
-// Filters
-$status = $_GET['status'] ?? 'Active';
-$q = trim($_GET['q'] ?? '');
-
-$allowed = ['Active', 'Inactive', 'Dissolved', 'All'];
-if (!in_array($status, $allowed, true)) $status = 'Active';
-
-// Fetch
-$households = $householdModel->getAll($status === 'All' ? '' : $status, $q);
-
-// Flash
-$success = $_SESSION['success'] ?? '';
-$error   = $_SESSION['error'] ?? '';
-unset($_SESSION['success'], $_SESSION['error']);
+// View expects variables from controller/population_dashboard_controller.php
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manage Households</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Population Overview</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <!-- Your admin theme -->
-    <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
 </head>
 
-<body style="background:#D6D5D7;">
+<body style="background: #D6D5D7;">
 
-<!-- TOP NAVBAR -->
-<?php require_once __DIR__ . '/../views/navbar_top.php'; ?>
+  <!-- TOP NAVBAR -->
+  <?php require_once __DIR__ . '/../navbar_top.php'; ?>
 
-<!-- LEFT SIDEBAR -->
-<?php require_once __DIR__ . '/../views/navbaradmin_leftside.php'; ?>
+  <!-- LEFT SIDEBAR -->
+  <?php require_once __DIR__ . '/../navbaradmin_leftside.php'; ?>
 
-<div class="main-content" id="mainContent">
+  <div class="main-content" id="mainContent">
     <div class="container-fluid py-4">
 
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-            <div>
-                <h3 class="mb-1">Manage Households</h3>
-                <div class="text-muted">Household registry & socio-economic profile</div>
-            </div>
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h3 class="mb-1">Population Overview</h3>
+          <div class="text-muted">People & Household Summary + SES</div>
+        </div>
+      </div>
 
-            <div class="d-flex flex-wrap gap-2">
-                <a href="/BIS/views/admin/household_add.php" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg"></i> Add Household
-                </a>
+      <!-- PEOPLE OVERVIEW -->
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted">Total Residents (Active)</div>
+              <div class="fs-2 fw-bold"><?= (int)$totalResidents ?></div>
             </div>
+          </div>
         </div>
 
-        <?php if ($success): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> <?= htmlspecialchars($success) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($error) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <div class="card shadow-sm mb-3">
+        <div class="col-md-3">
+          <div class="card shadow-sm">
             <div class="card-body">
-                <form method="GET" class="row g-2 align-items-center">
-                    <div class="col-12 col-md-5">
-                        <input
-                            type="text"
-                            class="form-control form-control-sm"
-                            name="q"
-                            value="<?= htmlspecialchars($q) ?>"
-                            placeholder="Search household code, head name, address, purok..."
-                        />
-                    </div>
-
-                    <div class="col-8 col-md-3">
-                        <select class="form-select form-select-sm" name="status">
-                            <option value="Active"   <?= $status==='Active'?'selected':'' ?>>Active</option>
-                            <option value="Inactive" <?= $status==='Inactive'?'selected':'' ?>>Inactive</option>
-                            <option value="Dissolved"<?= $status==='Dissolved'?'selected':'' ?>>Dissolved</option>
-                            <option value="All"      <?= $status==='All'?'selected':'' ?>>All</option>
-                        </select>
-                    </div>
-
-                    <div class="col-4 col-md-2 d-grid">
-                        <button class="btn btn-outline-dark btn-sm" type="submit">
-                            <i class="bi bi-search"></i> Search
-                        </button>
-                    </div>
-
-                    <div class="col-12 col-md-2 d-grid">
-                        <a class="btn btn-outline-secondary btn-sm" href="/BIS/controller/households_manage.php?status=Active">
-                            <i class="bi bi-x-circle"></i> Reset
-                        </a>
-                    </div>
-                </form>
+              <div class="text-muted">Male</div>
+              <div class="fs-2 fw-bold"><?= (int)$maleResidents ?></div>
             </div>
+          </div>
         </div>
 
-        <div class="card shadow-sm">
+        <div class="col-md-3">
+          <div class="card shadow-sm">
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="min-width:140px;">Household Code</th>
-                                <th style="min-width:120px;">Purok</th>
-                                <th style="min-width:220px;">Address</th>
-                                <th style="min-width:180px;">Head of Household</th>
-                                <th style="min-width:140px;">Income Range</th>
-                                <th style="min-width:130px;">Class</th>
-                                <th style="min-width:110px;">Status</th>
-                                <th class="text-end" style="min-width:240px;">Actions</th>
-                            </tr>
-                        </thead>
+              <div class="text-muted">Female</div>
+              <div class="fs-2 fw-bold"><?= (int)$femaleResidents ?></div>
+            </div>
+          </div>
+        </div>
 
-                        <tbody>
-                        <?php if (!empty($households)): ?>
-                            <?php foreach ($households as $h): ?>
-                                <?php
-                                    $hStatus = $h['status'] ?? '';
-                                    $badge = 'bg-secondary';
-                                    if ($hStatus === 'Active') $badge = 'bg-success';
-                                    elseif ($hStatus === 'Inactive') $badge = 'bg-warning text-dark';
-                                    elseif ($hStatus === 'Dissolved') $badge = 'bg-dark';
-                                ?>
-                                <tr>
-                                    <td class="fw-semibold"><?= htmlspecialchars($h['household_code'] ?? '') ?></td>
-                                    <td><?= htmlspecialchars($h['purok_name'] ?? '') ?></td>
-                                    <td><?= htmlspecialchars($h['address_line'] ?? '') ?></td>
-                                    <td><?= htmlspecialchars(trim((string)($h['head_name'] ?? '')) ?: '—') ?></td>
-                                    <td><?= htmlspecialchars($h['monthly_income_range'] ?? '—') ?></td>
-                                    <td><?= htmlspecialchars($h['socio_economic_class'] ?? '—') ?></td>
-                                    <td>
-                                        <span class="badge <?= $badge ?>">
-                                            <?= htmlspecialchars($hStatus ?: '—') ?>
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary"
-                                           href="/BIS/views/admin/household_view.php?id=<?= (int)$h['id'] ?>">
-                                            <i class="bi bi-eye"></i> View
-                                        </a>
+        <div class="col-md-3">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted">Senior Citizens (60+)</div>
+              <div class="fs-2 fw-bold"><?= (int)$ageSeniors ?></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           href="/BIS/views/admin/household_edit.php?id=<?= (int)$h['id'] ?>">
-                                            <i class="bi bi-pencil-square"></i> Edit
-                                        </a>
+      <div class="row g-3 mt-0">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted">Minors (0 - 17)</div>
+              <div class="fs-2 fw-bold"><?= (int)$ageMinors ?></div>
+            </div>
+          </div>
+        </div>
 
-                                        <?php if (($h['status'] ?? '') === 'Active'): ?>
-                                            <a class="btn btn-sm btn-outline-danger"
-                                               href="/BIS/controller/admin/household_deactivate.php?id=<?= (int)$h['id'] ?>"
-                                               onclick="return confirm('Deactivate this household?');">
-                                                <i class="bi bi-slash-circle"></i>
-                                            </a>
-                                        <?php elseif (($h['status'] ?? '') === 'Inactive'): ?>
-                                            <a class="btn btn-sm btn-outline-success"
-                                               href="/BIS/controller/admin/household_activate.php?id=<?= (int)$h['id'] ?>"
-                                               onclick="return confirm('Activate this household?');">
-                                                <i class="bi bi-check2-circle"></i>
-                                            </a>
-                                        <?php endif; ?>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted">Adults (18 - 59)</div>
+              <div class="fs-2 fw-bold"><?= (int)$ageAdults ?></div>
+            </div>
+          </div>
+        </div>
 
-                                        <?php if (($h['status'] ?? '') !== 'Dissolved'): ?>
-                                            <a class="btn btn-sm btn-outline-dark"
-                                               href="/BIS/controller/admin/household_dissolve.php?id=<?= (int)$h['id'] ?>"
-                                               onclick="return confirm('Dissolve this household?');">
-                                                <i class="bi bi-house-x"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
-                                    <div class="mb-2"><i class="bi bi-inbox fs-3"></i></div>
-                                    No households found.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                        </tbody>
-                    </table>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted">Special Groups (Total)</div>
+              <div class="fs-2 fw-bold"><?= (int)array_sum($specialGroups ?? []) ?></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Households -->
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="mb-3">Households</h5>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="border rounded p-3 bg-white">
+                <div class="text-muted">Total</div>
+                <div class="fs-4 fw-bold"><?= (int)$totalHouseholds ?></div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border rounded p-3 bg-white">
+                <div class="text-muted">Active</div>
+                <div class="fs-4 fw-bold"><?= (int)$activeHouseholds ?></div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border rounded p-3 bg-white">
+                <div class="text-muted">Inactive</div>
+                <div class="fs-4 fw-bold"><?= (int)$inactiveHouseholds ?></div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border rounded p-3 bg-white">
+                <div class="text-muted">Dissolved</div>
+                <div class="fs-4 fw-bold"><?= (int)$dissolvedHouseholds ?></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRAMS -->
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="mb-3">Programs / Assistance (Households)</h5>
+          <div class="row g-3">
+            <div class="col-md-2"><div class="border rounded p-3 bg-white"><div class="text-muted">4Ps</div><div class="fs-4 fw-bold"><?= (int)$prog4ps ?></div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 bg-white"><div class="text-muted">TUPAD</div><div class="fs-4 fw-bold"><?= (int)$progTupad ?></div></div></div>
+            <div class="col-md-2"><div class="border rounded p-3 bg-white"><div class="text-muted">AKAP</div><div class="fs-4 fw-bold"><?= (int)$progAkap ?></div></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 bg-white"><div class="text-muted">Solo Parent Assist</div><div class="fs-4 fw-bold"><?= (int)$progSolo ?></div></div></div>
+            <div class="col-md-3"><div class="border rounded p-3 bg-white"><div class="text-muted">Social Pension</div><div class="fs-4 fw-bold"><?= (int)$progPension ?></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SES -->
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="mb-3">Socio-Economic Status (SES)</h5>
+
+          <div class="row g-3">
+            <?php foreach (($ses ?? []) as $label => $val): ?>
+              <div class="col-6 col-md-3">
+                <div class="border rounded p-3 bg-white">
+                  <div class="text-muted"><?= htmlspecialchars($label) ?></div>
+                  <div class="d-flex justify-content-between align-items-end">
+                    <div class="fs-4 fw-bold"><?= (int)$val ?></div>
+                    <div class="text-muted"><?= htmlspecialchars(pct((int)$val, (int)$sesTotal)) ?></div>
+                  </div>
                 </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <?php if (($sesTotal ?? 0) <= 0): ?>
+            <div class="text-muted mt-3">
+              Note: No socio_economic_class data found yet in households.
             </div>
+          <?php endif; ?>
         </div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="row g-3 mt-3">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">Age Distribution</h6>
+              <canvas id="agePie"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">Gender Distribution</h6>
+              <canvas id="genderBar"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">Special Groups</h6>
+              <canvas id="specialChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">SES Distribution</h6>
+              <canvas id="sesPie"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
-</div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- PASS DATA TO JS -->
+  <script>
+    window.DASHBOARD_DATA = {
+      age: {
+        minors: <?= (int)$ageMinors ?>,
+        adults: <?= (int)$ageAdults ?>,
+        seniors: <?= (int)$ageSeniors ?>
+      },
+      gender: {
+        male: <?= (int)$maleResidents ?>,
+        female: <?= (int)$femaleResidents ?>
+      },
+      special: {
+        labels: <?= json_encode(array_keys($specialGroups ?? [])) ?>,
+        data: <?= json_encode(array_values($specialGroups ?? [])) ?>
+      },
+      ses: {
+        labels: <?= json_encode(array_keys($ses ?? [])) ?>,
+        data: <?= json_encode(array_values($ses ?? [])) ?>
+      }
+    };
+  </script>
 
-<script>
-(() => {
-  const toggleBtn = document.getElementById("toggleSidebar");
-  const sidebar = document.getElementById("sidebar");
-  const main = document.getElementById("mainContent");
-  const icon = document.getElementById("toggleIcon");
-
-  if (!toggleBtn || !sidebar || !main || !icon) return;
-
-  toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-    main.classList.toggle("expanded");
-
-    icon.classList.toggle("bi-list");
-    icon.classList.toggle("bi-x-lg");
-  });
-})();
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/BIS/assets/js/dashboard_charts.js"></script>
 
 </body>
 </html>

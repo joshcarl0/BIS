@@ -1,0 +1,17 @@
+.chart-box{
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+
+.card{
+  border-radius: 12px;
+}
+
+.card h6, .card h5{
+  font-weight: 600;
+}
+
+@media(max-width:768px){
+  .chart-box{ height: 220px; }
+}
