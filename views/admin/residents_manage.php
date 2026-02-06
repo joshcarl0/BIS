@@ -312,7 +312,7 @@
             </div>
           </div>
 
-          <!-- ✅ SPECIAL GROUPS (ADD) -->
+          <!--  SPECIAL GROUPS (ADD) -->
           <div class="col-12">
             <div class="form-label fw-bold">Special Groups</div>
             <div class="row">
@@ -453,7 +453,7 @@
             </div>
           </div>
 
-          <!-- ✅ SPECIAL GROUPS (EDIT) -->
+          <!--  SPECIAL GROUPS (EDIT) -->
           <div class="col-12">
             <div class="form-label fw-bold">Special Groups</div>
             <div class="row">
@@ -520,7 +520,7 @@
         document.getElementById('edit_is_active').value = (parseInt(r.is_active || 0) === 1) ? '1' : '0';
         document.getElementById('edit_hoh').checked = (parseInt(r.is_head_of_household || 0) === 1);
 
-        // ✅ Special groups auto-check
+        //  Special groups auto-check
         document.querySelectorAll('.edit-special-group').forEach(cb => cb.checked = false);
 
         const csv = btn.getAttribute('data-groups') || '';

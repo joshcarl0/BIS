@@ -146,69 +146,68 @@
 
       <div class="modal-body row g-3">
 
-        <div class="col-md-6">
-          <label class="form-label">Position *</label>
-          <input class="form-control" name="position" required>
+          <div class="col-md-6">
+            <label for="add_position" class="form-label">Position *</label>
+            <input id="add_position" class="form-control" name="position" required autocomplete="organization-title">
+          </div>
+
+          <div class="col-md-6">
+            <label for="add_full_name" class="form-label">Full Name *</label>
+            <input id="add_full_name" class="form-control" name="full_name" required autocomplete="name">
+          </div>
+
+          <div class="col-md-6">
+            <label for="add_committee" class="form-label">Committee</label>
+            <input id="add_committee" class="form-control" name="committee">
+          </div>
+
+          <div class="col-md-3">
+            <label for="add_term_start" class="form-label">Term Start</label>
+            <input id="add_term_start" type="date" class="form-control" name="term_start">
+          </div>
+
+          <div class="col-md-3">
+            <label for="add_term_end" class="form-label">Term End</label>
+            <input id="add_term_end" type="date" class="form-control" name="term_end">
+          </div>
+
+          <div class="col-md-6">
+            <label for="add_contact" class="form-label">Contact</label>
+            <input id="add_contact" class="form-control" name="contact" autocomplete="tel">
+          </div>
+
+          <div class="col-md-6">
+            <label for="add_email" class="form-label">Email</label>
+            <input id="add_email" type="email" name="email" class="form-control" autocomplete="email">
+          </div>
+
+          <div class="col-md-4">
+            <label for="add_status" class="form-label">Status</label>
+            <select id="add_status" class="form-select" name="status">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="col-md-8">
+            <label for="add_photo" class="form-label">Photo</label>
+            <input id="add_photo" type="file"
+                  class="form-control"
+                  name="photo"
+                  accept="image/*"
+                  onchange="previewAddPhoto(event)">
+          </div>
+
+          <div class="col-md-4 text-center">
+            <img id="addPhotoPreview"
+                src="/BIS/assets/images/default-avatar.png"
+                width="120"
+                height="120"
+                style="object-fit:cover; border-radius:50%;">
+          </div>
+
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Full Name *</label>
-          <input class="form-control" name="full_name" required>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Committee</label>
-          <input class="form-control" name="committee">
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Term Start</label>
-          <input type="date" class="form-control" name="term_start">
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Term End</label>
-          <input type="date" class="form-control" name="term_end">
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Contact</label>
-          <input class="form-control" name="contact">
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" name="email">
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Status</label>
-          <select class="form-select" name="status">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
-
-        <!-- PHOTO UPLOAD -->
-        <div class="col-md-8">
-          <label class="form-label">Photo</label>
-          <input type="file"
-                 class="form-control"
-                 name="photo"
-                 accept="image/*"
-                 onchange="previewAddPhoto(event)">
-        </div>
-
-        <!-- PHOTO PREVIEW -->
-        <div class="col-md-4 text-center">
-          <img id="addPhotoPreview"
-               src="/BIS/assets/images/default-avatar.png"
-               width="120"
-               height="120"
-               style="object-fit:cover; border-radius:50%;">
-        </div>
-
-      </div>
 
       <div class="modal-footer">
         <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
@@ -232,70 +231,80 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
-        <div class="modal-body row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Position *</label>
-            <input class="form-control" name="position" id="edit_position" required>
-          </div>
+      <div class="modal-body row g-3">
 
-          <div class="col-md-6">
-            <label class="form-label">Full Name *</label>
-            <input class="form-control" name="full_name" id="edit_full_name" required>
-          </div>
-          
-          <div class="col-md-6">
-            <label class="form-label">Committee</label>
-            <input class="form-control" name="committee" id="edit_committee">
-          </div>
-          
-          <div class="col-md-3">
-            <label class="form-label">Term Start</label>
-            <input type="date" class="form-control" name="term_start" id="edit_term_start">
-          </div>
+        <div class="col-md-6">
+          <label for="edit_position" class="form-label">Position *</label>
+          <input class="form-control" name="position" id="edit_position" required autocomplete="organization-title">
+        </div>
 
-          <div class="col-md-3">
-            <label class="form-label">Term End</label>
-            <input type="date" class="form-control" name="term_end" id="edit_term_end">
-          </div>
-                        <!-- PHOTO (EDIT) -->
-                <div class="col-md-8">
-                <label class="form-label">Photo</label>
-                <input type="file"
-                        class="form-control"
-                        name="photo"
-                        accept="image/*"
-                        onchange="previewEditPhoto(event)">
-                <div class="form-text">Leave blank if you don’t want to change the photo.</div>
-                </div>
+        <div class="col-md-6">
+          <label for="edit_full_name" class="form-label">Full Name *</label>
+          <input class="form-control" name="full_name" id="edit_full_name" required autocomplete="name">
+        </div>
 
-                <div class="col-md-4 text-center">
-                <img id="editPhotoPreview"
-                    src="/BIS/assets/images/default-avatar.png"
-                    width="120"
-                    height="120"
-                    style="object-fit:cover; border-radius:50%;">
-                </div>
+        <div class="col-md-6">
+          <label for="edit_committee" class="form-label">Committee</label>
+          <input class="form-control" name="committee" id="edit_committee">
+        </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Contact</label>
-            <input class="form-control" name="contact" id="edit_contact">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" id="edit_email">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Status</label>
-            <select class="form-select" name="status" id="edit_status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
+        <div class="col-md-3">
+          <label for="edit_term_start" class="form-label">Term Start</label>
+          <input type="date" class="form-control" name="term_start" id="edit_term_start">
+        </div>
+
+        <div class="col-md-3">
+          <label for="edit_term_end" class="form-label">Term End</label>
+          <input type="date" class="form-control" name="term_end" id="edit_term_end">
+        </div>
+
+        <!-- PHOTO (EDIT) -->
+        <div class="col-md-8">
+          <label for="edit_photo" class="form-label">Photo</label>
+          <input type="file"
+                id="edit_photo"
+                class="form-control"
+                name="photo"
+                accept="image/*"
+                onchange="previewEditPhoto(event)">
+          <div class="form-text">Leave blank if you don’t want to change the photo.</div>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <img id="editPhotoPreview"
+              src="/BIS/assets/images/default-avatar.png"
+              width="120"
+              height="120"
+              style="object-fit:cover; border-radius:50%;">
+        </div>
+
+        <div class="col-md-6">
+          <label for="edit_contact" class="form-label">Contact</label>
+          <input class="form-control" name="contact" id="edit_contact" autocomplete="tel">
+        </div>
+
+        <div class="col-md-6">
+          <label for="edit_email" class="form-label">Email</label>
+          <input type="email" name="email" id="edit_email" class="form-control" autocomplete="email">
+        </div>
+
+        <div class="col-md-4">
+          <label for="edit_status" class="form-label">Status</label>
+          <select class="form-select" name="status" id="edit_status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
+      </div>
+
+
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
           <button class="btn btn-primary">Update</button>
         </div>
+
       </form>
     </div>
   </div>

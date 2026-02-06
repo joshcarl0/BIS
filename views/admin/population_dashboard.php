@@ -18,7 +18,7 @@
 
 <body style="background: #D6D5D7;">
 
-  <!-- LEFT SIDEBAR (✅ inside body) -->
+  <!-- LEFT SIDEBAR ( inside body) -->
   <?php require_once __DIR__ . '/../navbaradmin_leftside.php'; ?>
 
   <div class="main-content" id="mainContent">
@@ -72,7 +72,7 @@
             </div>
           </div>
         </div>
-      </div><!-- ✅ close row -->
+      </div><!--  close row -->
 
       <div class="row g-3 mt-0">
         <div class="col-md-4">
@@ -151,7 +151,7 @@
         </div>
       </div>
 
-      <!-- ✅ CHARTS in cards (with design) -->
+      <!-- CHARTS in cards (with design) -->
       <div class="row g-3 mt-3">
         <div class="col-md-6">
           <div class="card shadow-sm">
@@ -193,7 +193,7 @@
     </div>
   </div>
 
-  <!-- ✅ PASS DATA (fixed variables) -->
+  <!--  PASS DATA (fixed variables) -->
   <script>
     window.DASHBOARD_DATA = {
       age: {

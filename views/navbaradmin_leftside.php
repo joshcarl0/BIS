@@ -34,7 +34,7 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('Barangay_officials.php', $current) ?>">
+       <li class="<?= activeMenu('officials.php', $current) ?>">
             <a href="/BIS/controller/officials.php">
                 <i class="bi bi-building"></i>
                 <span>Officials</span>
@@ -55,10 +55,10 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('Dailynewsreport.php', $current) ?>">
-            <a href="/BIS/views/Dailynewsreport.php">
+        <li class="<?= activeMenu('admin_announcements.php', $current) ?>">
+            <a href="/BIS/views/admin/admin_announcements.php">
                 <i class="bi bi-newspaper"></i>
-                <span>News Announcement</span>
+                <span>Announcement</span>
             </a>
         </li>
 
