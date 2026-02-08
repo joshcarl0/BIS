@@ -24,14 +24,25 @@ $user = $userModel->login($username, $password);
 if ($user) {
     session_regenerate_id(true);
 
+    unset($_SESSION['error']);
+
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
+    $_SESSION['full_name'] = $user['full_name'];
 
-    if ($user['role'] === 'admin') {
-        header("Location: /BIS/views/admin_dashboard.php");
-    } else {
-        header("Location: /BIS/views/user_dashboard.php");
+    switch ($user['role']) {
+        case 'admin':
+            header("Location: /BIS/views/admin_dashboard.php");
+            break;
+
+        case 'official':
+            header("Location: /BIS/views/official_dashboard.php");
+            break;
+
+        default:
+            header("Location: /BIS/views/user_dashboard.php");
+            break;
     }
     exit();
 }

@@ -40,11 +40,12 @@
                         <?php endif; ?>
 
                         <!-- Login Form -->
-                        <form method="POST" action="../controller/login_process.php" id="loginForm">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
-
+                        <form method="POST" action="/BIS/controller/login_process.php" id="loginForm">
+                                    <div class="mb-3">
+                                            <label for="username" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="username" name="username"
+                                                    placeholder="Enter your username" required autocomplete="username">
+                                            </div>
 
                             <div class="password-container mb-3">
                                 <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">

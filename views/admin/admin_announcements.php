@@ -94,6 +94,18 @@ $rows = $ann->all();
               <td><?= (int)$r['attachments_count'] ?></td>
 
               <td class="text-end">
+
+                <?php if ((int)$r['attachments_count'] > 0 ): ?>
+                  <a class="btn btn-sm btn-outline-dark"
+                   href="/BIS/views/admin/announcement_attachments.php?id=<?= (int)$r['id'] ?>">
+                    <i class="bi bi-paperclip"></i>
+                  </a>
+                <?php else: ?>
+                  <button class="btn btn-sm btn-outline-dark" disabled>
+                    <i class="bi bi-paperclip"></i>
+                  </button>
+                <?php endif; ?>
+
                 <button
                   class="btn btn-sm btn-outline-primary btn-edit"
                   data-bs-toggle="modal"
@@ -190,7 +202,7 @@ $rows = $ann->all();
       </div>
 
         <div class="col-12">
-          <<label for="edit_details" class="form-label">Details *</label>
+          <label for="edit_details" class="form-label">Details *</label>
           <textarea name="details" id="edit_details" class="form-control" rows="5" required></textarea>
         </div>
 

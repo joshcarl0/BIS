@@ -89,18 +89,18 @@ if ($userModel->isEmailTaken($email)) {
    REGISTER USER
 =========================== */
 // DEFAULT VALUES
-$role   = 'user';
-$status = 'active';
+$role_id = 3;   // resident
+$status  = 'active';
 
-// Pass the raw password; the model will hash it.
 $success = $userModel->register(
     $username,
     $email,
     $password,
     $fullname,
-    $role,
+    $role_id,
     $status
 );
+
 
 if ($success) {
     unset($_SESSION['csrf_token']); // regenerate later

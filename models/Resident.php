@@ -357,7 +357,7 @@ class Resident
 
     public function deactivate(int $id): bool
     {
-        $sql = "UPDATE {$this->table} SET is_active = 0 WHERE id = ?";
+        $sql = "UPDATE {$this->table} SET is_active = 0 WHERE id = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) return false;
 
@@ -416,7 +416,7 @@ class Resident
                 if (!$ins) throw new Exception("Prepare failed (insert)");
 
                 foreach ($groupIds as $gid) {
-                    $note = isset($notesByGroupId[$gid]) ? trim((string)$notesByGroupId[$gid]) : null;
+                    $note = trim((string)($notesByGroupId[$gid] ?? ''));
                     $ins->bind_param("iis", $residentId, $gid, $note);
                     if (!$ins->execute()) {
                         $ins->close();

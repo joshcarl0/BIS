@@ -42,6 +42,44 @@ if ($res) {
 
 $error = $_SESSION['error'] ?? '';
 unset($_SESSION['error']);
+
+
+function getDropdownOptions(mysqli $conn, string $category): array {
+  $items = [];
+  $stmt = $conn->prepare("SELECT value FROM dropdown_options WHERE category = ? AND is_active = 1 ORDER BY sort_order, value");
+  $stmt->bind_param("s", $category);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  while ($row = $res->fetch_assoc()) $items[] = $row['value'];
+  $stmt->close();
+  return $items;
+}
+
+$opt_housing_type        = getDropdownOptions($conn, 'housing_type');
+$opt_household_type      = getDropdownOptions($conn, 'household_type');
+$opt_tenure_status       = getDropdownOptions($conn, 'tenure_status');
+$opt_housing_status      = getDropdownOptions($conn, 'housing_status');
+
+$opt_monthly_income      = getDropdownOptions($conn, 'monthly_income_range');
+$opt_income_source       = getDropdownOptions($conn, 'income_source');
+$opt_employment_type     = getDropdownOptions($conn, 'employment_type');
+$opt_ses_class           = getDropdownOptions($conn, 'socio_economic_class');
+
+$opt_house_material      = getDropdownOptions($conn, 'house_material');
+$opt_water_source        = getDropdownOptions($conn, 'water_source');
+$opt_electricity_access  = getDropdownOptions($conn, 'electricity_access');
+$opt_toilet_facility     = getDropdownOptions($conn, 'toilet_facility');
+$opt_internet_access     = getDropdownOptions($conn, 'internet_access');
+
+$opt_land_ownership      = getDropdownOptions($conn, 'land_ownership');
+$opt_business_ownership  = getDropdownOptions($conn, 'business_ownership');
+$opt_highest_education   = getDropdownOptions($conn, 'highest_education');
+$opt_health_insurance    = getDropdownOptions($conn, 'health_insurance');
+$opt_malnutrition_cases  = getDropdownOptions($conn, 'malnutrition_cases');
+
+
+
+
 ?>
 
 
@@ -134,49 +172,42 @@ unset($_SESSION['error']);
 </div>
 
 <div class="col-md-3">
-    <label for="housing_type" class="form-label">Housing Type</label>
-    <select id="housing_type" name="housing_type" class="form-select">
+   <select id="housing_type" name="housing_type" class="form-select">
   <option value="">Select</option>
-  <option value="Single Detached House">Single Detached House</option>
-  <option value="Apartment">Apartment</option>
-  <option value="Boarding House">Boarding House</option>
-  <option value="Room for Rent">Room for Rent</option>
-  <option value="Condominium">Condominium</option>
-  <option value="Others">Others</option>
+  <?php foreach ($opt_housing_type as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
+
+</div>
+
+<div class="col-md-3">
+    <select id="household_type" name="household_type" class="form-select">
+  <option value="">Select</option>
+  <?php foreach ($opt_household_type as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
 </select>
 
 </div>
 
 <div class="col-md-3">
-    <label for="household_type" class="form-label">Household Type</label>
-    <select id="household_type" name="household_type" class="form-select">
-        <option value="">Select</option>
-        <option value="Nuclear">Nuclear</option>
-        <option value="Single Parent">Single Parent</option>
-        <option value="Extended">Extended</option>
-        <option value="Others">Others</option>
-    </select>
-</div>
-
-<div class="col-md-3">
-    <label for="tenure_status" class="form-label">Tenure Status</label>
-    <select id="tenure_status" name="tenure_status" class="form-select">
-        <option value="">Select</option>
-        <option value="Owner">Owner</option>
-        <option value="Renter">Renter</option>
-        <option value="Others">Others</option>
-    </select>
+   <select id="tenure_status" name="tenure_status" class="form-select">
+    <option value="">Select</option>
+  <?php foreach ($opt_tenure_status as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+   </select>
 </div>
 
 <div class="col-md-4">
-    <label for="housing_status" class="form-label">Housing Status</label>
     <select id="housing_status" name="housing_status" class="form-select">
-        <option value="">Select</option>
-        <option value="Owned">Owned</option>
-        <option value="Rented">Rented</option>
-        <option value="Informal Settler">Informal Settler</option>
-        <option value="Living with Relatives">Living with Relatives</option>
-    </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_housing_status as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 <!-- ===================== SOCIO-ECONOMIC ===================== -->
@@ -186,61 +217,43 @@ unset($_SESSION['error']);
 </div>
 
 <div class="col-md-4">
-    <label for="monthly_income_range" class="form-label">Monthly Income Range</label>
     <select id="monthly_income_range" name="monthly_income_range" class="form-select" required>
-        <option value="">-- Select Income Range --</option>
-        <option value="Below 10,000">Below ₱10,000</option>
-        <option value="10,000 - 20,000">₱10,000 – ₱20,000</option>
-        <option value="20,001 - 30,000">₱20,001 – ₱30,000</option>
-        <option value="30,001 - 50,000">₱30,001 – ₱50,000</option>
-        <option value="Above 50,000">Above ₱50,000</option>
-    </select>
+  <option value="">-- Select Income Range --</option>
+  <?php foreach ($opt_monthly_income as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
-    <label for="income_source" class="form-label">Income Source</label>
     <select id="income_source" name="income_source" class="form-select" required>
-        <option value="">-- Select Income Source --</option>
-        <option value="Salary / Wages">Salary / Wages</option>
-        <option value="Business / Self-Employed">Business / Self-Employed</option>
-        <option value="Daily Wage / Labor">Daily Wage / Labor</option>
-        <option value="Fishing / Aquaculture">Fishing / Aquaculture</option>
-        <option value="Transportation Services">Transportation Services</option>
-        <option value="OFW / Remittance">OFW / Remittance</option>
-        <option value="Pension">Pension</option>
-        <option value="Financial Assistance">Financial Assistance</option>
-        <option value="Freelance / Online Work">Freelance / Online Work</option>
-        <option value="No Regular Income">No Regular Income</option>
-    </select>
+  <option value="">-- Select Income Source --</option>
+  <?php foreach ($opt_income_source as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
-    <label for="employment_type" class="form-label">Employment Type</label>
     <select id="employment_type" name="employment_type" class="form-select" required>
-        <option value="">-- Select Employment Type --</option>
-        <option value="Regular / Permanent">Regular / Permanent</option>
-        <option value="Contractual">Contractual</option>
-        <option value="Casual / Seasonal">Casual / Seasonal</option>
-        <option value="Self-Employed">Self-Employed</option>
-        <option value="Freelancer / Gig Worker">Freelancer / Gig Worker</option>
-        <option value="Daily Wage Earner">Daily Wage Earner</option>
-        <option value="Government Employee">Government Employee</option>
-        <option value="Private Employee">Private Employee</option>
-        <option value="Unemployed">Unemployed</option>
-        <option value="Student">Student</option>
-        <option value="Retired / Pensioner">Retired / Pensioner</option>
-    </select>
+  <option value="">-- Select Employment Type --</option>
+  <?php foreach ($opt_employment_type as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
-    <label for="socio_economic_class" class="form-label">Socio-Economic Class</label>
     <select id="socio_economic_class" name="socio_economic_class" class="form-select">
-        <option value="">Select</option>
-        <option value="Poverty">Poverty</option>
-        <option value="Low Income">Low Income</option>
-        <option value="Middle Income">Middle Income</option>
-        <option value="High Income">High Income</option>
-    </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_ses_class as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
@@ -264,64 +277,54 @@ unset($_SESSION['error']);
 </div>
 
 <div class="col-md-4">
-  <label for="house_material" class="form-label">House Material</label>
-  <select name="house_material" id="house_material" class="form-select">
-    <option value="">Select</option>
-    <option value="Concrete">Concrete</option>
-    <option value="Wood">Wood</option>
-    <option value="Mixed">Mixed</option>
-    <option value="Light Materials">Light Materials</option>
-  </select>
+ <select name="house_material" id="house_material" class="form-select">
+  <option value="">Select</option>
+  <?php foreach ($opt_house_material as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
-  <label for="water_source" class="form-label">Water Source</label>
   <select name="water_source" id="water_source" class="form-select">
-    <option value="">Select</option>
-    <option value="Maynilad">Maynilad</option>
-    <option value="Manila Water">Manila Water</option>
-    <option value="Deepwell">Deepwell</option>
-    <option value="Communal Faucet">Communal Faucet</option>
-    <option value="Refilling Station">Refilling Station</option>
-    <option value="Others">Others</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_water_source as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 
 <div class="col-md-4">
-  <label for="electricity_access" class="form-label">Electricity Access</label>
   <select name="electricity_access" id="electricity_access" class="form-select">
-    <option value="">Select</option>
-    <option value="Meralco">Meralco</option>
-    <option value="Solar Panel">Solar Panel</option>
-    <option value="Generator">Generator</option>
-    <option value="Shared Connection">Shared Connection</option>
-    <option value="None">None</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_electricity_access as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <div class="col-md-4">
-  <label for="toilet_facility" class="form-label">Toilet Facility</label>
   <select name="toilet_facility" id="toilet_facility" class="form-select">
-    <option value="">Select</option>
-    <option value="Own Toilet">Own Toilet</option>
-    <option value="Shared Toilet">Shared Toilet</option>
-    <option value="Public Toilet">Public Toilet</option>
-    <option value="None">None</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_toilet_facility as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 
 <div class="col-md-4">
-  <label for="internet_access" class="form-label">Internet Access</label>
   <select name="internet_access" id="internet_access" class="form-select">
-    <option value="">Select</option>
-    <option value="Fiber">Fiber</option>
-    <option value="DSL">DSL</option>
-    <option value="Mobile Data">Mobile Data</option>
-    <option value="WiFi (Shared)">WiFi (Shared)</option>
-    <option value="None">None</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_internet_access as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
+
 </div>
 
 <!-- ===================== GOVERNMENT PROGRAMS ===================== -->
@@ -420,68 +423,52 @@ unset($_SESSION['error']);
 </div>
 
 <div class="col-md-4">
-  <label for="land_ownership" class="form-label">Land Ownership</label>
   <select name="land_ownership" id="land_ownership" class="form-select">
-    <option value="">Select</option>
-    <option value="Owned">Owned</option>
-    <option value="Leased">Leased</option>
-    <option value="Government Owned">Government Owned</option>
-    <option value="Informal Settler">Informal Settler</option>
-    <option value="Others">Others</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_land_ownership as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 
 <div class="col-md-4">
-  <label for="business_ownership" class="form-label">Business Ownership</label>
   <select name="business_ownership" id="business_ownership" class="form-select">
-    <option value="">Select</option>
-    <option value="None">None</option>
-    <option value="Sari-sari Store">Sari-sari Store</option>
-    <option value="Small Business">Small Business</option>
-    <option value="Registered Business">Registered Business</option>
-    <option value="Others">Others</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_business_ownership as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 
 <div class="col-md-4">
-  <label for="highest_education" class="form-label">Highest Education</label>
-  <select name="highest_education" id="highest_education" class="form-select">
-    <option value="">Select</option>
-    <option value="No Formal Education">No Formal Education</option>
-    <option value="Elementary Level">Elementary Level</option>
-    <option value="Elementary Graduate">Elementary Graduate</option>
-    <option value="High School Level">High School Level</option>
-    <option value="High School Graduate">High School Graduate</option>
-    <option value="College Level">College Level</option>
-    <option value="College Graduate">College Graduate</option>
-    <option value="Post Graduate">Post Graduate</option>
-  </select>
+ <select name="highest_education" id="highest_education" class="form-select">
+  <option value="">Select</option>
+  <?php foreach ($opt_highest_education as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 
 <div class="col-md-4">
-  <label for="health_insurance" class="form-label">Health Insurance</label>
   <select name="health_insurance" id="health_insurance" class="form-select">
-    <option value="">Select</option>
-    <option value="PhilHealth">PhilHealth</option>
-    <option value="HMO">HMO</option>
-    <option value="Both">PhilHealth & HMO</option>
-    <option value="None">None</option>
-  </select>
+  <option value="">Select</option>
+  <?php foreach ($opt_health_insurance as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 
 <div class="col-md-4">
-  <label for="malnutrition_cases" class="form-label">Malnutrition Cases</label>
-  <select name="malnutrition_cases" id="malnutrition_cases" class="form-select">
-    <option value="">Select</option>
-    <option value="None">None</option>
-    <option value="At Risk">At Risk</option>
-    <option value="Moderate">Moderate</option>
-    <option value="Severe">Severe</option>
-  </select>
+ <select name="malnutrition_cases" id="malnutrition_cases" class="form-select">
+  <option value="">Select</option>
+  <?php foreach ($opt_malnutrition_cases as $v): ?>
+    <option value="<?= htmlspecialchars($v) ?>"><?= htmlspecialchars($v) ?></option>
+  <?php endforeach; ?>
+</select>
 </div>
 
 

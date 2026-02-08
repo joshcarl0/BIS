@@ -22,9 +22,11 @@ public function all(): array {
 
         $res = $this->conn->query($sql);
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-        
 
+        foreach ($rows as &$r)
+            $r ['attachments'] = $this->attachments((int)$r['id']);
 
+        return $rows;
 }
 
 public function find(int $id): ?array

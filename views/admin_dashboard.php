@@ -35,10 +35,18 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
 
         <!-- PAGE CONTENT -->
         <div class="container-fluid mt-4">
-            <h3>Welcome, Admin!</h3>
-            <p>Manage users, residents, households, and reports here.</p>
-        </div>
+            <?php
+                $displayName = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Admin';
+                $firstName = explode(' ', trim($displayName))[0];
+                $firstName = ucfirst(strtolower($firstName));
+                ?>
+                <h3>Welcome <?= htmlspecialchars($firstName) ?>, Admin</h3>
 
+            <p class="text-muted">
+            The Barangay Information System (BIS) is a web-based solution designed to digitize and centralize barangay records. 
+            It enables efficient management of residents, households, socio-economic data, and community programs while supporting faster services and informed decision-making.
+            </p>
+        </div>
     </div>
 
     <!-- Bootstrap JS (optional but ok) -->

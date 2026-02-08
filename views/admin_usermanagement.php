@@ -21,6 +21,13 @@ if (empty($_SESSION['csrf_token'])) {
 
 $userModel = new User($conn);
 
+// LOAD ROLES for dropdown
+$roles = [];
+$res = $conn->query("SELECT id, role_name FROM roles ORDER BY id ASC");
+if ($res) {
+    $roles = $res->fetch_all(MYSQLI_ASSOC);
+}
+
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
@@ -46,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username  = trim($_POST['username'] ?? '');
         $email     = trim($_POST['email'] ?? '');
         $password  = (string)($_POST['password'] ?? '');
-        $role      = trim($_POST['role'] ?? 'user');
+       $role_id   = (int)($_POST['role_id'] ?? 3); // default resident (3)
         $status    = trim($_POST['status'] ?? 'active');
 
         if ($full_name === '' || $username === '' || $email === '' || $password === '') {
@@ -57,8 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!$errors) {
-            $ok = $userModel->adminCreateUser($username, $email, $password, $full_name, $role, $status);
-
+            $ok = $userModel->adminCreateUser($username, $email, $password, $full_name, $role_id, $status);
             $_SESSION['flash'] = $ok
                 ? ['type' => 'success', 'msg' => 'User added successfully.']
                 : ['type' => 'danger', 'msg' => 'Failed to add user (username/email may already exist).'];
@@ -74,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $full_name = trim($_POST['full_name'] ?? '');
         $username  = trim($_POST['username'] ?? '');
         $email     = trim($_POST['email'] ?? '');
-        $role      = trim($_POST['role'] ?? 'user');
+        $role_id   = (int)($_POST['role_id'] ?? 3);
         $status    = trim($_POST['status'] ?? 'active');
         $password  = (string)($_POST['password'] ?? ''); // optional
 
@@ -83,8 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Invalid email address.";
 
         if (!$errors) {
-            $ok = $userModel->adminUpdateUser($id, $username, $email, $full_name, $role, $status, $password);
-
+            $ok = $userModel->adminUpdateUser($id, $username, $email, $full_name, $role_id, $status, $password);
             $_SESSION['flash'] = $ok
                 ? ['type' => 'success', 'msg' => 'User updated successfully.']
                 : ['type' => 'danger', 'msg' => 'Failed to update user (username/email may already exist).'];
@@ -197,7 +202,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
         <div class="col-lg-4">
           <div class="card shadow-sm">
             <div class="card-body">
-              <h5 class="mb-3">Add User</h5>
+              <h5 class="mb-3">Add Resident and Admin</h5>
 
               <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
@@ -226,11 +231,15 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                 <div class="row g-2">
                   <div class="col-6">
                     <label class="form-label" for="role">Role</label>
-                    <select class="form-select" id="role" name="role" autocomplete="off">
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
-                    </select>
+                    <select class="form-select" id="role_id" name="role_id" autocomplete="off" required>
+                            <?php foreach ($roles as $r): ?>
+                              <option value="<?= (int)$r['id'] ?>">
+                                <?= htmlspecialchars($r['role_name']) ?>
+                              </option>
+                            <?php endforeach; ?>
+                        </select>
                   </div>
+
                   <div class="col-6">
                     <label class="form-label" for="status">Status</label>
                     <select class="form-select" id="status" name="status" autocomplete="off">
@@ -252,7 +261,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
             <div class="card-body">
 
               <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Users List</h5>
+                <h5 class="mb-0">Resident List</h5>
 
                 <form class="d-flex gap-2" method="GET">
                   <input class="form-control" name="search" placeholder="Search name, username, email"
@@ -277,7 +286,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                   </thead>
                   <tbody>
                     <?php if (!$users): ?>
-                      <tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr>
+                      <tr><td colspan="8" class="text-center text-muted py-4">No residents found.</td></tr>
                     <?php endif; ?>
 
                     <?php foreach ($users as $u): ?>
@@ -331,7 +340,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
             <div class="card shadow-sm mt-3">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0">Edit User #<?= (int)$editUser['id'] ?></h5>
+                  <h5 class="mb-0">Edit Resisdent #<?= (int)$editUser['id'] ?></h5>
                   <a class="btn btn-sm btn-outline-dark" href="admin_usermanagement.php?search=<?= urlencode($search) ?>">Close</a>
                 </div>
 
@@ -367,10 +376,13 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
 
                     <div class="col-md-6">
                       <label class="form-label" for="edit_role">Role</label>
-                      <select class="form-select" id="edit_role" name="role" autocomplete="off">
-                        <option value="user" <?= $editUser['role']==='user'?'selected':'' ?>>user</option>
-                        <option value="admin" <?= $editUser['role']==='admin'?'selected':'' ?>>admin</option>
-                      </select>
+                      <select class="form-select" id="edit_role_id" name="role_id" autocomplete="off" required>
+                      <?php foreach ($roles as $r): ?>
+                        <option value="<?= (int)$r['id'] ?>" <?= ((int)($editUser['role_id'] ?? 0) === (int)$r['id']) ? 'selected' : '' ?>>
+                          <?= htmlspecialchars($r['role_name']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
                     </div>
 
                     <div class="col-md-6">

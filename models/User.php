@@ -10,10 +10,19 @@ class User
         $this->conn = $db;
     }
 
+    /* =========================
+       AUTH
+    ========================= */
+
     public function login($username, $password)
     {
-        $sql = "SELECT id, username, password, role, status, email, full_name 
-                FROM {$this->table} WHERE username = ? LIMIT 1";
+        $sql = "SELECT u.id, u.username, u.password, u.status, u.email, u.full_name,
+                       u.role_id, r.role_name AS role
+                FROM {$this->table} u
+                LEFT JOIN roles r ON r.id = u.role_id
+                WHERE u.username = ?
+                LIMIT 1";
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             error_log('User::login prepare failed: ' . $this->conn->error);
@@ -25,21 +34,23 @@ class User
 
         $user = null;
         if (method_exists($stmt, 'get_result')) {
-            $result = $stmt->get_result();
-            $user = $result ? $result->fetch_assoc() : null;
+            $res = $stmt->get_result();
+            $user = $res ? $res->fetch_assoc() : null;
         } else {
             // Fallback for environments without mysqlnd
-            $id = $u = $pwd = $role = $status = $email = $full_name = null;
-            $stmt->bind_result($id, $u, $pwd, $role, $status, $email, $full_name);
+            $id = $u = $pwd = $status = $email = $full_name = $role = null;
+            $role_id = null;
+            $stmt->bind_result($id, $u, $pwd, $status, $email, $full_name, $role_id, $role);
             if ($stmt->fetch()) {
                 $user = [
                     'id' => $id,
                     'username' => $u,
                     'password' => $pwd,
-                    'role' => $role,
                     'status' => $status,
                     'email' => $email,
-                    'full_name' => $full_name
+                    'full_name' => $full_name,
+                    'role_id' => $role_id,
+                    'role' => $role,
                 ];
             }
         }
@@ -47,11 +58,7 @@ class User
         $stmt->close();
 
         if ($user) {
-            if (password_verify($password, $user['password'])) {
-                unset($user['password']); // don't return the hash
-                return $user;
-            }
-            if ($password === $user['password']) { // legacy plaintext (not recommended)
+            if (password_verify($password, $user['password']) || $password === $user['password']) {
                 unset($user['password']);
                 return $user;
             }
@@ -64,10 +71,7 @@ class User
     {
         $sql = "SELECT id FROM {$this->table} WHERE username = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        if (! $stmt) {
-            error_log('User::isUsernameTaken prepare failed: ' . $this->conn->error);
-            return false;
-        }
+        if (!$stmt) return false;
 
         $stmt->bind_param('s', $username);
         $stmt->execute();
@@ -82,10 +86,7 @@ class User
     {
         $sql = "SELECT id FROM {$this->table} WHERE email = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        if (! $stmt) {
-            error_log('User::isEmailTaken prepare failed: ' . $this->conn->error);
-            return false;
-        }
+        if (!$stmt) return false;
 
         $stmt->bind_param('s', $email);
         $stmt->execute();
@@ -96,304 +97,228 @@ class User
         return $taken;
     }
 
-public function register($username, $email, $password, $full_name, $role = 'user', $status = 'active')
-{
-    // Basic uniqueness checks
-    if ($this->isUsernameTaken($username) || $this->isEmailTaken($email)) {
-        return false;
-    }
+    // Default role_id = 3 (resident)
+    public function register($username, $email, $password, $full_name, $role_id = 3, $status = 'active')
+    {
+        if ($this->isUsernameTaken($username) || $this->isEmailTaken($email)) {
+            return false;
+        }
 
-    $sql = "INSERT INTO {$this->table} 
-            (username, email, password, full_name, role, status) 
-            VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO {$this->table}
+                (username, email, password, full_name, role_id, status)
+                VALUES (?, ?, ?, ?, ?, ?)";
 
-    $stmt = $this->conn->prepare($sql);
-    if (!$stmt) {
-        error_log('User::register prepare failed: ' . $this->conn->error);
-        return false;
-    }
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            error_log('User::register prepare failed: ' . $this->conn->error);
+            return false;
+        }
 
-    $hashed = password_hash($password, PASSWORD_DEFAULT);
-    $stmt->bind_param('ssssss', $username, $email, $hashed, $full_name, $role, $status);
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $stmt->bind_param('ssssis', $username, $email, $hashed, $full_name, $role_id, $status);
 
-    $ok = $stmt->execute();
-    if ($ok) {
-        $insertId = $this->conn->insert_id;
+        $ok = $stmt->execute();
+        $newId = $ok ? $this->conn->insert_id : false;
+        if (!$ok) error_log('User::register execute failed: ' . $stmt->error);
+
         $stmt->close();
-        return $insertId; // return new user id
+        return $newId;
     }
 
-    error_log('User::register execute failed: ' . $stmt->error);
-    $stmt->close();
-    return false;
-}
+    /* =========================
+       FETCH USER
+    ========================= */
 
-public function getUserById($id)
-{
-    $sql = "SELECT id, username, email, full_name, role, status 
-            FROM {$this->table} WHERE id = ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) {
-        error_log('User::getUserById prepare failed: ' . $this->conn->error);
-        return null;
-    }
+    public function getUserById($id)
+    {
+        $sql = "SELECT u.id, u.username, u.email, u.full_name, u.status,
+                       u.role_id, r.role_name AS role
+                FROM {$this->table} u
+                LEFT JOIN roles r ON r.id = u.role_id
+                WHERE u.id = ? LIMIT 1";
 
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return null;
 
-    $user = null;
-    if (method_exists($stmt, 'get_result')) {
-        $result = $stmt->get_result();
-        $user = $result ? $result->fetch_assoc() : null;
-    } else {
-        // Fallback for environments without mysqlnd
-        $uid = $username = $email = $full_name = $role = $status = null;
-        $stmt->bind_result($uid, $username, $email, $full_name, $role, $status);
-        if ($stmt->fetch()) {
-            $user = [
-                'id' => $uid,
-                'username' => $username,
-                'email' => $email,
-                'full_name' => $full_name,
-                'role' => $role,
-                'status' => $status
-            ];
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+
+        $user = null;
+        if (method_exists($stmt, 'get_result')) {
+            $res = $stmt->get_result();
+            $user = $res ? $res->fetch_assoc() : null;
         }
+
+        $stmt->close();
+        return $user;
     }
 
-    $stmt->close();
-    return $user;
-
-
-
-
-
-}
-
-public function updatePassword($userId, $newPassword)
-{
-    $sql = "UPDATE {$this->table} SET password = ? WHERE id = ?";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) {
-        error_log('User::updatePassword prepare failed: ' . $this->conn->error);
-        return false;
-    }
-
-    $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
-    $stmt->bind_param('si', $hashed, $userId);
-
-    $ok = $stmt->execute();
-    if (! $ok) {
-        error_log('User::updatePassword execute failed: ' . $stmt->error);
-    }
-
-    $stmt->close();
-    return $ok;
-
-}
-
-public function updatePasswordById(int $userId, string $newPassword): bool
-{
-    $hash = password_hash($newPassword, PASSWORD_BCRYPT);
-
-    $stmt = $this->conn->prepare("UPDATE users SET password = ? WHERE id = ? LIMIT 1");
-    if (! $stmt) return false;
-
-    $stmt->bind_param('si', $hash, $userId);
-    $ok = $stmt->execute();
-    $stmt->close();
-
-    return $ok;
-}
-
-/* =========================
-   USER MANAGEMENT (ADMIN)
-========================= */
-
-// Get all users (with optional search)
-public function getAllUsers(string $search = ''): array
-{
-    $search = trim($search);
-
-    if ($search !== '') {
-        $like = '%' . $search . '%';
-        $sql = "SELECT id, username, email, full_name, role, status, created_at
-                FROM {$this->table}
-                WHERE username LIKE ? OR email LIKE ? OR full_name LIKE ?
-                ORDER BY id DESC";
+    public function updatePassword($userId, $newPassword)
+    {
+        $sql = "UPDATE {$this->table} SET password = ? WHERE id = ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        if (! $stmt) return [];
-        $stmt->bind_param('sss', $like, $like, $like);
-    } else {
-        $sql = "SELECT id, username, email, full_name, role, status, created_at
-                FROM {$this->table}
-                ORDER BY id DESC";
-        $stmt = $this->conn->prepare($sql);
-        if (! $stmt) return [];
+        if (!$stmt) return false;
+
+        $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt->bind_param('si', $hashed, $userId);
+
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
     }
 
-    $stmt->execute();
+    /* =========================
+       USER MANAGEMENT (ADMIN)
+    ========================= */
 
-    $rows = [];
-    if (method_exists($stmt, 'get_result')) {
-        $result = $stmt->get_result();
-        while ($result && ($row = $result->fetch_assoc())) {
-            $rows[] = $row;
+    public function getAllUsers(string $search = ''): array
+    {
+        $search = trim($search);
+
+        if ($search !== '') {
+            $like = '%' . $search . '%';
+            $sql = "SELECT u.id, u.username, u.email, u.full_name, u.status, u.created_at,
+                           u.role_id, r.role_name AS role
+                    FROM {$this->table} u
+                    LEFT JOIN roles r ON r.id = u.role_id
+                    WHERE u.username LIKE ? OR u.email LIKE ? OR u.full_name LIKE ?
+                    ORDER BY u.id DESC";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return [];
+            $stmt->bind_param('sss', $like, $like, $like);
+        } else {
+            $sql = "SELECT u.id, u.username, u.email, u.full_name, u.status, u.created_at,
+                           u.role_id, r.role_name AS role
+                    FROM {$this->table} u
+                    LEFT JOIN roles r ON r.id = u.role_id
+                    ORDER BY u.id DESC";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return [];
         }
-    } else {
-        // Fallback if no mysqlnd (limited)
-        // If your environment doesn't support get_result, we can provide bind_result version too.
-    }
 
-    $stmt->close();
-    return $rows;
-}
+        $stmt->execute();
 
-// Get user by ID (for edit form)
-public function getUserByIdAdmin(int $id): ?array
-{
-    $sql = "SELECT id, username, email, full_name, role, status, created_at
-            FROM {$this->table}
-            WHERE id = ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return null;
-
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-
-    $user = null;
-    if (method_exists($stmt, 'get_result')) {
-        $result = $stmt->get_result();
-        $user = $result ? $result->fetch_assoc() : null;
-    } else {
-        $uid=$u=$e=$fn=$r=$s=$ca=null;
-        $stmt->bind_result($uid,$u,$e,$fn,$r,$s,$ca);
-        if ($stmt->fetch()) {
-            $user = [
-                'id'=>$uid,'username'=>$u,'email'=>$e,'full_name'=>$fn,
-                'role'=>$r,'status'=>$s,'created_at'=>$ca
-            ];
+        $rows = [];
+        if (method_exists($stmt, 'get_result')) {
+            $res = $stmt->get_result();
+            while ($res && ($row = $res->fetch_assoc())) {
+                $rows[] = $row;
+            }
         }
+
+        $stmt->close();
+        return $rows;
     }
 
-    $stmt->close();
-    return $user;
-}
-
-// Check taken username/email but allow exclude current id (for edit)
-public function isUsernameTakenExcept(string $username, int $excludeId): bool
-{
-    $sql = "SELECT id FROM {$this->table} WHERE username = ? AND id != ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return false;
-
-    $stmt->bind_param('si', $username, $excludeId);
-    $stmt->execute();
-    $stmt->store_result();
-    $taken = $stmt->num_rows > 0;
-    $stmt->close();
-    return $taken;
-}
-
-public function isEmailTakenExcept(string $email, int $excludeId): bool
-{
-    $sql = "SELECT id FROM {$this->table} WHERE email = ? AND id != ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return false;
-
-    $stmt->bind_param('si', $email, $excludeId);
-    $stmt->execute();
-    $stmt->store_result();
-    $taken = $stmt->num_rows > 0;
-    $stmt->close();
-    return $taken;
-}
-
-// Admin create user (like register but for admin)
-public function adminCreateUser(string $username, string $email, string $password, string $full_name, string $role, string $status): bool
-{
-    if ($this->isUsernameTaken($username) || $this->isEmailTaken($email)) {
-        return false;
+    public function getUserByIdAdmin(int $id): ?array
+    {
+        return $this->getUserById($id);
     }
 
-    $role   = ($role === 'admin') ? 'admin' : 'user';
-    $status = ($status === 'inactive') ? 'inactive' : 'active';
-
-    $sql = "INSERT INTO {$this->table} (username, email, password, full_name, role, status)
-            VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return false;
-
-    $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt->bind_param('ssssss', $username, $email, $hash, $full_name, $role, $status);
-
-    $ok = $stmt->execute();
-    $stmt->close();
-    return $ok;
-}
-
-// Admin update user (password optional)
-public function adminUpdateUser(int $id, string $username, string $email, string $full_name, string $role, string $status, string $newPassword = ''): bool
-{
-    if ($this->isUsernameTakenExcept($username, $id) || $this->isEmailTakenExcept($email, $id)) {
-        return false;
-    }
-
-    $role   = ($role === 'admin') ? 'admin' : 'user';
-    $status = ($status === 'inactive') ? 'inactive' : 'active';
-
-    if (trim($newPassword) !== '') {
-        $sql = "UPDATE {$this->table}
-                SET username=?, email=?, password=?, full_name=?, role=?, status=?
-                WHERE id=? LIMIT 1";
+    public function isUsernameTakenExcept(string $username, int $excludeId): bool
+    {
+        $sql = "SELECT id FROM {$this->table} WHERE username = ? AND id != ? LIMIT 1";
         $stmt = $this->conn->prepare($sql);
-        if (! $stmt) return false;
+        if (!$stmt) return false;
 
-        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $stmt->bind_param('ssssssi', $username, $email, $hash, $full_name, $role, $status, $id);
-    } else {
-        $sql = "UPDATE {$this->table}
-                SET username=?, email=?, full_name=?, role=?, status=?
-                WHERE id=? LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-        if (! $stmt) return false;
-
-        $stmt->bind_param('sssssi', $username, $email, $full_name, $role, $status, $id);
+        $stmt->bind_param('si', $username, $excludeId);
+        $stmt->execute();
+        $stmt->store_result();
+        $taken = $stmt->num_rows > 0;
+        $stmt->close();
+        return $taken;
     }
 
-    $ok = $stmt->execute();
-    $stmt->close();
-    return $ok;
-}
+    public function isEmailTakenExcept(string $email, int $excludeId): bool
+    {
+        $sql = "SELECT id FROM {$this->table} WHERE email = ? AND id != ? LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
 
-// Delete user
-public function deleteUser(int $id): bool
-{
-    $sql = "DELETE FROM {$this->table} WHERE id = ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return false;
+        $stmt->bind_param('si', $email, $excludeId);
+        $stmt->execute();
+        $stmt->store_result();
+        $taken = $stmt->num_rows > 0;
+        $stmt->close();
+        return $taken;
+    }
 
-    $stmt->bind_param('i', $id);
-    $ok = $stmt->execute();
-    $stmt->close();
-    return $ok;
-}
+    // role_id: 1 admin, 2 official, 3 resident
+    public function adminCreateUser(string $username, string $email, string $password, string $full_name, int $role_id, string $status): bool
+    {
+        if ($this->isUsernameTaken($username) || $this->isEmailTaken($email)) return false;
 
-// Update status (active/inactive)
-public function updateUserStatus(int $id, string $status): bool
-{
-    $status = ($status === 'inactive') ? 'inactive' : 'active';
+        $status = ($status === 'inactive') ? 'inactive' : 'active';
+        if (!in_array($role_id, [1,2,3], true)) $role_id = 3; // default resident
 
-    $sql = "UPDATE {$this->table} SET status = ? WHERE id = ? LIMIT 1";
-    $stmt = $this->conn->prepare($sql);
-    if (! $stmt) return false;
+        $sql = "INSERT INTO {$this->table} (username, email, password, full_name, role_id, status)
+                VALUES (?, ?, ?, ?, ?, ?)";
 
-    $stmt->bind_param('si', $status, $id);
-    $ok = $stmt->execute();
-    $stmt->close();
-    return $ok;
-}
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
 
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt->bind_param('ssssis', $username, $email, $hash, $full_name, $role_id, $status);
 
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
 
+    public function adminUpdateUser(int $id, string $username, string $email, string $full_name, int $role_id, string $status, string $newPassword = ''): bool
+    {
+        if ($this->isUsernameTakenExcept($username, $id) || $this->isEmailTakenExcept($email, $id)) return false;
+
+        $status = ($status === 'inactive') ? 'inactive' : 'active';
+        if (!in_array($role_id, [1,2,3], true)) $role_id = 3;
+
+        if (trim($newPassword) !== '') {
+            $sql = "UPDATE {$this->table}
+                    SET username=?, email=?, password=?, full_name=?, role_id=?, status=?
+                    WHERE id=? LIMIT 1";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+
+            $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt->bind_param('ssssisi', $username, $email, $hash, $full_name, $role_id, $status, $id);
+        } else {
+            $sql = "UPDATE {$this->table}
+                    SET username=?, email=?, full_name=?, role_id=?, status=?
+                    WHERE id=? LIMIT 1";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+
+            $stmt->bind_param('sssisi', $username, $email, $full_name, $role_id, $status, $id);
+        }
+
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    public function deleteUser(int $id): bool
+    {
+        $sql = "DELETE FROM {$this->table} WHERE id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+
+        $stmt->bind_param('i', $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    public function updateUserStatus(int $id, string $status): bool
+    {
+        $status = ($status === 'inactive') ? 'inactive' : 'active';
+
+        $sql = "UPDATE {$this->table} SET status = ? WHERE id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+
+        $stmt->bind_param('si', $status, $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
 }

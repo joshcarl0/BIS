@@ -87,10 +87,11 @@ try {
         $title = trim($_POST['title'] ?? '');
         $details = trim($_POST['details'] ?? '');
         $status = $_POST['status'] ?? 'Active';
+        $status = in_array($status,['Active', 'Archived'], true) ? $status: 'Active';
 
         if ($title === '' || $details === '') {
             $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Title and Details are required.'];
-            header("Location: /BIS/views/admin_announcements.php");
+            header("Location: /BIS/views/admin/admin_announcements.php");
             exit;
         }
 
@@ -103,7 +104,7 @@ try {
         }
 
         $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Announcement added successfully.'];
-        header("Location: /BIS/views/admin/admin_announcements.php");
+       header("Location: /BIS/views/admin/admin_announcements.php");
         exit;
     }
 
@@ -146,10 +147,16 @@ try {
 
         // delete physical files first
         $atts = $ann->attachments($id);
+        $webPrefix = $a['file_path'];
+
         foreach ($atts as $a) {
             $webPath = $a['file_path']; // e.g. /BIS/uploads/announcements/xxx.png
-            $absPath = str_replace('/BIS/', __DIR__ . '/../', $webPath); // map web to abs
-            if (is_file($absPath)) @unlink($absPath);
+            if (strpos($webpath, $webPrefix) === 0) {
+                $fileName = substr($webPath, strlen($webPrefix));
+                $absPath = $uploadDirAbs . $fileName;
+                if (is_file($absPath)) @unlink($absPath);
+
+            }
         }
 
         // DB delete (attachments rows cascade)

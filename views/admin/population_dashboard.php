@@ -28,12 +28,56 @@
 
     <div class="container-fluid py-4">
 
-      <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
           <h3 class="mb-1">Population Overview</h3>
           <div class="text-muted">People & Household Summary + SES</div>
         </div>
       </div>
+
+
+      <!-- CHARTS in cards (with design) -->
+<div class="row g-3 mt-3">
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="mb-2">Age Distribution</h6>
+        <div class="chart-box"><canvas id="agePie"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="mb-2">Gender Distribution</h6>
+        <div class="chart-box"><canvas id="genderBar"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="mb-2">Special Groups</h6>
+        <div class="chart-box"><canvas id="specialChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="mb-2">SES Distribution</h6>
+        <div class="chart-box"><canvas id="sesPie"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
 
       <!-- PEOPLE OVERVIEW -->
       <div class="row g-3">
@@ -151,44 +195,6 @@
         </div>
       </div>
 
-      <!-- CHARTS in cards (with design) -->
-      <div class="row g-3 mt-3">
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h6 class="mb-2">Age Distribution</h6>
-              <div class="chart-box"><canvas id="agePie"></canvas></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h6 class="mb-2">Gender Distribution</h6>
-              <div class="chart-box"><canvas id="genderBar"></canvas></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h6 class="mb-2">Special Groups</h6>
-              <div class="chart-box"><canvas id="specialChart"></canvas></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h6 class="mb-2">SES Distribution</h6>
-              <div class="chart-box"><canvas id="sesPie"></canvas></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
