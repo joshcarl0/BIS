@@ -11,6 +11,8 @@ $this->conn = $db;
 
 // Get all the announecement
 
+
+
 public function all(): array {
 
    $sql = "SELECT a.id, a.title, a.details, a.status, a.date_posted, a.posted_by,
@@ -109,7 +111,32 @@ public function addAttachments(
         return $stmt->execute();
     }
 
+public function active()
+{
+    $sql = "SELECT a.*,
+                   aa.file_name AS attachment_name,
+                   aa.file_path AS attachment_path,
+                   aa.file_type AS attachment_type
+            FROM announcements a
+            LEFT JOIN announcement_attachments aa
+              ON aa.announcement_id = a.id
+             AND aa.id = (
+                SELECT MAX(id)
+                FROM announcement_attachments
+                WHERE announcement_id = a.id
+             )
+            WHERE a.status = 'Active'
+            ORDER BY a.date_posted DESC, a.id DESC";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
+
+
+
+
+    }
 
 
 

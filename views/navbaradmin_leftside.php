@@ -27,18 +27,18 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('admin_usermanagement.php', $current) ?>">
-            <a href="/BIS/views/admin_usermanagement.php">
-                <i class="bi bi-people-fill"></i>
-                <span>User Management</span>
-            </a>
-        </li>
-
-       <li class="<?= activeMenu('officials.php', $current) ?>">
+        <li class="<?= activeMenu('officials.php', $current) ?>">
             <a href="/BIS/controller/officials.php">
                 <i class="bi bi-building"></i>
                 <span>Officials</span>
             </a>
+        </li>
+
+                <li class="<?= activeMenu('admin_document_requests.php', $current) ?>">
+        <a href="/BIS/controller/admin_document_requests.php">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Document Requests</span>
+        </a>
         </li>
 
         <li class="<?= activeMenu('residents_manage.php', $current) ?>">
@@ -59,6 +59,13 @@ function activeMenu($file, $current) {
             <a href="/BIS/views/admin/admin_announcements.php">
                 <i class="bi bi-newspaper"></i>
                 <span>Announcement</span>
+            </a>
+        </li>
+
+                <li class="<?= activeMenu('admin_usermanagement.php', $current) ?>">
+            <a href="/BIS/views/admin_usermanagement.php">
+                <i class="bi bi-people-fill"></i>
+                <span>User Management</span>
             </a>
         </li>
 
