@@ -59,8 +59,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ========= LIST ========= */
+$rows = [];
+
 if ($search !== '') {
-    $rows = $docReq->search($search);   // search() returns array
+    $sql = "SELECT dr.*, dt.name AS document_name,
+                   CONCAT(r.first_name, ' ', r.last_name) AS resident_name,
+                   dt.category AS document_category
+            FROM document_requests dr
+            LEFT JOIN residents r ON r.id = dr.resident_id
+            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+            WHERE CONCAT(r.first_name, ' ', r.last_name) LIKE CONCAT('%', ?, '%')
+               OR dr.ref_no LIKE CONCAT('%', ?, '%')
+            ORDER BY dr.requested_at DESC, dr.id DESC";
+
+    $stmt = $db->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param('ss', $search, $search);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+    }
 } else {
     $rows = $docReq->all();
 }
