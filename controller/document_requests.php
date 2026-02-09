@@ -36,8 +36,15 @@ if ($document_type_id <= 0 || $purpose === '') {
     exit;
 }
 
-//  GET resident_id using logged-in user_id
-$sql = "SELECT id FROM residents WHERE user_id = ? LIMIT 1";
+// GET resident_id using logged-in user_id (with email fallback for legacy accounts)
+$sql = "SELECT r.id
+        FROM users u
+        INNER JOIN residents r
+            ON (r.user_id = u.id
+                OR (r.user_id IS NULL AND r.email IS NOT NULL AND r.email <> '' AND r.email = u.email))
+        WHERE u.id = ?
+        ORDER BY (r.user_id = u.id) DESC, r.id DESC
+        LIMIT 1";
 $stmt = $db->prepare($sql);
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
