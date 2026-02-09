@@ -12,7 +12,7 @@ if ( !isset( $_SESSION['user_id'] ) || ( $_SESSION['role'] ?? '' ) !== 'admin' )
 $id = (int)( $_GET['id'] ?? 0 ) ;
 if ( $id <= 0 ) {
   $_SESSION['error'] = "Invalid household id." ;
-  header( "Location: /BIS/views/admin/households_manage.php" ) ; exit() ;
+  header( "Location: /BIS/controller/households_manage.php" ) ; exit() ;
 }
 
 $model = new Household( $conn ) ;
@@ -23,5 +23,5 @@ if( $model->deactivate( $id ) ) {
  $_SESSION['error'] = "Failed to deactivate household." ;
 }
 
-header( "Location: /BIS/views/admin/households_manage.php" ) ; exit() ;
+header( "Location: /BIS/controller/households_manage.php" ) ; exit() ;
 exit() ;

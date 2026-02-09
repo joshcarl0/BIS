@@ -174,13 +174,13 @@ unset($_SESSION['success'], $_SESSION['error']);
 
                                         <?php if (($h['status'] ?? '') === 'Active'): ?>
                                             <a class="btn btn-sm btn-outline-danger"
-                                               href="/BIS/controller/admin/household_deactivate.php?id=<?= (int)$h['id'] ?>"
+                                               href="/BIS/controller/household_deactivate.php?id=<?= (int)$h['id'] ?>"
                                                onclick="return confirm('Deactivate this household?');">
                                                 <i class="bi bi-slash-circle"></i>
                                             </a>
                                         <?php elseif (($h['status'] ?? '') === 'Inactive'): ?>
                                             <a class="btn btn-sm btn-outline-success"
-                                               href="/BIS/controller/admin/household_activate.php?id=<?= (int)$h['id'] ?>"
+                                               href="/BIS/controller/household_activate.php?id=<?= (int)$h['id'] ?>"
                                                onclick="return confirm('Activate this household?');">
                                                 <i class="bi bi-check2-circle"></i>
                                             </a>
@@ -188,7 +188,7 @@ unset($_SESSION['success'], $_SESSION['error']);
 
                                         <?php if (($h['status'] ?? '') !== 'Dissolved'): ?>
                                             <a class="btn btn-sm btn-outline-dark"
-                                               href="/BIS/controller/admin/household_dissolve.php?id=<?= (int)$h['id'] ?>"
+                                               href="/BIS/controller/household_dissolve.php?id=<?= (int)$h['id'] ?>"
                                                onclick="return confirm('Dissolve this household?');">
                                                 <i class="bi bi-house-x"></i>
                                             </a>
