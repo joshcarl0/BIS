@@ -5,9 +5,25 @@ require_once __DIR__ . '/../../config/database.php';
 
 $userId = (int)$_SESSION['user_id'];
 
-// Get requests linked to the logged-in account:
-// 1) direct resident.user_id match
-// 2) fallback by same email for legacy/unlinked resident rows
+// 1) get resident_id using user_id (with email fallback for legacy accounts)
+$stmt = $conn->prepare("
+    SELECT r.id
+    FROM users u
+    INNER JOIN residents r
+        ON (r.user_id = u.id
+            OR (r.user_id IS NULL AND r.email IS NOT NULL AND r.email <> '' AND r.email = u.email))
+    WHERE u.id = ?
+    ORDER BY (r.user_id = u.id) DESC, r.id DESC
+    LIMIT 1
+");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$res = $stmt->get_result();
+$resident = $res->fetch_assoc();
+
+$residentId = (int)($resident['id'] ?? 0);
+
+// 2) get requests of this resident
 $rows = [];
 $sql = "
     SELECT
