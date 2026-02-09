@@ -473,6 +473,13 @@ public function update(int $id, array $data): bool
     return $ok;
 }
 
+public function countActive()
+{
+    $sql = "SELECT COUNT(*) AS total FROM households WHERE status='Active'";
+    $res = $this->conn->query($sql);
+    $row = $res ? $res->fetch_assoc() : null;
+    return (int)($row['total'] ?? 0);
+}
 
 
 

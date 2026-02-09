@@ -3,6 +3,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Resident.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
+
 
 // ADMIN GUARD
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -16,6 +18,23 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 $residentModel = new Resident($conn);
+
+$log = new ActivityLog($conn);
+
+function buildFullName(array $p): string {
+    $first  = trim($p['first_name'] ?? '');
+    $middle = trim($p['middle_name'] ?? '');
+    $last   = trim($p['last_name'] ?? '');
+    $suffix = trim($p['suffix'] ?? '');
+
+    $name = $last;
+    if ($first !== '') $name .= ($name ? ', ' : '') . $first;
+    if ($middle !== '') $name .= ' ' . $middle;
+    if ($suffix !== '') $name .= ' ' . $suffix;
+
+    return trim($name);
+}
+
 
 // FLASH
 $flash = $_SESSION['flash'] ?? null;
@@ -80,14 +99,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             $newId = $residentModel->createReturnId($_POST);
 
-            if ($newId !== false && $newId > 0) {
-                // ✅ save special groups
-                $residentModel->updateSpecialGroups((int)$newId, $selectedGroups);
+           if ($newId !== false && $newId > 0) {
+    //  save special groups
+    $residentModel->updateSpecialGroups((int)$newId, $selectedGroups);
 
-                $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident added successfully.'];
-            } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to add resident.'];
-            }
+    // ACTIVITY LOG
+    $actorId   = $_SESSION['user_id'] ?? null;
+    $actorRole = $_SESSION['role'] ?? null;
+    $fullName  = buildFullName($_POST);
+
+    $log->add(
+        $actorId,
+        $actorRole,
+        'resident_add',
+        'resident',
+        (int)$newId,
+        "Added new resident: {$fullName}"
+    );
+
+    $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident added successfully.'];
+} else {
+    $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to add resident.'];
+}
 
             header("Location: /BIS/controller/residents_manage.php");
             exit;
@@ -111,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = $residentModel->update($id, $_POST);
 
             if ($ok) {
-                // ✅ update special groups
+                //  update special groups
                 $residentModel->updateSpecialGroups($id, $selectedGroups);
 
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident updated successfully.'];
@@ -126,16 +159,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // DEACTIVATE
     if ($action === 'deactivate') {
-        $id = (int)($_POST['id'] ?? 0);
+       $ok = ($id > 0) ? $residentModel->deactivate($id) : false;
 
-        $ok = ($id > 0) ? $residentModel->deactivate($id) : false;
+if ($ok) {
+    $actorId   = $_SESSION['user_id'] ?? null;
+    $actorRole = $_SESSION['role'] ?? null;
 
-        $_SESSION['flash'] = $ok
-            ? ['type' => 'success', 'msg' => 'Resident deactivated.']
-            : ['type' => 'danger', 'msg' => 'Failed to deactivate resident.'];
-
-        header("Location: /BIS/controller/residents_manage.php");
-        exit;
+    $log->add(
+        $actorId,
+        $actorRole,
+        'resident_deactivate',
+        'resident',
+        (int)$id,
+        "Deactivated resident (ID: {$id})"
+    );
+}
     }
 }
 
@@ -145,10 +183,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $q = trim($_GET['q'] ?? '');
 $page = (int)($_GET['page'] ?? 1);
 
-// ✅ list with group names (optional display)
+//  list with group names (optional display)
 $list = $residentModel->getPaginatedWithGroups($q, $page, 10);
 
-// ✅ attach group ids CSV per resident (for edit modal auto-check)
+//  attach group ids CSV per resident (for edit modal auto-check)
 $ids = array_map(fn($row) => (int)$row['id'], $list['rows']);
 $map = [];
 if (!empty($ids)) {
@@ -179,7 +217,7 @@ $data['civil_statuses'] = $civil_statuses;
 $data['puroks'] = $puroks;
 $data['residency_types'] = $residency_types;
 
-// ✅ for checkboxes
+//  for checkboxes
 $data['special_groups'] = $special_groups;
 
 // LOAD VIEW

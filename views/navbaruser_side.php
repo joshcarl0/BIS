@@ -36,15 +36,15 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('Documentrequest.php', $current) ?>">
-            <a href="/BIS/views/Documentrequest.php">
+        <li class="<?= activeMenu('document_request.php', $current) ?>">
+        <a href="/BIS/views/resident/document_request.php">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Document Request</span>
             </a>
         </li>
 
-        <li class="<?= activeMenu('Transaction.php', $current) ?>">
-            <a href="/BIS/views/Transaction.php">
+        <li class="<?= activeMenu('transaction.php', $current) ?>">
+            <a href="/BIS/views/resident/transaction.php">
                 <i class="bi bi-receipt"></i>
                 <span>Transaction</span>
             </a>

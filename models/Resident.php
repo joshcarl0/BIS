@@ -434,4 +434,15 @@ class Resident
             return false;
         }
     }
+
+public function countActive()
+{
+    $sql = "SELECT COUNT(*) AS total FROM residents WHERE is_active = 1";
+    $res = $this->conn->query($sql);
+    $row = $res ? $res->fetch_assoc() : null;
+    return (int)($row['total'] ?? 0);
+}
+
+
+
 }

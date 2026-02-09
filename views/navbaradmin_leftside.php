@@ -20,6 +20,14 @@ function activeMenu($file, $current) {
 
     <ul class="sidebar-menu">
 
+            <li class="<?= activeMenu('admin_dashboard.php', $current) ?>">
+        <a href="/BIS/controller/admin_dashboard.php">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Home Dashboard</span>
+        </a>
+        </li>
+
+
         <li class="<?= activeMenu('population_dashboard.php', $current) ?>">
             <a href="/BIS/controller/population_dashboard.php">
                 <i class="bi bi-bar-chart-line-fill"></i>
@@ -34,12 +42,13 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-                <li class="<?= activeMenu('admin_document_requests.php', $current) ?>">
-        <a href="/BIS/controller/admin_document_requests.php">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Document Requests</span>
-        </a>
-        </li>
+            <li class="<?= activeMenu('admin_document_requests.php', $current) ?>">
+            <a href="/BIS/controller/admin_document_requests.php">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Document Requests</span>
+            </a>
+            </li>
+
 
         <li class="<?= activeMenu('residents_manage.php', $current) ?>">
             <a href="/BIS/controller/residents_manage.php">
