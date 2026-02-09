@@ -159,7 +159,7 @@ public function countReleasedToday(): int
     return (int)($res['c'] ?? 0);
 }
 
-public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose)
+public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [])
 {
     $purpose = trim($purpose);
 
@@ -167,7 +167,24 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
         return false;
     }
 
-    // Generate REF-YYYY-0001
+    // 1) GET FEE FROM document_types (snapshot)
+    $qFee = "SELECT fee FROM document_types WHERE id = ? LIMIT 1";
+    $stmtFee = $this->db->prepare($qFee);
+    if (!$stmtFee) return false;
+
+    $stmtFee->bind_param("i", $documentTypeId);
+    $stmtFee->execute();
+
+    $feeRow = null;
+    if (method_exists($stmtFee, 'get_result')) {
+        $resFee = $stmtFee->get_result();
+        $feeRow = $resFee ? $resFee->fetch_assoc() : null;
+    }
+    $stmtFee->close();
+
+    $feeSnapshot = (float)($feeRow['fee'] ?? 0);
+
+    // 2) Generate REF-YYYY-0001
     $year   = date('Y');
     $prefix = "REF-$year-";
 
@@ -199,19 +216,47 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
 
     $refNo = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 
+    // 3) INSERT (fee_snapshot is dynamic)
     $sql = "INSERT INTO document_requests
             (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at)
-            VALUES (?, ?, ?, ?, 'Pending', 0.00, NOW())";
+            VALUES (?, ?, ?, ?, 'Pending', ?, NOW())";
 
     $stmt = $this->db->prepare($sql);
     if (!$stmt) return false;
 
-    $stmt->bind_param("siis", $refNo, $residentId, $documentTypeId, $purpose);
+    // siisd: refNo(s), residentId(i), documentTypeId(i), purpose(s), feeSnapshot(d)
+   // siisd: refNo(s), residentId(i), documentTypeId(i), purpose(s), feeSnapshot(d)
+$stmt->bind_param("siisd", $refNo, $residentId, $documentTypeId, $purpose, $feeSnapshot);
 
-    $ok = $stmt->execute();
-    $stmt->close();
+$ok = $stmt->execute();
+$requestId = $this->db->insert_id; // ✅ ito ang request_id
+$stmt->close();
 
-    return $ok ? ['ref_no' => $refNo] : false;
+if (!$ok) return false;
+
+/* =========================
+   SAVE EXTRA DETAILS
+========================= */
+if (!empty($extra) && $requestId > 0) {
+    $sqlD = "INSERT INTO document_request_details (request_id, field_name, field_value)
+             VALUES (?, ?, ?)";
+    $stmtD = $this->db->prepare($sqlD);
+    if ($stmtD) {
+        foreach ($extra as $k => $v) {
+            $k = trim((string)$k);
+            $v = trim((string)$v);
+
+            if ($k === '' || $v === '') continue;
+
+            $stmtD->bind_param("iss", $requestId, $k, $v);
+            $stmtD->execute();
+        }
+        $stmtD->close();
+    }
+}
+
+return ['ref_no' => $refNo, 'id' => $requestId];
+
 }
 
 
@@ -310,6 +355,41 @@ public function releasedTodayList($dateYmd, $limit = 20)
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
+public function releasedTodayPage($date, $limit, $offset)
+{
+   $sql = "SELECT dr.ref_no,
+        CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name, r.suffix) AS resident,
+        dt.name AS document,
+        dr.amount_paid,
+        dr.released_at
+    FROM document_requests dr
+    JOIN residents r ON r.id = dr.resident_id
+    JOIN document_types dt ON dt.id = dr.document_type_id
+    WHERE DATE(dr.released_at) = ?
+    ORDER BY dr.released_at DESC
+    LIMIT ? OFFSET ?";
+
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("sii", $date, $limit, $offset);
+    $stmt->execute();
+
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
+public function releasedTodayCount($date)
+{
+    $sql = "SELECT COUNT(*) as total
+            FROM document_requests
+            WHERE DATE(released_at) = ?";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("s", $date);
+    $stmt->execute();
+
+    $row = $stmt->get_result()->fetch_assoc();
+    return (int)($row['total'] ?? 0);
+}
 
 
 

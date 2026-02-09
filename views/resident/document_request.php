@@ -59,7 +59,8 @@ if (!$docsRes) {
         <div class="card shadow-sm">
           <div class="card-body">
 
-            <form method="POST" action="/BIS/controller/document_requests.php">
+            <form method="POST" action="/BIS/controller/document_requests.php" enctype="multipart/form-data">
+
               <!-- CSRF -->
               <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
 
@@ -110,10 +111,12 @@ if (!$docsRes) {
               <!-- PURPOSE -->
               <div class="mb-3">
                 <label class="form-label">Purpose <span class="text-danger">*</span></label>
-                <textarea name="purpose" class="form-control" rows="3" required></textarea>
+                <textarea name="purpose" class="form-control" rows="3" maxlength="500" required></textarea>
               </div>
+              <!-- Dynamic Fields -->
+              <div id="dynamicFields"></div>
 
-              <button class="btn btn-primary">Submit Request</button>
+              <button type="submit" class="btn btn-primary">Submit Request</button>
             </form>
 
           </div>
@@ -126,34 +129,9 @@ if (!$docsRes) {
 </div>
 
 <script src="/BIS/assets/js/sidebar_toggle.js"></script>
-<script>
-const sel = document.getElementById('documentSelect');
+<script src="/BIS/assets/js/document_request.js"></script>
+<script src="/BIS/assets/js/document_request_dynamic.js"></script>
 
-function updateInfo() {
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt || !opt.dataset) return;
-
-  // fee/time
-  document.getElementById('feeTxt').textContent  = opt.dataset.fee ? opt.dataset.fee : '-';
-  document.getElementById('timeTxt').textContent = opt.dataset.time ? opt.dataset.time : '-';
-
-  // requirements (JSON safe)
-  let req = '-';
-  try {
-    req = JSON.parse(opt.dataset.req || '""') || '-';
-  } catch(e) {
-    req = '-';
-  }
-
-  // show newlines properly
-  const reqBox = document.getElementById('reqTxt');
-  reqBox.innerHTML = (req && req !== '-') 
-    ? String(req).replace(/\n/g, "<br>")
-    : "-";
-}
-
-sel.addEventListener('change', updateInfo);
-</script>
 
 </body>
 </html>

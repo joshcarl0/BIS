@@ -2,6 +2,8 @@
 // layout variables expected:
 // $title
 // $content
+// optional:
+// $cert_no, $or_no, $amount, $date_paid
 ?>
 <!DOCTYPE html>
 <html>
@@ -13,7 +15,7 @@
   /* ===== A4 EXACT SETUP ===== */
   @page{
     size: A4;
-    margin: 18mm 18mm 18mm 18mm;
+    margin: 18mm;
   }
 
   body{
@@ -23,12 +25,11 @@
   }
 
   .page{
-  position: relative;
-  width: 210mm;
-  height: 297mm; /* instead of min-height */
-  margin: 0 auto;
-}
-
+    position: relative;
+    width: 210mm;
+    height: 297mm; /* fixed A4 */
+    margin: 0 auto;
+  }
 
   /* ===== HEADER ===== */
   .header{
@@ -81,17 +82,16 @@
 
   /* ===== WATERMARK ===== */
   .watermark{
-    position: absolute;
-    top: 110mm;   /* adjust para nasa gitna */
-    left: 105mm;  /* center of A4 width */
-    transform: translate(-50%, -50%);
-    opacity: 0.07;
+    position:absolute;
+    inset: 0;
+    margin: auto;
     width: 130mm;
-    z-index: 0;
-    pointer-events: none;
+    opacity: 0.07;
+    z-index:0;
+    pointer-events:none;
   }
 
-  /* ===== TITLE & CONTENT ===== */
+  /* ===== TITLE ===== */
   .cert-title{
     text-align:center;
     font-size:18pt;
@@ -102,6 +102,7 @@
     position: relative;
   }
 
+  /* ===== CONTENT ===== */
   .content{
     font-size:12.5pt;
     line-height:1.8;
@@ -109,24 +110,26 @@
     z-index: 2;
     position: relative;
 
-    padding-bottom: 75mm;
+    /* reserve space for signature + footer area so no overlap */
+    padding-bottom: 95mm;
   }
 
   /* ===== SIGNATURE ===== */
   .signature{
-    margin-top: 18mm;
+    position: absolute;
+    right: 0;
+    bottom: 70mm; /* balanced (above receipt box) */
     text-align:right;
     font-size:12pt;
     z-index: 2;
-    position: relative;
   }
 
-  /* ===== LOWER SECTION (FOOTER AREA) ===== */
+  /* ===== BOTTOM AREA (NOTE + SEAL + RECEIPT) ===== */
   .bottom-area{
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 16mm; /* spacing from bottom margin */
+    bottom: 16mm;
     display:flex;
     justify-content:space-between;
     align-items:flex-end;
@@ -134,11 +137,17 @@
     z-index: 2;
   }
 
-  /* Dry seal placement (left side) */
+  /* left side */
   .dry-seal{
-    width: 65mm;
+    width: 95mm;
     font-size: 10pt;
     line-height:1.3;
+  }
+
+  .footer-note{
+    font-size: 10.5pt;
+    line-height: 1.4;
+    margin-bottom: 8mm;
   }
 
   .seal-circle{
@@ -155,7 +164,7 @@
     color:#555;
   }
 
-  /* Receipt box (lower-right) */
+  /* right side receipt box */
   .receipt-box{
     width: 70mm;
     border: 1px solid #111;
@@ -174,39 +183,23 @@
     white-space: nowrap;
   }
 
-  .receipt-line{
+  .receipt-value{
     flex:1;
-    border-bottom: 1px solid #111;
-    margin-left: 4mm;
-    height: 14px;
-  }
-
-  /* Footer validity note (bottom-left text style) */
-  .footer-note{
-    margin-top: 10mm;
-    font-size: 10.5pt;
+    text-align:right;
+    font-weight:bold;
+    min-height: 14px;
   }
 
   @media print{
     .page{ box-shadow:none; }
   }
-
-.receipt-value{
-  flex:1;
-  text-align:right;
-  font-weight:bold;
-  min-height: 14px;
-}
-
-
-
 </style>
 </head>
 
 <body onload="window.print()">
 <div class="page">
 
-  <!-- WATERMARK (BARANGAY SEAL) -->
+  <!-- WATERMARK -->
   <img src="/BIS/assets/images/barangay_logo.png" class="watermark" alt="Watermark">
 
   <!-- HEADER -->
@@ -237,12 +230,6 @@
   <!-- CONTENT -->
   <div class="content">
     <?= $content ?? '' ?>
-
-    <!-- optional: footer note inside content area -->
-    <div class="footer-note">
-      <b>NOTE:</b> Not valid without official seal.<br><br>
-      <b>This Certificate is valid for ninety (90) days</b> from the date of issuance.
-    </div>
   </div>
 
   <!-- SIGNATURE -->
@@ -251,39 +238,49 @@
     Punong Barangay
   </div>
 
-  <!-- BOTTOM AREA: DRY SEAL + RECEIPT BOX -->
+  <!-- BOTTOM AREA -->
   <div class="bottom-area">
 
-    <!-- DRY SEAL PLACEMENT -->
+    <!-- LEFT: NOTE + SEAL -->
     <div class="dry-seal">
+      <div class="footer-note">
+        <b>NOTE:</b> Not valid without official seal.<br>
+        <b>This Certificate is valid for ninety (90) days</b> from the date of issuance.
+      </div>
+
       <div><b>Dry Seal / Official Seal</b></div>
       <div class="seal-circle">
         PLACE<br>OFFICIAL SEAL<br>HERE
       </div>
     </div>
 
- <div class="receipt-box">
-  <div class="receipt-row">
-    <div class="receipt-label">Brgy. Cert. No:</div>
-    <div class="receipt-value"><?= htmlspecialchars($cert_no ?? '') ?></div>
-  </div>
+    <!-- RIGHT: RECEIPT BOX -->
+    <div class="receipt-box">
+      <div class="receipt-row">
+        <div class="receipt-label">Brgy. Cert. No:</div>
+        <div class="receipt-value"><?= htmlspecialchars($cert_no ?? '') ?></div>
+      </div>
 
-  <div class="receipt-row">
-    <div class="receipt-label">Official Receipt:</div>
-    <div class="receipt-value"><?= htmlspecialchars($or_no ?? '') ?></div>
-  </div>
+      <div class="receipt-row">
+        <div class="receipt-label">Official Receipt:</div>
+        <div class="receipt-value"><?= htmlspecialchars($or_no ?? '') ?></div>
+      </div>
 
-  <div class="receipt-row">
-    <div class="receipt-label">Amount:</div>
-    <div class="receipt-value"><?= htmlspecialchars($amount ?? '') ?></div>
-  </div>
+      <div class="receipt-row">
+        <div class="receipt-label">Amount:</div>
+        <div class="receipt-value">
+          <?php
+            $amt = $amount ?? '';
+            echo htmlspecialchars($amt);
+          ?>
+        </div>
+      </div>
 
-  <div class="receipt-row">
-    <div class="receipt-label">Date Paid:</div>
-    <div class="receipt-value"><?= htmlspecialchars($date_paid ?? '') ?></div>
-  </div>
-</div>
-
+      <div class="receipt-row">
+        <div class="receipt-label">Date Paid:</div>
+        <div class="receipt-value"><?= htmlspecialchars($date_paid ?? '') ?></div>
+      </div>
+    </div>
 
   </div>
 

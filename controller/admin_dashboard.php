@@ -32,7 +32,22 @@
 
         // NEW (needs methods in DocumentRequest)
         $incomeTotal   = $docReq->incomeTotalReleased();
-        $todayRows     = $docReq->releasedTodayList($today, 20);
+        // PAGINATION: Today's Transactions
+$perPageTx = 10;
+$txPage = max(1, (int)($_GET['tx_page'] ?? 1));
+$txOffset = ($txPage - 1) * $perPageTx;
+
+$txTotal = $docReq->releasedTodayCount($today);
+$txTotalPages = max(1, (int)ceil($txTotal / $perPageTx));
+
+if ($txPage > $txTotalPages) {
+    $txPage = $txTotalPages;
+    $txOffset = ($txPage - 1) * $perPageTx;
+}
+
+$todayRows = $docReq->releasedTodayPage($today, $perPageTx, $txOffset);
+
+
 
         $statusMap     = $docReq->statusCounts();
         $statusLabels  = array_keys($statusMap);

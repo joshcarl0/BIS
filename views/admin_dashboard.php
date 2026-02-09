@@ -134,25 +134,25 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                             <th>Released At</th>
                         </tr>
                         </thead>
+
                         <tbody>
                         <?php if (empty($todayRows)): ?>
-                            <tr><td colspan="5" class="text-muted">No released transactions today.</td></tr>
-                        <?php else: foreach ($todayRows as $r): ?>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No released transactions today.</td>
+                        </tr>
+                        <?php else: ?>
+                        <?php foreach ($todayRows as $r): ?>
                             <tr>
-                            <td><?= htmlspecialchars($r['ref_no']) ?></td>
-                            <td><?= htmlspecialchars($r['resident_name']) ?></td>
-                            <td><?= htmlspecialchars($r['document_type']) ?></td>
-                            <td class="text-end">
-                            ₱<?= number_format((float)($r['amount_paid'] ?? 0), 2) ?>
-                            </td>
-                            <td><?= htmlspecialchars($r['released_at']) ?></td>
+                            <td class="fw-semibold"><?= htmlspecialchars($r['ref_no'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($r['resident'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($r['document'] ?? '') ?></td>
+                            <td class="text-end">₱<?= number_format((float)($r['amount_paid'] ?? 0), 2) ?></td>
+                            <td><?= htmlspecialchars($r['released_at'] ?? '') ?></td>
                             </tr>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                         </tbody>
-                    </table>
-                    </div>
-                </div>
-                </div>
+
 
 
             <!-- RECENT ACTIVITY / LOGS -->

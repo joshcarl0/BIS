@@ -62,7 +62,9 @@ $residentId = (int)$row['id'];
 
 $model = new DocumentRequest($db);
 
-$result = $model->createResidentRequest($residentId, $document_type_id, $purpose);
+$extra = $_POST['extra'] ?? [];
+$result = $model->createResidentRequest($residentId, $document_type_id, $purpose, $extra);
+
 
 if (!$result) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to submit request.'];
