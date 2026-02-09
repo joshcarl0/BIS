@@ -60,9 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ========= LIST ========= */
 if ($search !== '') {
-    $rows = $docReq->search($search);   // search() 
+    $rows = $docReq->search($search);   // search() returns array
 } else {
     $rows = $docReq->all();
+}
+
+// Safety: normalize to array before view uses count()/foreach
+if ($rows instanceof mysqli_result) {
+    $rows = $rows->fetch_all(MYSQLI_ASSOC);
+} elseif (!is_array($rows)) {
+    $rows = [];
 }
 
 // VIEW

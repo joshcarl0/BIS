@@ -32,7 +32,18 @@
 
         // NEW (needs methods in DocumentRequest)
         $incomeTotal   = $docReq->incomeTotalReleased();
-        $todayRows     = $docReq->releasedTodayList($today, 20);
+
+        // PAGINATION: Today's Transactions
+        $perPageTx = 10;
+        $txPage = max(1, (int)($_GET['tx_page'] ?? 1));
+        $txOffset = ($txPage - 1) * $perPageTx;
+        $txTotal = $docReq->releasedTodayCount($today);
+        $txTotalPages = max(1, (int)ceil($txTotal / $perPageTx));
+        if ($txPage > $txTotalPages) {
+            $txPage = $txTotalPages;
+            $txOffset = ($txPage - 1) * $perPageTx;
+        }
+        $todayRows = $docReq->releasedTodayPage($today, $perPageTx, $txOffset);
 
         $statusMap     = $docReq->statusCounts();
         $statusLabels  = array_keys($statusMap);
@@ -47,8 +58,17 @@
             $incomeValues[] = $docReq->incomeByDate($d);
         }
 
-        // RECENT LOGS (existing)
-        $recentLogs = $logModel->latest(10);
+        // PAGINATION: Recent Activity
+        $perPageLog = 10;
+        $logPage = max(1, (int)($_GET['log_page'] ?? 1));
+        $logOffset = ($logPage - 1) * $perPageLog;
+        $logTotal = $logModel->countAll();
+        $logTotalPages = max(1, (int)ceil($logTotal / $perPageLog));
+        if ($logPage > $logTotalPages) {
+            $logPage = $logTotalPages;
+            $logOffset = ($logPage - 1) * $perPageLog;
+        }
+        $recentLogs = $logModel->latestPage($perPageLog, $logOffset);
 
         // VIEW
         require_once __DIR__ . '/../views/admin_dashboard.php';

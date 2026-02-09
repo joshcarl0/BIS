@@ -5,36 +5,31 @@ require_once __DIR__ . '/../../config/database.php';
 
 $userId = (int)$_SESSION['user_id'];
 
-// 1) get resident_id from residents table using user_id
-$stmt = $conn->prepare("SELECT id FROM residents WHERE user_id = ? LIMIT 1");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$res = $stmt->get_result();
-$resident = $res->fetch_assoc();
-
-$residentId = (int)($resident['id'] ?? 0);
-
-// 2) get requests of this resident
+// Get requests linked to the logged-in account:
+// 1) direct resident.user_id match
+// 2) fallback by same email for legacy/unlinked resident rows
 $rows = [];
-if ($residentId > 0) {
-    $sql = "
-        SELECT 
-            dr.ref_no,
-            dt.name AS document,
-            dr.purpose,
-            dr.fee_snapshot AS fee,
-            dr.status,
-            dr.requested_at
-        FROM document_requests dr
-        LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-        WHERE dr.resident_id = ?
-        ORDER BY dr.requested_at DESC
-    ";
-    $stmt2 = $conn->prepare($sql);
-    $stmt2->bind_param("i", $residentId);
-    $stmt2->execute();
-    $rows = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+$sql = "
+    SELECT
+        dr.ref_no,
+        dt.name AS document,
+        dr.purpose,
+        dr.fee_snapshot AS fee,
+        dr.status,
+        dr.requested_at
+    FROM users u
+    INNER JOIN residents r
+        ON (r.user_id = u.id
+            OR (r.email IS NOT NULL AND r.email <> '' AND u.email IS NOT NULL AND r.email = u.email))
+    INNER JOIN document_requests dr ON dr.resident_id = r.id
+    LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+    WHERE u.id = ?
+    ORDER BY dr.requested_at DESC
+";
+$stmt2 = $conn->prepare($sql);
+$stmt2->bind_param("i", $userId);
+$stmt2->execute();
+$rows = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
 
 
 

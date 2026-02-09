@@ -86,7 +86,7 @@ public function findById($id)
     return $res ? $res->fetch_assoc() : null;
 }
 
-public function search($keyword = '')
+public function search($keyword = ''): array
 {
     if ($keyword !== '') {
 
@@ -101,6 +101,7 @@ public function search($keyword = '')
             ORDER BY dr.requested_at DESC
         ");
 
+        if (!$stmt) return [];
         $stmt->bind_param("ss", $keyword, $keyword);
 
     } else {
@@ -113,10 +114,16 @@ public function search($keyword = '')
             LEFT JOIN document_types dt ON dt.id = dr.document_type_id
             ORDER BY dr.requested_at DESC
         ");
+
+        if (!$stmt) return [];
     }
 
     $stmt->execute();
-    return $stmt->get_result();
+    $res = $stmt->get_result();
+    $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    $stmt->close();
+
+    return $rows;
 }
 
 public function dashboardCounts()
@@ -289,6 +296,51 @@ public function statusCounts()
         $out[$st] = (int)($row['c'] ?? 0);
     }
     return $out;
+}
+
+public function releasedTodayCount(string $dateYmd): int
+{
+    $sql = "SELECT COUNT(*) AS c
+            FROM document_requests
+            WHERE status='Released' AND DATE(released_at)=?";
+
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) return 0;
+
+    $stmt->bind_param("s", $dateYmd);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return (int)($row['c'] ?? 0);
+}
+
+public function releasedTodayPage(string $dateYmd, int $limit = 10, int $offset = 0): array
+{
+    $limit  = max(1, $limit);
+    $offset = max(0, $offset);
+
+    $sql = "SELECT dr.ref_no,
+                   CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name,'')) AS resident_name,
+                   dt.name AS document_type,
+                   dr.amount_paid,
+                   dr.released_at
+            FROM document_requests dr
+            JOIN residents r ON r.id = dr.resident_id
+            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+            WHERE dr.status='Released' AND DATE(dr.released_at)=?
+            ORDER BY dr.released_at DESC
+            LIMIT ? OFFSET ?";
+
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) return [];
+
+    $stmt->bind_param("sii", $dateYmd, $limit, $offset);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    return $rows;
 }
 
 public function releasedTodayList($dateYmd, $limit = 20)
