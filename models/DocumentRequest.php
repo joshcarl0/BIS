@@ -57,67 +57,73 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null) {
         return $stmt->execute();
     }
 
-public function findById($id)
-{
-    $id = (int)$id;
+    public function findById($id)
+    {
+        $id = (int)$id;
 
-    $sql = "SELECT dr.*,
-                   TRIM(CONCAT(
-                        r.first_name, ' ',
-                        IFNULL(r.middle_name, ''), ' ',
-                        r.last_name, ' ',
-                        IFNULL(r.suffix, '')
-                   )) AS resident_name,
-                   dt.name AS document_name,
-                   dt.category AS document_category,
-                   dt.fee AS document_fee,
-                   dt.processing_minutes
-            FROM document_requests dr
-            LEFT JOIN residents r ON r.id = dr.resident_id
-            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-            WHERE dr.id = ?
-            LIMIT 1";
+        $sql = "SELECT dr.*,
+                    TRIM(CONCAT(
+                            r.first_name, ' ',
+                            IFNULL(r.middle_name, ''), ' ',
+                            r.last_name, ' ',
+                            IFNULL(r.suffix, '')
+                    )) AS resident_name,
+                    dt.name AS document_name,
+                    dt.category AS document_category,
+                    dt.fee AS document_fee,
+                    dt.processing_minutes
+                FROM document_requests dr
+                LEFT JOIN residents r ON r.id = dr.resident_id
+                LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+                WHERE dr.id = ?
+                LIMIT 1";
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
 
-    $res = $stmt->get_result();
-    return $res ? $res->fetch_assoc() : null;
-}
-
-public function search($keyword = '')
-{
-    if ($keyword !== '') {
-
-        $stmt = $this->db->prepare("
-            SELECT dr.*, dt.name AS document_name,
-                   CONCAT(r.first_name, ' ', r.last_name) AS resident_name
-            FROM document_requests dr
-            LEFT JOIN residents r ON r.id = dr.resident_id
-            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-            WHERE CONCAT(r.first_name, ' ', r.last_name) LIKE CONCAT('%', ?, '%')
-               OR dr.ref_no LIKE CONCAT('%', ?, '%')
-            ORDER BY dr.requested_at DESC
-        ");
-
-        $stmt->bind_param("ss", $keyword, $keyword);
-
-    } else {
-
-        $stmt = $this->db->prepare("
-            SELECT dr.*, dt.name AS document_name,
-                   CONCAT(r.first_name, ' ', r.last_name) AS resident_name
-            FROM document_requests dr
-            LEFT JOIN residents r ON r.id = dr.resident_id
-            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-            ORDER BY dr.requested_at DESC
-        ");
+        $res = $stmt->get_result();
+        return $res ? $res->fetch_assoc() : null;
     }
 
-    $stmt->execute();
-    return $stmt->get_result();
-}
+        public function search($keyword = ''): array
+        {
+            $keyword = trim((string)$keyword);
+
+            if ($keyword !== '') {
+
+                $stmt = $this->db->prepare("
+                    SELECT dr.*,
+                        dt.name AS document_name,
+                        dt.category AS document_category,
+                        CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name, r.suffix) AS resident_name
+                    FROM document_requests dr
+                    LEFT JOIN residents r ON r.id = dr.resident_id
+                    LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+                    WHERE CONCAT_WS(' ', r.first_name, r.middle_name, r.last_name, r.suffix) LIKE CONCAT('%', ?, '%')
+                    OR dr.ref_no LIKE CONCAT('%', ?, '%')
+                    ORDER BY dr.requested_at DESC
+                ");
+
+                if (!$stmt) return [];
+
+                $stmt->bind_param("ss", $keyword, $keyword);
+
+            } else {
+
+                // If empty keyword, return all rows as array
+                return $this->all();
+            }
+
+            $stmt->execute();
+
+            $res = $stmt->get_result();
+            $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+
+            $stmt->close();
+            return $rows;
+        }
+
 
 public function dashboardCounts()
 {

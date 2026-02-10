@@ -15,10 +15,16 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$docReq = new DocumentRequest($db);
+// SUPPORT BOTH $db and $conn
+$mysqli = $db ?? $conn ?? null;
+if (!$mysqli) {
+    die("Database connection not found. Check database.php variable name (\$db or \$conn).");
+}
+
+$docReq = new DocumentRequest($mysqli);
 
 /* ========= SEARCH (GET) ========= */
-$search = trim($_GET['search'] ?? '');  // search by name / ref no
+$search = trim($_GET['search'] ?? '');
 
 /* ========= ACTIONS (POST) ========= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,10 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $id = (int)($_POST['id'] ?? 0);
+    $id     = (int)($_POST['id'] ?? 0);
     $action = $_POST['action'] ?? '';
     $remarks = trim($_POST['remarks'] ?? '');
-
     $adminId = $_SESSION['user_id'] ?? null;
 
     $map = [
@@ -42,13 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     if ($id > 0 && isset($map[$action])) {
-        $ok = $docReq->updateStatus($id, $map[$action], $adminId, $remarks ?: null);
+        $ok = $docReq->updateStatus($id, $map[$action], $adminId, $remarks !== '' ? $remarks : null);
+
         $_SESSION['flash'] = $ok
-            ? ['type'=>'success','msg'=>"Request updated: {$map[$action]}"]
-            : ['type'=>'danger','msg'=>"Failed to update request."];
+            ? ['type' => 'success', 'msg' => "Request updated: {$map[$action]}"]
+            : ['type' => 'danger', 'msg' => "Failed to update request."];
     }
 
-    // Preserve search after action (optional but recommended)
+    // preserve search after action
     $qs = '';
     if (!empty($_POST['search'])) {
         $qs = '?search=' . urlencode(trim($_POST['search']));
@@ -59,11 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ========= LIST ========= */
-if ($search !== '') {
-    $rows = $docReq->search($search);   // search() 
-} else {
-    $rows = $docReq->all();
-}
+$rows = ($search !== '') ? $docReq->search($search) : $docReq->all();
 
 // VIEW
 require_once __DIR__ . '/../views/admin/admin_document_requests.php';
