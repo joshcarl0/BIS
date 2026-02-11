@@ -86,35 +86,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                         </div>
                     </div>
 
-                    <div class="col-md-2">
-                        <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="text-muted">Income (Released)</div>
-                            <div class="fs-2 fw-bold">₱<?= number_format((float)($incomeTotal ?? 0), 2) ?></div>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-5">
-                    <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="fw-bold mb-2">Requests by Status</div>
-                        <canvas id="statusChart" height="170"></canvas>
-                    </div>
-                    </div>
-                </div>
-
-                <div class="col-md-7">
-                    <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="fw-bold mb-2">Income (Last 7 Days)</div>
-                        <canvas id="incomeChart" height="170"></canvas>
-                    </div>
-                    </div>
-                </div>
-                </div>
 
             <div class="card shadow-sm mb-3">
                 <div class="card-body">

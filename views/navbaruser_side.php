@@ -22,8 +22,8 @@ function activeMenu($file, $current) {
 
     <ul class="sidebar-menu">
 
-        <li class="<?= activeMenu('Home.php', $current) ?>">
-            <a href="/BIS/views/Home.php">
+        <li class="<?= activeMenu('user_dashboard.php', $current) ?>">
+            <a href="/BIS/views/user_dashboard.php">
                 <i class="bi bi-house-fill"></i>
                 <span>Home</span>
             </a>
