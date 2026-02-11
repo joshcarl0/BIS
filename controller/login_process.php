@@ -54,13 +54,8 @@ if (!$user) {
 }
 
 if (empty($user['email']) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
-    // Keep admin access available even if legacy admin accounts have no email.
-    if (($user['role'] ?? '') === 'admin') {
-        finalizeLogin($user);
-    }
-
     $_SESSION['error'] = 'Your account does not have a valid email for OTP login.';
-    header('Location: /BIS/views/login.php');
+    header("Location: /BIS/views/login.php");
     exit();
 }
 
@@ -102,15 +97,8 @@ try {
     exit();
 } catch (Exception $e) {
     error_log('Login OTP mail error: ' . $e->getMessage());
-
-    // Do not lock out admins when SMTP has transient issues.
-    if (($user['role'] ?? '') === 'admin') {
-        unset($_SESSION['pending_login']);
-        finalizeLogin($user);
-    }
-
     unset($_SESSION['pending_login']);
     $_SESSION['error'] = 'Could not send OTP right now. Please try again.';
-    header('Location: /BIS/views/login.php');
+    header("Location: /BIS/views/login.php");
     exit();
 }
