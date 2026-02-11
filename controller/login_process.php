@@ -5,6 +5,31 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../models/User.php';
 
+function finalizeLogin(array $user): void
+{
+    session_regenerate_id(true);
+
+    unset($_SESSION['error']);
+
+    $_SESSION['user_id'] = (int) $user['id'];
+    $_SESSION['username'] = (string) $user['username'];
+    $_SESSION['role'] = (string) $user['role'];
+    $_SESSION['full_name'] = (string) $user['full_name'];
+
+    switch ($_SESSION['role']) {
+        case 'admin':
+            header('Location: /BIS/views/admin_dashboard.php');
+            break;
+        case 'official':
+            header('Location: /BIS/views/official_dashboard.php');
+            break;
+        default:
+            header('Location: /BIS/views/user_dashboard.php');
+            break;
+    }
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/login.php");
     exit();
