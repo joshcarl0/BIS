@@ -29,13 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const registerForm = document.getElementById('registerForm');
   if (registerForm) {
     registerForm.addEventListener('submit', (e) => {
-      const fullname = document.getElementById('fullname')?.value.trim();
+      const fullName = document.getElementById('full_name')?.value.trim();
       const username = document.getElementById('username')?.value.trim();
       const email = document.getElementById('email')?.value.trim();
       const pwd = password?.value;
       const confirm = confirmPassword?.value;
 
-      if (!fullname || !username || !email || !pwd || !confirm) {
+      if (!fullName || !username || !email || !pwd || !confirm) {
         alert('All fields are required');
         e.preventDefault();
         return;

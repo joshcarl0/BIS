@@ -71,7 +71,15 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-                <li class="<?= activeMenu('admin_usermanagement.php', $current) ?>">
+        
+        <li class="<?= activeMenu('admin_resident_registrations.php', $current) ?>">
+            <a href="/BIS/controller/admin_resident_registrations.php">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Resident Registrations</span>
+            </a>
+        </li>
+
+        <li class="<?= activeMenu('admin_usermanagement.php', $current) ?>">
             <a href="/BIS/views/admin_usermanagement.php">
                 <i class="bi bi-people-fill"></i>
                 <span>User Management</span>
