@@ -18,7 +18,7 @@ function finalizeLogin(array $user): void
 
     switch ($_SESSION['role']) {
         case 'admin':
-            header('Location: /BIS/views/admin_dashboard.php');
+            header('Location: /BIS/controller/admin_dashboard.php');
             break;
         case 'official':
             header('Location: /BIS/views/official_dashboard.php');
@@ -52,6 +52,12 @@ if (!$user) {
     header("Location: /BIS/views/login.php");
     exit();
 }
+
+// ===== SKIP OTP FOR ADMIN =====
+if (($user['role'] ?? '') === 'admin') {
+    finalizeLogin($user);
+}
+
 
 if (empty($user['email']) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
     $_SESSION['error'] = 'Your account does not have a valid email for OTP login.';
