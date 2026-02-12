@@ -31,6 +31,31 @@ function finalizeLogin(array $user): void
     exit();
 }
 
+function finalizeLogin(array $user): void
+{
+    session_regenerate_id(true);
+
+    unset($_SESSION['error']);
+
+    $_SESSION['user_id'] = (int) $user['id'];
+    $_SESSION['username'] = (string) $user['username'];
+    $_SESSION['role'] = (string) $user['role'];
+    $_SESSION['full_name'] = (string) $user['full_name'];
+
+    switch ($_SESSION['role']) {
+        case 'admin':
+            header('Location: /BIS/views/admin_dashboard.php');
+            break;
+        case 'official':
+            header('Location: /BIS/views/official_dashboard.php');
+            break;
+        default:
+            header('Location: /BIS/views/user_dashboard.php');
+            break;
+    }
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/login.php");
     exit();
@@ -49,33 +74,14 @@ $userModel = new User($conn);
 $user = $userModel->login($username, $password);
 
 if (!$user) {
-    $registrationModel = new ResidentRegistration($conn);
-    $registration = $registrationModel->findLatestByLoginIdentifier($username);
-
-    if ($registration && in_array($registration['status'], ['pending_otp', 'pending_id', 'pending_approval'], true)) {
-        $_SESSION['error'] = 'Your registration is pending approval. Ref: ' . $registration['ref_no'];
-    } else {
-        $_SESSION['error'] = 'Invalid username or password';
-    }
-
+    $_SESSION['error'] = 'Invalid username or password';
     header("Location: /BIS/views/login.php");
     exit();
 }
 
-if (($user['role'] ?? '') === 'resident' && ($user['status'] ?? 'inactive') !== 'active') {
-    $_SESSION['error'] = 'Resident account is not yet approved.';
-    header('Location: /BIS/views/login.php');
-    exit();
-}
-
 if (empty($user['email']) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
-    // Keep admin access available even if legacy admin accounts have no email.
-    if (($user['role'] ?? '') === 'admin') {
-        finalizeLogin($user);
-    }
-
     $_SESSION['error'] = 'Your account does not have a valid email for OTP login.';
-    header('Location: /BIS/views/login.php');
+    header("Location: /BIS/views/login.php");
     exit();
 }
 
@@ -117,15 +123,8 @@ try {
     exit();
 } catch (Exception $e) {
     error_log('Login OTP mail error: ' . $e->getMessage());
-
-    // Do not lock out admins when SMTP has transient issues.
-    if (($user['role'] ?? '') === 'admin') {
-        unset($_SESSION['pending_login']);
-        finalizeLogin($user);
-    }
-
     unset($_SESSION['pending_login']);
     $_SESSION['error'] = 'Could not send OTP right now. Please try again.';
-    header('Location: /BIS/views/login.php');
+    header("Location: /BIS/views/login.php");
     exit();
 }
