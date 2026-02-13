@@ -25,25 +25,27 @@ $residentId = (int)($resident['id'] ?? 0);
 
 // 2) get requests of this resident
 $rows = [];
-if ($residentId > 0) {
-    $sql = "
-        SELECT 
-            dr.ref_no,
-            dt.name AS document,
-            dr.purpose,
-            dr.fee_snapshot AS fee,
-            dr.status,
-            dr.requested_at
-        FROM document_requests dr
-        LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-        WHERE dr.resident_id = ?
-        ORDER BY dr.requested_at DESC
-    ";
-    $stmt2 = $conn->prepare($sql);
-    $stmt2->bind_param("i", $residentId);
-    $stmt2->execute();
-    $rows = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+$sql = "
+    SELECT
+        dr.ref_no,
+        dt.name AS document,
+        dr.purpose,
+        dr.fee_snapshot AS fee,
+        dr.status,
+        dr.requested_at
+    FROM users u
+    INNER JOIN residents r
+        ON (r.user_id = u.id
+            OR (r.email IS NOT NULL AND r.email <> '' AND u.email IS NOT NULL AND r.email = u.email))
+    INNER JOIN document_requests dr ON dr.resident_id = r.id
+    LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+    WHERE u.id = ?
+    ORDER BY dr.requested_at DESC
+";
+$stmt2 = $conn->prepare($sql);
+$stmt2->bind_param("i", $userId);
+$stmt2->execute();
+$rows = $stmt2->get_result()->fetch_all(MYSQLI_ASSOC);
 
 
 
