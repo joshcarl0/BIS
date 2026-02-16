@@ -321,4 +321,60 @@ class User
         $stmt->close();
         return $ok;
     }
+
+public function getRoleIdByName(string $roleName): ?int
+{
+    $sql = "SELECT id FROM roles WHERE role_name = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return null;
+
+    $stmt->bind_param('s', $roleName);
+    $stmt->execute();
+
+    $id = null;
+    if (method_exists($stmt, 'get_result')) {
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $id = $row ? (int)$row['id'] : null;
+    } else {
+        $tmp = null;
+        $stmt->bind_result($tmp);
+        if ($stmt->fetch()) $id = (int)$tmp;
+    }
+
+    $stmt->close();
+    return $id;
+}
+
+public function createUserFromRegistration(
+    string $username,
+    string $email,
+    string $passwordHash,
+    string $full_name,
+    int $role_id = 3,
+    string $status = 'active'
+): ?int {
+    // avoid duplicates
+    if ($this->isUsernameTaken($username) || $this->isEmailTaken($email)) {
+        return null;
+    }
+
+    $sql = "INSERT INTO {$this->table} (username, email, password, full_name, role_id, status)
+            VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return null;
+
+    // NOTE: passwordHash already hashed from resident_registrations.password_hash
+    $stmt->bind_param('ssssis', $username, $email, $passwordHash, $full_name, $role_id, $status);
+
+    $ok = $stmt->execute();
+    $newId = $ok ? (int)$this->conn->insert_id : null;
+    $stmt->close();
+
+    return $newId;
+}
+
+
+
+
 }

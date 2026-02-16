@@ -37,8 +37,8 @@ class ResidentRegistration
             INDEX idx_email (email),
             INDEX idx_username (username),
             INDEX idx_status (status),
-            CONSTRAINT uq_rr_username UNIQUE (username),
-            CONSTRAINT uq_rr_email UNIQUE (email),
+            INDEX idx_email (email),
+            INDEX idx_username (username),
             CONSTRAINT uq_rr_user UNIQUE (user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
@@ -56,19 +56,23 @@ class ResidentRegistration
         return $ref;
     }
 
-    public function hasUsernameOrEmail(string $username, string $email): bool
-    {
-        $sql = "SELECT id FROM {$this->table} WHERE username = ? OR email = ? LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return false;
-        $stmt->bind_param('ss', $username, $email);
-        $stmt->execute();
-        $stmt->store_result();
-        $exists = $stmt->num_rows > 0;
-        $stmt->close();
+   public function hasUsernameOrEmail(string $username, string $email): bool
+{
+    $sql = "SELECT id
+            FROM {$this->table}
+            WHERE (username = ? OR email = ?)
+              AND status <> 'rejected'
+            LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+    $stmt->bind_param('ss', $username, $email);
+    $stmt->execute();
+    $stmt->store_result();
+    $exists = $stmt->num_rows > 0;
+    $stmt->close();
+    return $exists;
+}
 
-        return $exists;
-    }
 
     public function createPendingOtp(string $refNo, string $fullName, string $username, string $email, string $contactNumber, string $passwordHash, string $otpHash, string $otpExpiresAt): ?int
     {
@@ -143,20 +147,19 @@ class ResidentRegistration
     }
 
     public function verifyOtpAndMoveToPendingId(int $id): bool
-    {
-        $sql = "UPDATE {$this->table}
-                SET status = 'pending_id', otp_verified_at = NOW(), otp_hash = NULL, otp_expires_at = NULL, otp_attempts = 0
-                WHERE id = ? AND status = 'pending_otp'
-                LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return false;
-        $stmt->bind_param('i', $id);
-        $ok = $stmt->execute();
-        $affected = $stmt->affected_rows;
-        $stmt->close();
+{
+    $status = 'pending_id';
+    $sql = "UPDATE {$this->table}
+            SET otp_verified_at = NOW(),
+                status = ?,
+                otp_attempts = 0
+            WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+    $stmt->bind_param("si", $status, $id);
+    return $stmt->execute();
+}
 
-        return $ok && $affected > 0;
-    }
 
     public function resendOtp(int $id, string $otpHash, string $otpExpiresAt): bool
     {
@@ -250,4 +253,168 @@ class ResidentRegistration
         $stmt->close();
         return $ok && $affected > 0;
     }
+
+
+public function createPendingRegistration(array $data): array
+{
+    $full = trim((string)($data['full_name'] ?? ''));
+    $user = trim((string)($data['username'] ?? ''));
+    $email = trim((string)($data['email'] ?? ''));
+    $contact = (string)($data['contact_number'] ?? '');
+    $password = (string)($data['password'] ?? '');
+
+    if ($full === '' || $user === '' || $email === '' || $password === '') {
+        throw new InvalidArgumentException('Missing required fields.');
+    }
+
+    if ($this->hasUsernameOrEmail($user, $email)) {
+        throw new RuntimeException('Username or email already used in registrations.');
+    }
+
+    $refNo = $this->generateReferenceNumber();
+
+    $otp = (string) random_int(100000, 999999);
+    $otpHash = hash('sha256', $otp);
+    $otpExpiresAt = date('Y-m-d H:i:s', time() + 600);
+
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+    $id = $this->createPendingOtp(
+        $refNo,
+        $full,
+        $user,
+        $email,
+        $contact,
+        $passwordHash,
+        $otpHash,
+        $otpExpiresAt
+    );
+
+    if (!$id) {
+        throw new RuntimeException('Failed to create pending registration.');
+    }
+
+    return [
+        'id' => $id,
+        'ref_no' => $refNo,
+        'otp' => $otp,
+    ];
+}
+
+public function updateStatus(int $id, string $status): bool {
+    $sql = "UPDATE {$this->table} SET status = ? WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("si", $status, $id);
+    return $stmt->execute();
+}
+
+public function markOtpVerified(int $id): bool {
+    $sql = "UPDATE {$this->table}
+            SET otp_verified_at = NOW()
+            WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    return $stmt->execute();
+}
+
+public function attachIdAndSetPending(int $id, string $path, string $name): bool
+{
+    $status = 'pending_approval';
+    $sql = "UPDATE {$this->table}
+            SET id_file_path = ?, id_file_name = ?, status = ?
+            WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+    $stmt->bind_param("sssi", $path, $name, $status, $id);
+    return $stmt->execute();
+}
+
+public function retryRejected(int $id, array $data): array
+{
+    $full = trim((string)($data['full_name'] ?? ''));
+    $user = trim((string)($data['username'] ?? ''));
+    $email = trim((string)($data['email'] ?? ''));
+    $contact = (string)($data['contact_number'] ?? '');
+    $password = (string)($data['password'] ?? '');
+
+    if ($full === '' || $user === '' || $email === '' || $password === '') {
+        throw new InvalidArgumentException('Missing required fields.');
+    }
+
+    // block username/email kung may active/pending registration na iba (hindi rejected)
+    $sql = "SELECT id FROM {$this->table}
+            WHERE id <> ?
+              AND (username = ? OR email = ?)
+              AND status <> 'rejected'
+            LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) throw new RuntimeException('DB prepare failed.');
+    $stmt->bind_param('iss', $id, $user, $email);
+    $stmt->execute();
+    $stmt->store_result();
+    $exists = $stmt->num_rows > 0;
+    $stmt->close();
+
+    if ($exists) {
+        throw new RuntimeException('Username or email already used in registrations.');
+    }
+
+    $refNo = $this->generateReferenceNumber();
+    $otp = (string) random_int(100000, 999999);
+    $otpHash = hash('sha256', $otp);
+    $otpExpiresAt = date('Y-m-d H:i:s', time() + 600);
+    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+    $sql = "UPDATE {$this->table}
+            SET ref_no = ?,
+                full_name = ?,
+                username = ?,
+                email = ?,
+                contact_number = ?,
+                password_hash = ?,
+                otp_hash = ?,
+                otp_expires_at = ?,
+                otp_attempts = 0,
+                otp_verified_at = NULL,
+                id_file_path = NULL,
+                id_file_name = NULL,
+                approved_at = NULL,
+                approved_by = NULL,
+                admin_notes = NULL,
+                status = 'pending_otp'
+            WHERE id = ? AND status = 'rejected'
+            LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) throw new RuntimeException('DB prepare failed.');
+    $stmt->bind_param(
+        'ssssssssi',
+        $refNo, $full, $user, $email, $contact, $passwordHash, $otpHash, $otpExpiresAt,
+        $id
+    );
+    $ok = $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+
+    if (!$ok || $affected <= 0) {
+        throw new RuntimeException('Retry failed.');
+    }
+
+    return ['id' => $id, 'ref_no' => $refNo, 'otp' => $otp];
+}
+
+
+public function findLatestByEmail(string $email): ?array
+{
+    $sql = "SELECT * FROM {$this->table} WHERE email = ? ORDER BY id DESC LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return null;
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+    $stmt->close();
+    return $row ?: null;
+}
+
+
 }

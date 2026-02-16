@@ -19,11 +19,17 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$userModel = new User($conn);
+/* SUPPORT BOTH $db and $conn */
+$mysqli = $db ?? $conn ?? null;
+if (!$mysqli) {
+    die("Database connection not found. Check database.php variable name (\$db or \$conn).");
+}
+
+$userModel = new User($mysqli);
 
 // LOAD ROLES for dropdown
 $roles = [];
-$res = $conn->query("SELECT id, role_name FROM roles ORDER BY id ASC");
+$res = $mysqli->query("SELECT id, role_name FROM roles ORDER BY id ASC");
 if ($res) {
     $roles = $res->fetch_all(MYSQLI_ASSOC);
 }
@@ -53,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username  = trim($_POST['username'] ?? '');
         $email     = trim($_POST['email'] ?? '');
         $password  = (string)($_POST['password'] ?? '');
-       $role_id   = (int)($_POST['role_id'] ?? 3); // default resident (3)
+        $role_id   = (int)($_POST['role_id'] ?? 3); // default resident
         $status    = trim($_POST['status'] ?? 'active');
 
         if ($full_name === '' || $username === '' || $email === '' || $password === '') {
@@ -99,31 +105,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // DELETE USER
+    // DELETE USER (DISABLED)
     if ($action === 'delete') {
-        $id = (int)($_POST['id'] ?? 0);
-
-        // prevent deleting your own account
-        if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] === $id) {
-            $_SESSION['flash'] = ['type' => 'warning', 'msg' => "You can't delete your own account."];
-            header("Location: admin_usermanagement.php");
-            exit;
-        }
-
-        $ok = ($id > 0) ? $userModel->deleteUser($id) : false;
-
-        $_SESSION['flash'] = $ok
-            ? ['type' => 'success', 'msg' => 'User deleted successfully.']
-            : ['type' => 'danger', 'msg' => 'Failed to delete user.'];
-
+        $_SESSION['flash'] = ['type' => 'warning', 'msg' => 'Delete is disabled. Please use Deactivate instead.'];
         header("Location: admin_usermanagement.php");
         exit;
     }
 
-    // TOGGLE STATUS
+    // TOGGLE STATUS (Deactivate / Activate)
     if ($action === 'toggle_status') {
         $id = (int)($_POST['id'] ?? 0);
         $next_status = ($_POST['next_status'] ?? 'inactive') === 'active' ? 'active' : 'inactive';
+
+        // prevent deactivating your own account
+        if (!empty($_SESSION['user_id']) && (int)$_SESSION['user_id'] === $id && $next_status === 'inactive') {
+            $_SESSION['flash'] = ['type' => 'warning', 'msg' => "You can't deactivate your own account."];
+            header("Location: admin_usermanagement.php");
+            exit;
+        }
 
         $ok = ($id > 0) ? $userModel->updateUserStatus($id, $next_status) : false;
 
@@ -155,28 +154,19 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - User Management</title>
 
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-  <!-- Same CSS as dashboard -->
   <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
 </head>
 
 <body style="background:#D6D5D7;">
 
-  <!-- LEFT SIDEBAR -->
   <?php require_once __DIR__ . '/../views/navbaradmin_leftside.php'; ?>
 
-  <!-- MAIN CONTENT WRAPPER -->
   <div class="main-content" id="mainContent">
 
-    <!-- TOP NAVBAR -->
     <?php require_once __DIR__ . '/navbar_top.php'; ?>
 
-    <!-- PAGE CONTENT -->
     <div class="container-fluid mt-4">
 
       <h4 class="mb-3">Manage Users</h4>
@@ -198,6 +188,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
       <?php endif; ?>
 
       <div class="row g-3">
+
         <!-- ADD USER -->
         <div class="col-lg-4">
           <div class="card shadow-sm">
@@ -230,14 +221,14 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
 
                 <div class="row g-2">
                   <div class="col-6">
-                    <label class="form-label" for="role">Role</label>
+                    <label class="form-label" for="role_id">Role</label>
                     <select class="form-select" id="role_id" name="role_id" autocomplete="off" required>
-                            <?php foreach ($roles as $r): ?>
-                              <option value="<?= (int)$r['id'] ?>">
-                                <?= htmlspecialchars($r['role_name']) ?>
-                              </option>
-                            <?php endforeach; ?>
-                        </select>
+                      <?php foreach ($roles as $r): ?>
+                        <option value="<?= (int)$r['id'] ?>">
+                          <?= htmlspecialchars($r['role_name']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
                   </div>
 
                   <div class="col-6">
@@ -290,7 +281,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                     <?php endif; ?>
 
                     <?php foreach ($users as $u): ?>
-                      <?php $isActive = ($u['status'] === 'active'); ?>
+                      <?php $isActive = (($u['status'] ?? '') === 'active'); ?>
                       <tr>
                         <td><?= (int)$u['id'] ?></td>
                         <td><?= htmlspecialchars($u['username']) ?></td>
@@ -309,20 +300,14 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                             Edit
                           </a>
 
-                          <form method="POST" onsubmit="return confirm('Delete this user?');">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
-                            <button class="btn btn-sm btn-outline-danger">Delete</button>
-                          </form>
-
+                          <!-- Only toggle status (Deactivate/Activate) -->
                           <form method="POST">
                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                             <input type="hidden" name="action" value="toggle_status">
                             <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
                             <input type="hidden" name="next_status" value="<?= $isActive ? 'inactive' : 'active' ?>">
                             <button class="btn btn-sm btn-outline-secondary">
-                              <?= $isActive ? 'Deactivate' : 'Activate' ?>
+                              <?= $isActive ? 'Deactivate' : 'Reactivate' ?>
                             </button>
                           </form>
                         </td>
@@ -340,7 +325,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
             <div class="card shadow-sm mt-3">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0">Edit Resisdent #<?= (int)$editUser['id'] ?></h5>
+                  <h5 class="mb-0">Edit Resident #<?= (int)$editUser['id'] ?></h5>
                   <a class="btn btn-sm btn-outline-dark" href="admin_usermanagement.php?search=<?= urlencode($search) ?>">Close</a>
                 </div>
 
@@ -375,21 +360,21 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                     </div>
 
                     <div class="col-md-6">
-                      <label class="form-label" for="edit_role">Role</label>
+                      <label class="form-label" for="edit_role_id">Role</label>
                       <select class="form-select" id="edit_role_id" name="role_id" autocomplete="off" required>
-                      <?php foreach ($roles as $r): ?>
-                        <option value="<?= (int)$r['id'] ?>" <?= ((int)($editUser['role_id'] ?? 0) === (int)$r['id']) ? 'selected' : '' ?>>
-                          <?= htmlspecialchars($r['role_name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                        <?php foreach ($roles as $r): ?>
+                          <option value="<?= (int)$r['id'] ?>" <?= ((int)($editUser['role_id'] ?? 0) === (int)$r['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($r['role_name']) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
                     </div>
 
                     <div class="col-md-6">
                       <label class="form-label" for="edit_status">Status</label>
                       <select class="form-select" id="edit_status" name="status" autocomplete="off">
-                        <option value="active" <?= $editUser['status']==='active'?'selected':'' ?>>active</option>
-                        <option value="inactive" <?= $editUser['status']==='inactive'?'selected':'' ?>>inactive</option>
+                        <option value="active" <?= ($editUser['status'] ?? '')==='active'?'selected':'' ?>>active</option>
+                        <option value="inactive" <?= ($editUser['status'] ?? '')==='inactive'?'selected':'' ?>>inactive</option>
                       </select>
                     </div>
                   </div>
@@ -403,13 +388,11 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
         </div>
       </div>
 
-    </div> <!-- /container-fluid -->
-  </div> <!-- /main-content -->
+    </div>
+  </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Sidebar Toggle JS -->
   <script>
   const toggleBtn = document.getElementById("toggleSidebar");
   if (toggleBtn) {
@@ -417,7 +400,6 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
       const sidebar = document.getElementById("sidebar");
       const main = document.getElementById("mainContent");
       const icon = document.getElementById("toggleIcon");
-
       if (!sidebar || !main || !icon) return;
 
       sidebar.classList.toggle("collapsed");

@@ -2,20 +2,16 @@
 session_start();
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/ResidentRegistration.php';
 
-
-/* ===========================
-   REQUEST CHECK
-=========================== */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/register.php");
     exit;
 }
 
-/* ===========================
-   CSRF VALIDATION
-=========================== */
+/* CSRF */
 if (
     empty($_POST['csrf_token']) ||
     empty($_SESSION['csrf_token']) ||
@@ -26,12 +22,11 @@ if (
     exit;
 }
 
-/* ===========================
-   INPUT SANITIZATION
-=========================== */
+/* Inputs */
 $fullname  = trim($_POST['fullname'] ?? '');
 $username  = trim($_POST['username'] ?? '');
 $email     = trim($_POST['email'] ?? '');
+$contact   = trim($_POST['contact_number'] ?? '');
 $password  = $_POST['password'] ?? '';
 $confirm   = $_POST['confirm_password'] ?? '';
 
@@ -47,17 +42,13 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-/* ===========================
-   PASSWORD RULES
-=========================== */
 if (
     strlen($password) < 8 ||
     !preg_match('/[A-Z]/', $password) ||
     !preg_match('/[0-9]/', $password) ||
     !preg_match('/[!@#$%^&*]/', $password)
 ) {
-    $_SESSION['error'] =
-        'Password must be 8+ chars, with uppercase, number, and special character';
+    $_SESSION['error'] = 'Password must be 8+ chars, with uppercase, number, and special character';
     header("Location: /BIS/views/register.php");
     exit;
 }
@@ -68,10 +59,16 @@ if ($password !== $confirm) {
     exit;
 }
 
-/* ===========================
-   USER MODEL
-=========================== */
-$userModel = new User($conn);
+/* DB handle: support $db or $conn */
+$mysqli = $db ?? $conn ?? null;
+if (!$mysqli) {
+    $_SESSION['error'] = 'Database connection not found.';
+    header("Location: /BIS/views/register.php");
+    exit;
+}
+
+/* Validate against existing users */
+$userModel = new User($mysqli);
 
 if ($userModel->isUsernameTaken($username)) {
     $_SESSION['error'] = 'Username is already taken';
@@ -85,30 +82,54 @@ if ($userModel->isEmailTaken($email)) {
     exit;
 }
 
-/* ===========================
-   REGISTER USER
-=========================== */
-// DEFAULT VALUES
-$role_id = 3;   // resident
-$status  = 'active';
+/* Create pending registration (NOT user yet) */
+$regModel = new ResidentRegistration($mysqli);
 
-$success = $userModel->register(
-    $username,
-    $email,
-    $password,
-    $fullname,
-    $role_id,
-    $status
-);
+try {
+    $result = $regModel->createPendingRegistration([
+        'full_name'       => $fullname,
+        'username'        => $username,
+        'password'        => $password, // model should hash
+        'email'           => $email,
+        'contact_number'  => $contact ?: null,
+    ]);
 
+    // expected return: ['id' => ..., 'ref_no' => ..., 'otp' => ...]
+    $regId  = (int)($result['id'] ?? 0);
+    $refNo  = (string)($result['ref_no'] ?? '');
+    $otp    = (string)($result['otp'] ?? '');
 
-if ($success) {
+    if ($regId <= 0 || $refNo === '' || $otp === '') {
+        throw new Exception('Registration init failed.');
+    }
+
+    // IMPORTANT: match your OTP controllers
+    $_SESSION['register_flow'] = [
+        'registration_id' => $regId,
+        'ref_no'          => $refNo,
+        'email'           => $email,
+        'otp_verified'    => false,
+    ];
+
     unset($_SESSION['csrf_token']); // regenerate later
-    $_SESSION['success'] = 'Registration successful! You can now log in.';
-    header("Location: /BIS/views/login.php");
+
+    // Send OTP email
+    if (function_exists('sendOtpMail')) {
+        sendOtpMail($email, $otp, $refNo);
+    }
+
+    header("Location: /BIS/views/register_otp.php");
+    exit;
+
+} catch (Throwable $e) {
+    $dbErr = ($mysqli instanceof mysqli) ? $mysqli->error : '';
+    error_log("register_process error: " . $e->getMessage() . " | DB: " . $dbErr);
+
+    // DEV: show exact message
+    $_SESSION['error'] = 'Registration failed: ' . $e->getMessage();
+    if ($dbErr) $_SESSION['error'] .= ' | DB: ' . $dbErr;
+
+    header("Location: /BIS/views/register.php");
     exit;
 }
 
-$_SESSION['error'] = 'Registration failed. Please try again.';
-header("Location: /BIS/views/register.php");
-exit;

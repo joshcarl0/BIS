@@ -53,11 +53,17 @@ if (!$user) {
     exit();
 }
 
+// ===== BLOCK INACTIVE USERS =====
+if (($user['status'] ?? '') !== 'active') {
+    $_SESSION['error'] = 'Your account is deactivated. Please contact the barangay to reactivate.';
+    header("Location: /BIS/views/login.php");
+    exit();
+}
+
 // ===== SKIP OTP FOR ADMIN =====
 if (($user['role'] ?? '') === 'admin') {
     finalizeLogin($user);
 }
-
 
 if (empty($user['email']) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
     $_SESSION['error'] = 'Your account does not have a valid email for OTP login.';
@@ -69,10 +75,10 @@ $otp = (string) random_int(100000, 999999);
 
 $_SESSION['pending_login'] = [
     'user_id' => (int) $user['id'],
-    'username' => $user['username'],
-    'role' => $user['role'],
-    'full_name' => $user['full_name'],
-    'email' => $user['email'],
+    'username' => (string) $user['username'],
+    'role' => (string) $user['role'],
+    'full_name' => (string) $user['full_name'],
+    'email' => (string) $user['email'],
     'otp_hash' => hash('sha256', $otp),
     'otp_expires' => time() + 300,
     'otp_attempts' => 0,

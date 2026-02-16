@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $roleId = $userModel->getRoleIdByName('resident') ?? 3;
+        $roleId = 3; // resident role_id
+
 
         $conn->begin_transaction();
         try {
