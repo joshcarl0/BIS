@@ -15,20 +15,24 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+// Only POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/resident/document_request.php");
     exit;
 }
 
-// CSRF check (IMPORTANT)
+// CSRF check
 if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid request (CSRF).'];
     header("Location: /BIS/views/resident/document_request.php");
     exit;
 }
 
+/* =========================
+   BASIC REQUIRED INPUTS
+========================= */
 $document_type_id = (int)($_POST['document_type_id'] ?? 0);
-$purpose          = trim($_POST['purpose'] ?? '');
+$purpose          = trim((string)($_POST['purpose'] ?? ''));
 
 if ($document_type_id <= 0 || $purpose === '') {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Please complete required fields.'];
@@ -36,7 +40,15 @@ if ($document_type_id <= 0 || $purpose === '') {
     exit;
 }
 
-// GET resident_id using logged-in user_id (with email fallback for legacy accounts)
+/* =========================
+   FIND RESIDENT ID
+   (user_id or email fallback)
+========================= */
+$mysqli = $db ?? $conn ?? null;
+if (!$mysqli) {
+    die("Database connection not found. Check database.php variable name (\$db or \$conn).");
+}
+
 $sql = "SELECT r.id
         FROM users u
         INNER JOIN residents r
@@ -45,10 +57,25 @@ $sql = "SELECT r.id
         WHERE u.id = ?
         ORDER BY (r.user_id = u.id) DESC, r.id DESC
         LIMIT 1";
-$stmt = $db->prepare($sql);
+
+$stmt = $mysqli->prepare($sql);
+if (!$stmt) {
+    $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Database error (prepare failed).'];
+    header("Location: /BIS/views/resident/document_request.php");
+    exit;
+}
+
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
+
+$row = null;
+if (method_exists($stmt, 'get_result')) {
+    $row = $stmt->get_result()->fetch_assoc();
+} else {
+    // fallback (rare)
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+}
 $stmt->close();
 
 if (!$row) {
@@ -59,10 +86,47 @@ if (!$row) {
 
 $residentId = (int)$row['id'];
 
+/* =========================
+   EXTRA FIELDS (DYNAMIC)
+   Supports:
+   1) extra[field] format
+   2) direct POST fields fallback
+========================= */
 
-$model = new DocumentRequest($db);
+// Prefer "extra" array (recommended)
+$extra = $_POST['extra'] ?? [];
+if (!is_array($extra)) $extra = [];
 
-$result = $model->createResidentRequest($residentId, $document_type_id, $purpose);
+// If you used direct inputs (name="child_name"), auto-pick them up too
+$directKeys = [
+    'child_name', 'child_dob', 'child_pob',
+    'mother_name', 'father_name',
+    'partner_name', 'living_since', 'since'
+];
+
+foreach ($directKeys as $k) {
+    if (!isset($extra[$k]) && isset($_POST[$k])) {
+        $extra[$k] = $_POST[$k];
+    }
+}
+
+// Normalize + trim values
+foreach ($extra as $k => $v) {
+    if (is_array($v)) continue;
+    $extra[$k] = trim((string)$v);
+}
+
+// Normalize date key: if form uses "since", map to "living_since"
+if (!empty($extra['since']) && empty($extra['living_since'])) {
+    $extra['living_since'] = $extra['since'];
+}
+
+/* =========================
+   CREATE REQUEST
+========================= */
+$model = new DocumentRequest($mysqli);
+
+$result = $model->createResidentRequest($residentId, $document_type_id, $purpose, $extra);
 
 if (!$result) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to submit request.'];

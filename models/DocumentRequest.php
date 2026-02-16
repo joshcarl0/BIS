@@ -62,12 +62,22 @@ public function findById($id)
     $id = (int)$id;
 
     $sql = "SELECT dr.*,
+                   dr.extra_json,
                    TRIM(CONCAT(
                         r.first_name, ' ',
                         IFNULL(r.middle_name, ''), ' ',
                         r.last_name, ' ',
                         IFNULL(r.suffix, '')
                    )) AS resident_name,
+
+                   CONCAT_WS(', ',
+                        NULLIF(r.house_no,''),
+                        NULLIF(r.street,''),
+                        NULLIF(r.barangay,''),
+                        NULLIF(r.city,''),
+                        NULLIF(r.province,'')
+                   ) AS resident_address,
+
                    dt.name AS document_name,
                    dt.category AS document_category,
                    dt.fee AS document_fee,
@@ -85,6 +95,7 @@ public function findById($id)
     $res = $stmt->get_result();
     return $res ? $res->fetch_assoc() : null;
 }
+
 
 public function search($keyword = '')
 {
@@ -159,12 +170,43 @@ public function countReleasedToday(): int
     return (int)($res['c'] ?? 0);
 }
 
-public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose)
+public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [])
 {
     $purpose = trim($purpose);
 
     if ($residentId <= 0 || $documentTypeId <= 0 || $purpose === '') {
         return false;
+    }
+
+    // ✅ Clean extra (simple sanitize)
+    $cleanExtra = [];
+    foreach ($extra as $k => $v) {
+        if (is_array($v) || is_object($v)) continue;
+        $key = trim((string)$k);
+        if ($key === '') continue;
+
+        $val = trim((string)$v);
+        if ($val === '') continue;
+
+        if (strlen($key) > 60)  $key = substr($key, 0, 60);
+        if (strlen($val) > 500) $val = substr($val, 0, 500);
+
+        $cleanExtra[$key] = $val;
+    }
+
+    $extraJson = !empty($cleanExtra)
+        ? json_encode($cleanExtra, JSON_UNESCAPED_UNICODE)
+        : null;
+
+    //  Fee snapshot from document_types
+    $feeSnapshot = 0.00;
+    $stmtFee = $this->db->prepare("SELECT fee FROM document_types WHERE id=? LIMIT 1");
+    if ($stmtFee) {
+        $stmtFee->bind_param("i", $documentTypeId);
+        $stmtFee->execute();
+        $rowFee = $stmtFee->get_result()->fetch_assoc();
+        $stmtFee->close();
+        $feeSnapshot = (float)($rowFee['fee'] ?? 0);
     }
 
     // Generate REF-YYYY-0001
@@ -184,11 +226,10 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
     $stmtLast->execute();
 
     $lastRef = null;
-    if (method_exists($stmtLast, 'get_result')) {
-        $res = $stmtLast->get_result();
-        $row = $res ? $res->fetch_assoc() : null;
-        $lastRef = $row['ref_no'] ?? null;
-    }
+    $res = $stmtLast->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+    $lastRef = $row['ref_no'] ?? null;
+
     $stmtLast->close();
 
     $next = 1;
@@ -199,20 +240,22 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
 
     $refNo = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 
+    // ✅ Insert including fee_snapshot + extra_json
     $sql = "INSERT INTO document_requests
-            (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at)
-            VALUES (?, ?, ?, ?, 'Pending', 0.00, NOW())";
+            (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at, extra_json)
+            VALUES (?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
 
     $stmt = $this->db->prepare($sql);
     if (!$stmt) return false;
 
-    $stmt->bind_param("siis", $refNo, $residentId, $documentTypeId, $purpose);
+    $stmt->bind_param("siisds", $refNo, $residentId, $documentTypeId, $purpose, $feeSnapshot, $extraJson);
 
     $ok = $stmt->execute();
     $stmt->close();
 
     return $ok ? ['ref_no' => $refNo] : false;
 }
+
 
 
 public function getByResident(int $residentId): array

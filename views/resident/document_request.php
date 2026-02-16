@@ -108,12 +108,22 @@ if (!$docsRes) {
               </div>
 
               <!-- PURPOSE -->
-              <div class="mb-3">
-                <label class="form-label">Purpose <span class="text-danger">*</span></label>
-                <textarea name="purpose" class="form-control" rows="3" required></textarea>
-              </div>
+                <div class="mb-3">
+                  <label class="form-label">Purpose <span class="text-danger">*</span></label>
+                  <textarea name="purpose" class="form-control" rows="3" required></textarea>
+                </div>
 
-              <button class="btn btn-primary">Submit Request</button>
+                <!-- EXTRA FIELDS (dynamic) -->
+                <div id="extraWrap" class="mt-3" style="display:none;">
+                  <div class="card border-0 bg-white">
+                    <div class="card-body p-3">
+                      <div class="fw-semibold mb-2">Additional Information</div>
+                      <div id="extraFields"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary">Submit Request</button>
             </form>
 
           </div>
@@ -129,31 +139,46 @@ if (!$docsRes) {
 <script>
 const sel = document.getElementById('documentSelect');
 
+async function loadExtraForm(docTypeId){
+  const wrap = document.getElementById('extraWrap');
+  const box  = document.getElementById('extraFields');
+
+  box.innerHTML = '';
+  wrap.style.display = 'none';
+
+  if(!docTypeId) return;
+
+  const res = await fetch(`/BIS/controller/document_form.php?document_type_id=${encodeURIComponent(docTypeId)}`);
+  const html = await res.text();
+
+  if(html.trim() !== ''){
+    box.innerHTML = html;
+    wrap.style.display = 'block';
+  }
+}
+
 function updateInfo() {
   const opt = sel.options[sel.selectedIndex];
   if (!opt || !opt.dataset) return;
 
-  // fee/time
   document.getElementById('feeTxt').textContent  = opt.dataset.fee ? opt.dataset.fee : '-';
   document.getElementById('timeTxt').textContent = opt.dataset.time ? opt.dataset.time : '-';
 
-  // requirements (JSON safe)
   let req = '-';
-  try {
-    req = JSON.parse(opt.dataset.req || '""') || '-';
-  } catch(e) {
-    req = '-';
-  }
+  try { req = JSON.parse(opt.dataset.req || '""') || '-'; } catch(e) { req = '-'; }
 
-  // show newlines properly
   const reqBox = document.getElementById('reqTxt');
-  reqBox.innerHTML = (req && req !== '-') 
-    ? String(req).replace(/\n/g, "<br>")
-    : "-";
+  reqBox.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, "<br>") : "-";
+
+  //  load dynamic form
+  loadExtraForm(sel.value);
 }
 
 sel.addEventListener('change', updateInfo);
 </script>
+
+
+                <script src="/BIS/assets/js/document_request_dynamic.js"></script>
 
 </body>
 </html>
