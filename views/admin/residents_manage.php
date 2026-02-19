@@ -301,7 +301,7 @@
             <label class="form-label" for="add_is_active">Active</label>
             <select class="form-select" id="add_is_active" name="is_active">
               <option value="1" selected>Active</option>
-              <option value="0">Inactive</option>
+              <option value="">Inactive</option>
             </select>
           </div>
 

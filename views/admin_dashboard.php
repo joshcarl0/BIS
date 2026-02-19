@@ -170,26 +170,21 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Sidebar Toggle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-            const statusLabels = <?= json_encode($statusLabels ?? []) ?>;
-            const statusCounts = <?= json_encode($statusCounts ?? []) ?>;
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+        const statusLabels = <?= json_encode($statusLabels ?? []) ?>;
+        const statusCounts = <?= json_encode($statusCounts ?? []) ?>;
 
-            const incomeLabels = <?= json_encode($incomeLabels ?? []) ?>;
-            const incomeValues = <?= json_encode($incomeValues ?? []) ?>;
-
-            new Chart(document.getElementById('statusChart'), {
-                type: 'pie',
-                data: { labels: statusLabels, datasets: [{ data: statusCounts }] },
-                options: { responsive: true }
-            });
-
-            new Chart(document.getElementById('incomeChart'), {
-                type: 'bar',
-                data: { labels: incomeLabels, datasets: [{ label: 'Income', data: incomeValues }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
-            });
-            </script>
+        // Guard: make sure canvas exists
+        const statusCanvas = document.getElementById('statusChart');
+        if (statusCanvas) {
+        new Chart(statusCanvas, {
+            type: 'pie',
+            data: { labels: statusLabels, datasets: [{ data: statusCounts }] },
+            options: { responsive: true }
+        });
+        }
+        </script>
 
 </body>
 </html>

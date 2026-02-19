@@ -81,7 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_POST['residency_type_id'] = ($_POST['residency_type_id'] ?? '') !== '' ? (int)$_POST['residency_type_id'] : 0;
     $_POST['civil_status_id'] = ($_POST['civil_status_id'] ?? '') !== '' ? (int)$_POST['civil_status_id'] : 0;
 
-    $_POST['household_id'] = ($_POST['household_id'] ?? '') !== '' ? (int)$_POST['household_id'] : null;
+           $hid = (int)($_POST['household_id'] ?? 0);
+
+            // kapag 0 or walang value → gawin NULL
+            $_POST['household_id'] = ($hid > 0) ? $hid : null;
+
+
 
     $selectedGroups = $_POST['special_groups'] ?? [];
     if (!is_array($selectedGroups)) $selectedGroups = [];
@@ -159,7 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // DEACTIVATE
     if ($action === 'deactivate') {
-       $ok = ($id > 0) ? $residentModel->deactivate($id) : false;
+    $id = (int)($_POST['id'] ?? 0);
+    $ok = ($id > 0) ? $residentModel->deactivate($id) : false;
+
 
 if ($ok) {
     $actorId   = $_SESSION['user_id'] ?? null;

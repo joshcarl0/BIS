@@ -23,68 +23,138 @@ public function all() {
 }
 
 
-public function updateStatus($id, $status, $adminId = null, $remarks = null) {
-// for Pending/ Approved/ Rejected/Released
+public function updateStatus($id, $status, $adminId = null, $remarks = null)
+{
+    // normalize
+    $id = (int)$id;
+    $status = ucfirst(strtolower(trim((string)$status)));
 
-    $status = ucfirst(strtolower($status)); 
+    if ($id <= 0) return false;
 
     $approvedAt = null;
     $releasedAt = null;
 
     if ($status === 'Approved') $approvedAt = date('Y-m-d H:i:s');
-        if ($status === 'Released') $releasedAt = date('Y-m-d H:i:s');
+    if ($status === 'Released') $releasedAt = date('Y-m-d H:i:s');
 
-        $sql = "UPDATE document_requests
-                SET status = ?,
-                    approved_at = COALESCE(?, approved_at),
-                    released_at = COALESCE(?, released_at),
-                    processed_by = COALESCE(?, processed_by),
-                    remarks = COALESCE(?, remarks)
-                WHERE id = ?";
+    // 1) UPDATE request status
+    $sql = "UPDATE document_requests
+            SET status = ?,
+                approved_at = COALESCE(?, approved_at),
+                released_at = COALESCE(?, released_at),
+                processed_by = COALESCE(?, processed_by),
+                remarks = COALESCE(?, remarks)
+            WHERE id = ?";
 
-        $stmt = $this->db->prepare($sql);
-        if (!$stmt) return false;
-
-        $stmt->bind_param(
-            "sssssi",
-            $status,
-            $approvedAt,
-            $releasedAt,
-            $adminId,
-            $remarks,
-            $id
-        );
-        return $stmt->execute();
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) {
+        error_log("DocumentRequest::updateStatus prepare failed: " . $this->db->error);
+        return false;
     }
+
+    // NOTE: adminId should be integer or NULL
+    $adminIdParam = ($adminId === null || $adminId === '') ? null : (int)$adminId;
+
+    $stmt->bind_param(
+        "ssissi",
+        $status,
+        $approvedAt,
+        $releasedAt,
+        $adminIdParam,
+        $remarks,
+        $id
+    );
+
+    $ok = $stmt->execute();
+    if (!$ok) {
+        error_log("DocumentRequest::updateStatus execute failed: " . $stmt->error);
+        $stmt->close();
+        return false;
+    }
+    $stmt->close();
+
+    // 2) AUTO INSERT payment kapag Released
+    if ($status === 'Released') {
+
+        // get fee_snapshot
+        $stmt = $this->db->prepare("SELECT fee_snapshot FROM document_requests WHERE id = ? LIMIT 1");
+        if (!$stmt) return true; // status updated already, don't break
+
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $req = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        $fee = (float)($req['fee_snapshot'] ?? 0);
+
+        // check existing payment (avoid duplicate)
+        $stmt = $this->db->prepare("SELECT id FROM payments WHERE request_id = ? LIMIT 1");
+        if (!$stmt) return true;
+
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $existing = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$existing) {
+            $stmt = $this->db->prepare("
+                INSERT INTO payments (request_id, amount, status, paid_at, created_at)
+                VALUES (?, ?, 'Paid', NOW(), NOW())
+            ");
+            if ($stmt) {
+                $stmt->bind_param("id", $id, $fee);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+    }
+
+    return true;
+}
+
 
 public function findById($id)
 {
     $id = (int)$id;
 
-    $sql = "SELECT dr.*,
-                   dr.extra_json,
-                   TRIM(CONCAT(
-                        r.first_name, ' ',
-                        IFNULL(r.middle_name, ''), ' ',
-                        r.last_name, ' ',
-                        IFNULL(r.suffix, '')
-                   )) AS resident_name,
+    $sql = "SELECT 
+                dr.*,
+                dr.extra_json,
 
-                   CONCAT_WS(', ',
-                        NULLIF(r.house_no,''),
-                        NULLIF(r.street,''),
-                        NULLIF(r.barangay,''),
-                        NULLIF(r.city,''),
-                        NULLIF(r.province,'')
-                   ) AS resident_address,
+                -- Full Name
+                TRIM(CONCAT(
+                    r.first_name, ' ',
+                    IFNULL(r.middle_name, ''), ' ',
+                    r.last_name, ' ',
+                    IFNULL(r.suffix, '')
+                )) AS resident_name,
 
-                   dt.name AS document_name,
-                   dt.category AS document_category,
-                   dt.fee AS document_fee,
-                   dt.processing_minutes
+                -- Address (using households + puroks)
+                CONCAT(
+                    h.address_line, ', ',
+                    'Purok ', p.name, ', ',
+                    'Barangay Don Galo'
+                ) AS resident_address,
+
+                dt.name AS document_name,
+                dt.category AS document_category,
+                dt.fee AS document_fee,
+                dt.processing_minutes
+
             FROM document_requests dr
-            LEFT JOIN residents r ON r.id = dr.resident_id
-            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+
+            LEFT JOIN residents r 
+                ON r.id = dr.resident_id
+
+            LEFT JOIN households h 
+                ON h.id = r.household_id
+
+            LEFT JOIN puroks p 
+                ON p.id = h.purok_id
+
+            LEFT JOIN document_types dt 
+                ON dt.id = dr.document_type_id
+
             WHERE dr.id = ?
             LIMIT 1";
 
@@ -178,7 +248,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
         return false;
     }
 
-    // ✅ Clean extra (simple sanitize)
+    //  Clean extra (simple sanitize)
     $cleanExtra = [];
     foreach ($extra as $k => $v) {
         if (is_array($v) || is_object($v)) continue;
@@ -240,7 +310,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
 
     $refNo = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 
-    // ✅ Insert including fee_snapshot + extra_json
+    // Insert including fee_snapshot + extra_json
     $sql = "INSERT INTO document_requests
             (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at, extra_json)
             VALUES (?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
@@ -336,23 +406,35 @@ public function statusCounts()
 
 public function releasedTodayList($dateYmd, $limit = 20)
 {
-        $sql = "SELECT dr.ref_no,
-                CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name,'')) AS resident_name,
-                dt.name AS document_type,
-                dr.amount_paid,
-                dr.released_at
-            FROM document_requests dr
-            JOIN residents r ON r.id = dr.resident_id
-            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-            WHERE dr.status='Released' AND DATE(dr.released_at)=?
-            ORDER BY dr.released_at DESC
-            LIMIT $limit";
-    $stmt = $this->db->prepare($sql);
-    $stmt->bind_param("s", $dateYmd);
-    $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
+    $sql = "
+        SELECT
+            dr.ref_no,
+            CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name,'')) AS resident_name,
+            dt.name AS document_type,
+            COALESCE(p.amount, dr.fee_snapshot, 0) AS amount_paid,
+            dr.released_at
+        FROM document_requests dr
+        JOIN residents r ON r.id = dr.resident_id
+        LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+        LEFT JOIN payments p ON p.request_id = dr.id
+        WHERE dr.status='Released'
+          AND DATE(dr.released_at)=?
+        ORDER BY dr.released_at DESC
+        LIMIT ?
+    ";
 
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) return [];
+
+    $stmt->bind_param("si", $dateYmd, $limit);
+    $stmt->execute();
+
+    $res = $stmt->get_result();
+    $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    $stmt->close();
+
+    return $rows;
+}
 
 
 

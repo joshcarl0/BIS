@@ -301,6 +301,11 @@ class Resident
         };
 
         $household_id = $getInt("household_id", null);
+
+            if ($household_id !== null && $household_id <= 0) {
+                $household_id = null;
+            }
+
         $purok_id = $getInt("purok_id", 0);
         $residency_type_id = $getInt("residency_type_id", 0);
 
@@ -325,7 +330,7 @@ class Resident
         $is_head_of_household = !empty($data["is_head_of_household"]) ? 1 : 0;
         $is_active = isset($data["is_active"]) ? (int)$data["is_active"] : 1;
 
-        // ✅ 19 params -> 19 types
+        //  19 params -> 19 types
         $stmt->bind_param(
             "iiissssssisssiiiiii",
             $household_id,

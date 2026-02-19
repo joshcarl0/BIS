@@ -19,7 +19,7 @@ body {
    BACKGROUND
 ========================= */
 body {
-    background: linear-gradient(135deg, #1c2e81 20%, #d6d5d7 80%);
+    background: linear-gradient(135deg, #dcb611 20%, #d6d5d7 80%);
     display: flex;
     flex-direction: column;
 }
