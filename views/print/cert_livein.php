@@ -1,12 +1,12 @@
 <?php
-// cert_livein.php (CONTENT ONLY)
-
 $extra = json_decode($doc['extra_json'] ?? '{}', true) ?: [];
 
 $partner_name = $extra['partner_name'] ?? '';
 $since        = $extra['since'] ?? '';
 
-function esc($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('esc')) {
+    function esc($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+}
 ?>
 
 <p>

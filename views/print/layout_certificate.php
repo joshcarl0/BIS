@@ -24,7 +24,7 @@ $imgBagong   = '../../BIS/assets/images/bagong_pilipinas.png';
 $fontOldEnglish = '../../BIS/assets/fonts/UnifrakturCook-Bold.ttf';
 
 // allow basic html for paragraphs
-$allowedTags = '<p><br><b><strong><i><em><u><span><small>';
+$allowedTags = '<p><br><b><strong><i><em><u><span><small><div><table><thead><tbody><tr><td><th><ul><ol><li>';
 $safeContent = strip_tags((string)$content, $allowedTags);
 ?>
 <!DOCTYPE html>
@@ -53,12 +53,7 @@ body.cert-layout{
 }
 
 /* Page wrapper (FLOW BASED) */
-.page{
-  width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  position: relative;
-}
+.page{ width: 100%; }
 
 /* ===== HEADER ===== */
 .header{
@@ -144,12 +139,26 @@ body.cert-layout{
 .content{
   margin-top:12mm;
   padding:0 12mm;
-  line-height:1.9;
+  line-height:1.8;
   text-align:left;
 }
 .content p{
   text-indent:14mm;
-  margin:0 0 10mm 0;
+  margin:0 0 7mm 0;
+}
+.content table{
+  width:100%;
+  border-collapse:collapse;
+  margin:0 0 7mm 0;
+}
+.content td,
+.content th{
+  padding:1.2mm 0;
+  vertical-align:top;
+}
+.content ul,
+.content ol{
+  margin: 0 0 7mm 20mm;
 }
 
 /* signature */
@@ -165,7 +174,7 @@ body.cert-layout{
 
 /* receipt (FLOW BASED - NO OVERLAP) */
 .receipt{
-  margin-top: 10mm;
+  margin-top: 12mm;
   width: 85mm;
   margin-left: auto;
   font-size:10.5pt;
@@ -179,13 +188,13 @@ body.cert-layout{
 .receipt .label{ width: 30mm; white-space: nowrap; }
 .receipt .line{
   flex: 1;
-  height: 6mm;
-  position: relative;
+  min-height: 6mm;
+  border-bottom: 1px solid #111;
+  text-align: right;
+  padding-top: 1mm;
 }
 .receipt .value{
-  position:absolute;
-  right:0;
-  bottom:1px;
+  display: inline-block;
   font-weight:700;
 }
 
