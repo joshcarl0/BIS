@@ -185,17 +185,20 @@ if ($ok) {
 }
 
 /* =========================
-   LIST
+            LIST
 ========================= */
 $q = trim($_GET['q'] ?? '');
 $page = (int)($_GET['page'] ?? 1);
 
-//  list with group names (optional display)
-$list = $residentModel->getPaginatedWithGroups($q, $page, 10);
+$status = $_GET['status'] ?? 'all';
+$status = in_array($status, ['active','inactive','all'], true) ? $status : 'all';
 
-//  attach group ids CSV per resident (for edit modal auto-check)
+$list = $residentModel->getPaginatedWithGroups($q, $page, 10, $status);
+
+// attach group ids CSV per resident (for edit modal auto-check)
 $ids = array_map(fn($row) => (int)$row['id'], $list['rows']);
 $map = [];
+
 if (!empty($ids)) {
     $in = implode(',', $ids);
     $sql = "SELECT resident_id, GROUP_CONCAT(group_id ORDER BY group_id SEPARATOR ',') AS ids
@@ -208,6 +211,7 @@ if (!empty($ids)) {
             $map[(int)$row['resident_id']] = $row['ids'] ?? '';
         }
     }
+
     foreach ($list['rows'] as &$row) {
         $rid = (int)$row['id'];
         $row['special_group_ids_csv'] = $map[$rid] ?? '';
@@ -215,16 +219,15 @@ if (!empty($ids)) {
     unset($row);
 }
 
+/* ==== BUILD DATA PROPERLY ==== */
 $data = [];
 $data['q'] = $q;
+$data['status'] = $status;   // ← IMPORTANT (dito ilagay)
 $data['list'] = $list;
 
-// lookups
 $data['civil_statuses'] = $civil_statuses;
 $data['puroks'] = $puroks;
 $data['residency_types'] = $residency_types;
-
-//  for checkboxes
 $data['special_groups'] = $special_groups;
 
 // LOAD VIEW

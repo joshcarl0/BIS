@@ -90,78 +90,106 @@ class Resident
         ];
     }
 
+    public function activate(int $id) : bool
+    {
+
+        $sql = "UPDATE {$this->table} SET is_active = 1 WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+
+    $stmt->bind_param("i", $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+
+    return $ok;
+
+
+    }
+
     /**
      * List residents + special_groups string
      */
-    public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPage = 10): array
-    {
-        $page = max(1, $page);
-        $perPage = max(1, min(100, $perPage));
-        $offset = ($page - 1) * $perPage;
+public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPage = 10, string $status = 'all'): array
+{
+    $page = max(1, $page);
+    $perPage = max(1, min(100, $perPage));
+    $offset = ($page - 1) * $perPage;
 
-        $where = " WHERE r.is_active = 1 ";
-        $params = [];
-        $types = "";
+    // status: active | inactive | all
+    $status = in_array($status, ['active', 'inactive', 'all'], true) ? $status : 'all';
 
-        if ($q !== '') {
-            $where .= " AND (
-                CAST(r.id AS CHAR) LIKE ?
-                OR r.last_name LIKE ?
-                OR r.first_name LIKE ?
-                OR r.email LIKE ?
-                OR r.contact_number LIKE ?
-            ) ";
-            $like = "%{$q}%";
-            $params = [$like, $like, $like, $like, $like];
-            $types = "sssss";
-        }
+    $where = " WHERE 1=1 ";
+    $params = [];
+    $types = "";
 
-        // COUNT
-        $sqlCount = "SELECT COUNT(*) as total FROM {$this->table} r {$where}";
-        $stmt = $this->conn->prepare($sqlCount);
-        if (!$stmt) return $this->emptyList();
-        if ($types) $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $total = (int)($stmt->get_result()->fetch_assoc()['total'] ?? 0);
-        $stmt->close();
+    // FILTER by status
+    if ($status === 'active') {
+        $where .= " AND r.is_active = 1 ";
+    } elseif ($status === 'inactive') {
+        $where .= " AND r.is_active = 0 ";
+    } // all = no filter
 
-        // ROWS + groups
-        $sql = "SELECT
-                    r.*,
-                    GROUP_CONCAT(sg.name ORDER BY sg.name SEPARATOR ', ') AS special_groups
-                FROM {$this->table} r
-                LEFT JOIN {$this->tblResidentSpecialGroups} rsg ON rsg.resident_id = r.id
-                LEFT JOIN {$this->tblSpecialGroups} sg ON sg.id = rsg.group_id
-                {$where}
-                GROUP BY r.id
-                ORDER BY r.created_at DESC
-                LIMIT ? OFFSET ?";
-
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return $this->emptyList();
-
-        if ($types) {
-            $types2 = $types . "ii";
-            $params2 = array_merge($params, [$perPage, $offset]);
-            $stmt->bind_param($types2, ...$params2);
-        } else {
-            $stmt->bind_param("ii", $perPage, $offset);
-        }
-
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        $pages = (int)ceil($total / $perPage);
-
-        return [
-            "rows" => $rows,
-            "total" => $total,
-            "page" => $page,
-            "perPage" => $perPage,
-            "pages" => max(1, $pages)
-        ];
+    // SEARCH
+    if ($q !== '') {
+        $where .= " AND (
+            CAST(r.id AS CHAR) LIKE ?
+            OR r.last_name LIKE ?
+            OR r.first_name LIKE ?
+            OR r.email LIKE ?
+            OR r.contact_number LIKE ?
+        ) ";
+        $like = "%{$q}%";
+        $params = [$like, $like, $like, $like, $like];
+        $types = "sssss";
     }
+
+    // COUNT (IMPORTANT: count distinct residents, because joins can duplicate)
+    $sqlCount = "SELECT COUNT(DISTINCT r.id) as total FROM {$this->table} r {$where}";
+    $stmt = $this->conn->prepare($sqlCount);
+    if (!$stmt) return $this->emptyList();
+
+    if ($types) $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $total = (int)($stmt->get_result()->fetch_assoc()['total'] ?? 0);
+    $stmt->close();
+
+    // ROWS + groups
+    $sql = "SELECT
+                r.*,
+                GROUP_CONCAT(sg.name ORDER BY sg.name SEPARATOR ', ') AS special_groups
+            FROM {$this->table} r
+            LEFT JOIN {$this->tblResidentSpecialGroups} rsg ON rsg.resident_id = r.id
+            LEFT JOIN {$this->tblSpecialGroups} sg ON sg.id = rsg.group_id
+            {$where}
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+            LIMIT ? OFFSET ?";
+
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return $this->emptyList();
+
+    if ($types) {
+        $types2 = $types . "ii";
+        $params2 = array_merge($params, [$perPage, $offset]);
+        $stmt->bind_param($types2, ...$params2);
+    } else {
+        $stmt->bind_param("ii", $perPage, $offset);
+    }
+
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $pages = (int)ceil($total / $perPage);
+
+    return [
+        "rows" => $rows,
+        "total" => $total,
+        "page" => $page,
+        "perPage" => $perPage,
+        "pages" => max(1, $pages)
+    ];
+}
 
     private function emptyList(): array
     {

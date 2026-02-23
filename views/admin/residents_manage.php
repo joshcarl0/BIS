@@ -72,106 +72,170 @@
         }
       ?>
 
-      <!-- Search -->
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <form class="row g-2" method="GET" action="/BIS/controller/residents_manage.php">
-            <div class="col-md-8">
-              <input class="form-control" name="q" value="<?= htmlspecialchars($data['q'] ?? '') ?>"
-                     placeholder="Search ID, name, email, contact...">
-            </div>
-            <div class="col-md-2">
-              <button class="btn btn-primary w-100"><i class="bi bi-search"></i> Search</button>
-            </div>
-            <div class="col-md-2">
-              <a class="btn btn-outline-secondary w-100" href="/BIS/controller/residents_manage.php">Reset</a>
-            </div>
-          </form>
-        </div>
+<?php
+  $status = $data['status'] ?? 'all';
+  $qv = $data['q'] ?? '';
+?>
+
+<!-- SEARCH + STATUS DROPDOWN -->
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form class="row g-2 align-items-center"
+          method="GET"
+          action="/BIS/controller/residents_manage.php">
+
+      
+
+      <!-- SEARCH INPUT -->
+      <div class="col-md-5">
+        <input class="form-control"
+               name="q"
+               value="<?= htmlspecialchars($qv) ?>"
+               placeholder="Search ID, name, email, contact...">
       </div>
 
-      <!-- Table -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Sex</th>
-                  <th>Birthdate</th>
-                  <th>Purok</th>
-                  <th>Residency Type</th>
-                  <th>Household</th>
-                  <th>Special Groups</th>
-                  <th>Active</th>
-                  <th style="width: 240px;">Actions</th>
-                </tr>
-              </thead>
+      <!-- STATUS DROPDOWN -->
+      <div class="col-md-3">
+        <select class="form-select"
+                name="status"
+                onchange="this.form.submit()">
 
-              <tbody>
-                <?php if (empty($data['list']['rows'])): ?>
-                  <tr>
-                    <td colspan="10" class="text-center text-muted py-4">No residents found.</td>
-                  </tr>
-                <?php else: ?>
-                  <?php foreach ($data['list']['rows'] as $r): ?>
-                    <?php
-                      $fullname = trim(
-                        ($r['last_name'] ?? '') . ', ' .
-                        ($r['first_name'] ?? '') . ' ' .
-                        ($r['middle_name'] ?? '') . ' ' .
-                        ($r['suffix'] ?? '')
-                      );
+          <option value="active"
+            <?= $status === 'active' ? 'selected' : '' ?>>
+            Active
+          </option>
 
-                      $isActive = (int)($r['is_active'] ?? 0) === 1;
+          <option value="inactive"
+            <?= $status === 'inactive' ? 'selected' : '' ?>>
+            Deactivated
+          </option>
 
-                      $purokName = $purokMap[(int)($r['purok_id'] ?? 0)] ?? ($r['purok_id'] ?? '');
-                      $resTypeName = $resTypeMap[(int)($r['residency_type_id'] ?? 0)] ?? ($r['residency_type_id'] ?? '');
-                      $groupsText = $r['special_groups'] ?? '';
-                      $groupsCsv  = $r['special_group_ids_csv'] ?? '';
-                    ?>
-                    <tr>
-                      <td><?= (int)($r['id'] ?? 0) ?></td>
-                      <td><?= htmlspecialchars($fullname) ?></td>
-                      <td><?= htmlspecialchars($r['sex'] ?? '') ?></td>
-                      <td><?= htmlspecialchars($r['birthdate'] ?? '') ?></td>
-                      <td><?= htmlspecialchars($purokName) ?></td>
-                      <td><?= htmlspecialchars($resTypeName) ?></td>
-                      <td><?= htmlspecialchars($r['household_id'] ?? '') ?></td>
-                      <td><?= htmlspecialchars($groupsText) ?></td>
-                      <td>
-                        <span class="badge <?= $isActive ? 'bg-success' : 'bg-secondary' ?>">
-                          <?= $isActive ? 'Active' : 'Inactive' ?>
-                        </span>
-                      </td>
-                      <td class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary btn-edit"
+          <option value="all"
+            <?= $status === 'all' ? 'selected' : '' ?>>
+            All
+          </option>
+
+        </select>
+      </div>
+
+      <!-- SEARCH BUTTON -->
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+
+      <!-- RESET -->
+      <div class="col-md-2">
+        <a class="btn btn-outline-secondary w-100"
+           href="/BIS/controller/residents_manage.php?status=all">
+          Reset
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Sex</th>
+            <th>Birthdate</th>
+            <th>Purok</th>
+            <th>Residency Type</th>
+            <th>Household</th>
+            <th>Special Groups</th>
+            <th>Status</th>
+            <th style="width:240px;">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <?php if (empty($data['list']['rows'])): ?>
+            <tr>
+              <td colspan="10" class="text-center text-muted py-4">
+                No residents found.
+              </td>
+            </tr>
+          <?php else: ?>
+            <?php foreach ($data['list']['rows'] as $r): ?>
+              <?php
+                $fullname = trim(
+                  ($r['last_name'] ?? '') . ', ' .
+                  ($r['first_name'] ?? '') . ' ' .
+                  ($r['middle_name'] ?? '') . ' ' .
+                  ($r['suffix'] ?? '')
+                );
+
+                $isActive = (int)($r['is_active'] ?? 0) === 1;
+
+                $purokName = $purokMap[(int)($r['purok_id'] ?? 0)] ?? '';
+                $resTypeName = $resTypeMap[(int)($r['residency_type_id'] ?? 0)] ?? '';
+                $groupsText = $r['special_groups'] ?? '';
+                $groupsCsv  = $r['special_group_ids_csv'] ?? '';
+              ?>
+              <tr>
+                <td><?= (int)$r['id'] ?></td>
+                <td><?= htmlspecialchars($fullname) ?></td>
+                <td><?= htmlspecialchars($r['sex'] ?? '') ?></td>
+                <td><?= htmlspecialchars($r['birthdate'] ?? '') ?></td>
+                <td><?= htmlspecialchars($purokName) ?></td>
+                <td><?= htmlspecialchars($resTypeName) ?></td>
+                <td><?= htmlspecialchars($r['household_id'] ?? '') ?></td>
+                <td><?= htmlspecialchars($groupsText) ?></td>
+                <td>
+                  <span class="badge <?= $isActive ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= $isActive ? 'Active' : 'Inactive' ?>
+                  </span>
+                </td>
+                <td class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-primary btn-edit"
                           data-bs-toggle="modal"
                           data-bs-target="#editResidentModal"
                           data-groups="<?= htmlspecialchars($groupsCsv) ?>"
                           data-resident='<?= htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8") ?>'>
-                          <i class="bi bi-pencil"></i> Edit
-                        </button>
+                    <i class="bi bi-pencil"></i> Edit
+                  </button>
 
-                        <form method="POST" action="/BIS/controller/residents_manage.php"
-                              onsubmit="return confirm('Deactivate this resident?');">
-                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
-                          <input type="hidden" name="action" value="deactivate">
-                          <input type="hidden" name="id" value="<?= (int)($r['id'] ?? 0) ?>">
-                          <button class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-person-x"></i> Deactivate
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-
+                  <?php if ($isActive): ?>
+                    <form method="POST"
+                          action="/BIS/controller/residents_manage.php"
+                          onsubmit="return confirm('Deactivate this resident?');">
+                      <input type="hidden" name="csrf_token"
+                              value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                      <input type="hidden" name="action" value="deactivate">
+                      <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                      <button class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-person-x"></i> Deactivate
+                      </button>
+                    </form>
+                  <?php else: ?>
+                    <form method="POST"
+                          action="/BIS/controller/residents_manage.php"
+                          onsubmit="return confirm('Activate this resident?');">
+                      <input type="hidden" name="csrf_token"
+                            value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                      <input type="hidden" name="action" value="activate">
+                      <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                      <button class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-person-check"></i> Activate
+                      </button>
+                    </form>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
           <!-- Pagination -->
           <?php
             $pages = (int)($data['list']['pages'] ?? 1);
