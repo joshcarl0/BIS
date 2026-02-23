@@ -1,12 +1,14 @@
 <?php
-// cert_residency.php (CONTENT ONLY)
+if (!function_exists('esc')) {
+    function esc($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+}
 ?>
 
 <p>
   This is to certify that 
-  <strong><?= htmlspecialchars($resident_name) ?></strong>, 
+  <strong><?= esc($resident_name) ?></strong>, 
   of legal age, is a bona fide resident of this barangay with postal address at 
-  <strong><?= htmlspecialchars($resident_address) ?></strong>, 
+  <strong><?= esc($resident_address) ?></strong>, 
   Barangay Don Galo, City of Parañaque.
 </p>
 
