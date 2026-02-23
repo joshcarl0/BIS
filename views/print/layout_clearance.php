@@ -24,20 +24,22 @@ $officials = $officials ?? [
   ['name'=>'Luzviminda DG. Aquino', 'role'=>'Barangay Treasurer'],
 ];
 
-function renderOfficials(array $officials): string {
-  $out = '';
-  foreach ($officials as $o) {
-    if (isset($o['heading'])) {
-      $out .= '<div class="cap">'.htmlspecialchars($o['heading']).'</div>';
-      continue;
+if (!function_exists('renderOfficials')) {
+  function renderOfficials(array $officials): string {
+    $out = '';
+    foreach ($officials as $o) {
+      if (isset($o['heading'])) {
+        $out .= '<div class="cap">'.htmlspecialchars($o['heading']).'</div>';
+        continue;
+      }
+      $out .= '<div class="person">';
+      $out .= '<div class="name">'.htmlspecialchars($o['name'] ?? '').'</div>';
+      if (!empty($o['role'])) $out .= '<div class="role">'.htmlspecialchars($o['role']).'</div>';
+      if (!empty($o['committee'])) $out .= '<div class="committee">'.htmlspecialchars($o['committee']).'</div>';
+      $out .= '</div>';
     }
-    $out .= '<div class="person">';
-    $out .= '<div class="name">'.htmlspecialchars($o['name'] ?? '').'</div>';
-    if (!empty($o['role'])) $out .= '<div class="role">'.htmlspecialchars($o['role']).'</div>';
-    if (!empty($o['committee'])) $out .= '<div class="committee">'.htmlspecialchars($o['committee']).'</div>';
-    $out .= '</div>';
+    return $out;
   }
-  return $out;
 }
 ?>
 <!DOCTYPE html>

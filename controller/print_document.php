@@ -64,15 +64,56 @@ $type = strtolower(trim($doc['document_name'] ?? ''));
 
 if (strpos($type, 'clearance') !== false) {
     $file = 'cert_clearance.php';
+    $layout = 'layout_clearance.php';
+    $pdfName = 'barangay_clearance.pdf';
 } elseif (strpos($type, 'cohabitation') !== false || strpos($type, 'live in') !== false) {
     $file = 'cert_livein.php';
+    $layout = 'layout_certificate.php';
+    $pdfName = 'cert_livein.pdf';
 } elseif (strpos($type, 'guardian') !== false) {
     $file = 'cert_guardian.php';
+    $layout = 'layout_certificate.php';
+    $pdfName = 'cert_guardian.pdf';
 } elseif (strpos($type, 'residency') !== false) {
     $file = 'cert_residency.php';
+    $layout = 'layout_certificate.php';
+    $pdfName = 'cert_residency.pdf';
 } else {
-    $file = 'cert_residency.php'; // fallback
+    $file = 'cert_residency.php';
+    $layout = 'layout_certificate.php';
+    $pdfName = 'certificate.pdf';
 }
 
-require_once __DIR__ . '/../views/print/' . $file;
+/* ======= RENDER HTML THEN PDF ======= */
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
+// 1) render content template -> $content
+ob_start();
+require __DIR__ . '/../views/print/' . $file;
+$content = ob_get_clean();
+
+// 2) wrap with layout -> $html
+$title = $doc['document_name'] ?? 'Document';
+
+ob_start();
+require __DIR__ . '/../views/print/' . $layout;
+$html = ob_get_clean();
+
+// 3) dompdf
+$chroot = realpath(__DIR__ . '/..'); // BIS root folder
+
+$options = new Options();
+$options->set('isRemoteEnabled', true);
+$options->set('isHtml5ParserEnabled', true);
+$options->setChroot($chroot); // IMPORTANT: allow local images
+
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'portrait');
+$dompdf->render();
+
+$dompdf->stream($pdfName, ['Attachment' => false]);
 exit;

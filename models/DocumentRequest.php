@@ -119,7 +119,9 @@ public function findById($id)
 
     $sql = "SELECT 
                 dr.*,
-                dr.extra_json,
+
+                -- dynamic extra data for this request (JSON)
+                dr.extra_data_json,
 
                 -- Full Name
                 TRIM(CONCAT(
@@ -139,7 +141,11 @@ public function findById($id)
                 dt.name AS document_name,
                 dt.category AS document_category,
                 dt.fee AS document_fee,
-                dt.processing_minutes
+                dt.processing_minutes,
+
+                -- template routing + form config (JSON)
+                dt.template_key,
+                dt.extra_fields_json
 
             FROM document_requests dr
 
@@ -159,13 +165,17 @@ public function findById($id)
             LIMIT 1";
 
     $stmt = $this->db->prepare($sql);
+    if (!$stmt) {
+        error_log("DocumentRequest::findById prepare failed: " . $this->db->error);
+        return null;
+    }
+
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
     $res = $stmt->get_result();
     return $res ? $res->fetch_assoc() : null;
 }
-
 
 public function search($keyword = '')
 {
