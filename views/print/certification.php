@@ -1,20 +1,21 @@
-<?php ob_start(); ?>
+<?php
+if (!function_exists('esc')) {
+    function esc($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+}
+?>
 
-This is to certify that <b><?= $resident_name ?></b>, of legal age,
-Filipino, with present address at <b><?= $resident_address ?></b>,
+<p>
+This is to certify that <strong><?= esc($resident_name) ?></strong>, of legal age,
+Filipino, with present address at <strong><?= esc($resident_address) ?></strong>,
 Barangay Don Galo, City of Parañaque.
+</p>
 
-<br><br>
-
+<p>
 This certification is being issued upon the request of the above-named
 person for whatever legal purpose it may serve.
+</p>
 
-<br><br>
-
-Issued this <b><?= date('j') ?></b> day of <b><?= date('F Y') ?></b>
+<p>
+Issued this <strong><?= date('j') ?></strong> day of <strong><?= date('F Y') ?></strong>
 in Barangay Don Galo, City of Parañaque.
-
-<?php
-$title = "CERTIFICATION";
-$content = ob_get_clean();
-require __DIR__ . "/layout.php";
+</p>
