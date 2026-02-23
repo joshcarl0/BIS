@@ -23,9 +23,22 @@ $imgBagong   = '../../BIS/assets/images/bagong_pilipinas.png';
 // Optional font (place file under /assets/fonts/)
 $fontOldEnglish = '../../BIS/assets/fonts/UnifrakturCook-Bold.ttf';
 
-// allow basic html for paragraphs
-$allowedTags = '<p><br><b><strong><i><em><u><span><small>';
+$allowedTags = '<p><br><b><strong><i><em><u><span><small><div><table><thead><tbody><tr><td><th><ul><ol><li>';
 $safeContent = strip_tags((string)$content, $allowedTags);
+
+$plainLength = function_exists('mb_strlen') ? mb_strlen(trim(strip_tags((string)$safeContent))) : strlen(trim(strip_tags((string)$safeContent)));
+
+$docTitleLc = strtolower((string)$doc_title);
+$isLivein = strpos($docTitleLc, 'cohabitation') !== false || strpos($docTitleLc, 'live') !== false;
+$isGuardian = strpos($docTitleLc, 'guardian') !== false;
+$compactClass = '';
+
+if ($isLivein || $plainLength > 530) {
+    $compactClass = ' compact';
+}
+if ($plainLength > 760 || ($isGuardian && $plainLength > 620)) {
+    $compactClass .= ' ultra-compact';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,17 +47,16 @@ $safeContent = strip_tags((string)$content, $allowedTags);
 <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 
 <style>
-@page { size: A4; margin: 18mm; }
+@page { size: A4; margin: 14mm 14mm 12mm; }
 *{ box-sizing:border-box; }
 html, body { margin:0; padding:0; }
 
 body.cert-layout{
   font-family: "Times New Roman", serif;
-  font-size: 12pt;
+  font-size: 11pt;
   color:#111;
 }
 
-/* Chroot-safe font face (no file://) */
 @font-face{
   font-family: "OldEnglishLocal";
   src: url("<?= htmlspecialchars($fontOldEnglish, ENT_QUOTES, 'UTF-8') ?>") format("truetype");
@@ -52,18 +64,13 @@ body.cert-layout{
   font-style: normal;
 }
 
-/* Page wrapper (FLOW BASED) */
 .page{
-  width: 210mm;
-  min-height: 297mm;
-  margin: 0 auto;
-  position: relative;
+  width:100%;
 }
 
-/* ===== HEADER ===== */
 .header{
   text-align:center;
-  margin-top:2mm;
+  margin-top:0;
 }
 
 .hdr{
@@ -72,135 +79,207 @@ body.cert-layout{
   border-collapse: collapse;
 }
 .hdr td{ padding:0; vertical-align: middle; }
-.hdr tr{ height: 36mm; }
+.hdr tr{ height: 27mm; }
 
-.td-seal{ width:26mm; text-align:center; }
+.td-seal{ width:22mm; text-align:center; }
 .td-text{ text-align:center; }
-.td-right-logos{ width:52mm; text-align:center; }
+.td-right-logos{ width:44mm; text-align:center; }
 
 .right-logos{ display:inline-block; white-space:nowrap; }
 .right-logos img{ display:inline-block; vertical-align:middle; }
 
-/* logos */
-.logo-seal{ width:20mm; height:auto; display:block; margin:0 auto; }
-.logo-bagong{ width:26mm; height:auto; display:block; margin:0 auto; }
+.logo-seal{ width:18mm; height:auto; display:block; margin:0 auto; }
+.logo-bagong{ width:22mm; height:auto; display:block; margin:0 auto; }
 
-/* header text */
 .rp{
   font-family: "OldEnglishLocal", "Times New Roman", serif;
-  font-size: 16pt;
-  font-weight: normal;
-  letter-spacing: 1px;
+  font-size: 14pt;
+  letter-spacing: 0.7px;
+  line-height:1;
 }
 .city{
   font-family: "OldEnglishLocal", "Times New Roman", serif;
-  font-size:14pt;
-  font-weight: normal;
-  margin-top:1mm;
-  line-height:1.1;
-  letter-spacing: 0.5px;
+  font-size:12pt;
+  margin-top:0.5mm;
+  line-height:1;
 }
 .brgy{
-  font-size:26pt;
+  font-size:23pt;
   font-weight:800;
   color:#1b4f9c;
-  margin:1mm 0;
-  white-space: nowrap;
-  line-height:1.05;
+  margin:0.7mm 0;
+  line-height:1;
 }
 .addr{
-  font-size:9.5pt;
-  line-height:1.2;
+  font-size:8.5pt;
+  line-height:1.1;
 }
 
-/* dual line like sample */
 .header-line{
-  margin-top:4mm;
-  border-top: 2px solid #1e4fa8;
-  border-bottom: 1.5px solid #d8b100;
+  margin-top:2.2mm;
+  border-top: 1.6px solid #1e4fa8;
+  border-bottom: 1.2px solid #d8b100;
   height:0;
 }
 
-/* watermark */
 .watermark{
   position: fixed;
-  top: 55%;
+  top: 54%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 160mm;
-  opacity: 0.08;
+  width: 148mm;
+  opacity: 0.07;
   z-index: -1;
 }
 
-/* title */
 .doc-title{
   text-align:center;
-  margin-top:14mm;
-  font-size:20pt;
+  margin-top:8mm;
+  font-size:17.5pt;
+  letter-spacing:1px;
   font-weight:800;
 }
 
-/* content */
 .content{
-  margin-top:12mm;
-  padding:0 12mm;
-  line-height:1.9;
+  margin-top:7mm;
+  padding:0 7mm;
+  line-height:1.55;
   text-align:left;
 }
 .content p{
-  text-indent:14mm;
-  margin:0 0 10mm 0;
+  text-indent:10mm;
+  margin:0 0 4.3mm 0;
+}
+.content table{
+  width:100%;
+  border-collapse:collapse;
+  margin:0 0 4.1mm 0;
+}
+.content td,
+.content th{
+  padding:0.8mm 0;
+  vertical-align:top;
+}
+.content td:first-child,
+.content th:first-child{
+  width:44mm;
+  white-space:nowrap;
+}
+.content ul,
+.content ol{
+  margin:0 0 4mm 14mm;
 }
 
-/* signature */
 .signature{
   text-align:right;
-  margin-top:20mm;
-  padding-right:25mm;
+  margin-top:8mm;
+  padding-right:16mm;
+  line-height:1.22;
 }
 .signature .name{
   font-weight:800;
   text-decoration:underline;
+  font-size:13pt;
 }
 
-/* receipt (FLOW BASED - NO OVERLAP) */
 .receipt{
-  margin-top: 10mm;
-  width: 85mm;
-  margin-left: auto;
-  font-size:10.5pt;
+  margin-top:5.2mm;
+  width:72mm;
+  margin-left:auto;
+  font-size:10.2pt;
+  line-height:1.08;
 }
-.receipt .row{
-  display:flex;
-  align-items:flex-end;
-  gap:4mm;
-  margin: 3mm 0;
+.receipt table{
+  width:100%;
+  border-collapse:collapse;
 }
-.receipt .label{ width: 30mm; white-space: nowrap; }
-.receipt .line{
-  flex: 1;
-  height: 6mm;
-  position: relative;
+.receipt td{
+  padding:1.1mm 0;
+  vertical-align:bottom;
 }
-.receipt .value{
-  position:absolute;
-  right:0;
-  bottom:1px;
-  font-weight:700;
+.receipt .label{
+  width:33mm;
+  white-space:nowrap;
+}
+.receipt .value-cell{
+  border-bottom:1px solid #111;
+  text-align:right;
+  min-width:34mm;
 }
 
-/* bottom note (FLOW BASED) */
 .bottom-left{
-  margin-top: 12mm;
-  padding-left: 12mm;
-  font-size:10.5pt;
-  line-height:1.4;
+  margin-top:4.2mm;
+  padding-left:7mm;
+  font-size:10pt;
+  line-height:1.2;
+}
+
+/* Compact mode for long content: keep single page without overlap */
+.page.compact{
+  font-size:10.4pt;
+}
+.page.compact .doc-title{
+  margin-top:6mm;
+  font-size:16pt;
+}
+.page.compact .content{
+  margin-top:5.2mm;
+  line-height:1.43;
+}
+.page.compact .content p{
+  margin-bottom:3mm;
+}
+.page.compact .content table{
+  margin-bottom:3mm;
+}
+.page.compact .signature{
+  margin-top:6mm;
+}
+.page.compact .receipt{
+  margin-top:4.2mm;
+  width:69mm;
+}
+.page.compact .bottom-left{
+  margin-top:3.6mm;
+  font-size:9.5pt;
+}
+
+.page.ultra-compact{
+  font-size:9.9pt;
+}
+.page.ultra-compact .doc-title{
+  margin-top:5mm;
+  font-size:15pt;
+}
+.page.ultra-compact .content{
+  margin-top:4.3mm;
+  line-height:1.34;
+}
+.page.ultra-compact .content p{
+  margin-bottom:2.3mm;
+}
+.page.ultra-compact .content td,
+.page.ultra-compact .content th{
+  padding:0.45mm 0;
+}
+.page.ultra-compact .signature{
+  margin-top:4.8mm;
+  padding-right:14mm;
+}
+.page.ultra-compact .receipt{
+  margin-top:3.5mm;
+  width:67mm;
+  font-size:9.6pt;
+}
+.page.ultra-compact .bottom-left{
+  margin-top:3.1mm;
+  font-size:9pt;
 }
 </style>
 </head>
 
 <body class="cert-layout">
-<div class="page">
+<div class="page<?= htmlspecialchars($compactClass, ENT_QUOTES, 'UTF-8') ?>">
 
   <img src="<?= htmlspecialchars($imgBarangay, ENT_QUOTES, 'UTF-8') ?>" class="watermark" alt="">
 
@@ -243,27 +322,29 @@ body.cert-layout{
   </div>
 
   <div class="receipt">
-    <div class="row">
-      <div class="label">Brgy. Cert. No:</div>
-      <div class="line"><span class="value"><?= htmlspecialchars($cert_no, ENT_QUOTES, 'UTF-8') ?></span></div>
-    </div>
-    <div class="row">
-      <div class="label">Official Receipt:</div>
-      <div class="line"><span class="value"><?= htmlspecialchars($or_no, ENT_QUOTES, 'UTF-8') ?></span></div>
-    </div>
-    <div class="row">
-      <div class="label">Amount:</div>
-      <div class="line"><span class="value"><?= htmlspecialchars($amount, ENT_QUOTES, 'UTF-8') ?></span></div>
-    </div>
-    <div class="row">
-      <div class="label">Date Paid:</div>
-      <div class="line"><span class="value"><?= htmlspecialchars($date_paid, ENT_QUOTES, 'UTF-8') ?></span></div>
-    </div>
+    <table>
+      <tr>
+        <td class="label">Brgy. Cert. No:</td>
+        <td class="value-cell"><?= htmlspecialchars($cert_no, ENT_QUOTES, 'UTF-8') ?></td>
+      </tr>
+      <tr>
+        <td class="label">Official Receipt:</td>
+        <td class="value-cell"><?= htmlspecialchars($or_no, ENT_QUOTES, 'UTF-8') ?></td>
+      </tr>
+      <tr>
+        <td class="label">Amount:</td>
+        <td class="value-cell"><?= htmlspecialchars($amount, ENT_QUOTES, 'UTF-8') ?></td>
+      </tr>
+      <tr>
+        <td class="label">Date Paid:</td>
+        <td class="value-cell"><?= htmlspecialchars($date_paid, ENT_QUOTES, 'UTF-8') ?></td>
+      </tr>
+    </table>
   </div>
 
   <div class="bottom-left">
     <div><b>NOTE:</b> Not valid without official seal.</div>
-    <div><b>This Certificate is valid for ninety (90) days</b> from the date of issuance.</div>
+    <div>This Certificate is only valid for ninety (90) days from the date of issuance.</div>
   </div>
 
 </div>

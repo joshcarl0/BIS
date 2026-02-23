@@ -78,8 +78,12 @@ if (strpos($type, 'clearance') !== false) {
     $file = 'cert_residency.php';
     $layout = 'layout_certificate.php';
     $pdfName = 'cert_residency.pdf';
+} elseif (strpos($type, 'certification') !== false) {
+    $file = 'certification.php';
+    $layout = 'layout_certificate.php';
+    $pdfName = 'certification.pdf';
 } else {
-    $file = 'cert_residency.php';
+    $file = 'certification.php';
     $layout = 'layout_certificate.php';
     $pdfName = 'certificate.pdf';
 }
@@ -97,6 +101,7 @@ $content = ob_get_clean();
 
 // 2) wrap with layout -> $html
 $title = $doc['document_name'] ?? 'Document';
+$doc_title = strtoupper(trim((string)($doc['document_name'] ?? 'CERTIFICATION')));
 
 ob_start();
 require __DIR__ . '/../views/print/' . $layout;
