@@ -25,19 +25,16 @@ public function all() {
 
 public function updateStatus($id, $status, $adminId = null, $remarks = null)
 {
-    // normalize
     $id = (int)$id;
     $status = ucfirst(strtolower(trim((string)$status)));
-
     if ($id <= 0) return false;
 
     $approvedAt = null;
     $releasedAt = null;
-
     if ($status === 'Approved') $approvedAt = date('Y-m-d H:i:s');
     if ($status === 'Released') $releasedAt = date('Y-m-d H:i:s');
 
-    // 1) UPDATE request status
+    // 1) Update request
     $sql = "UPDATE document_requests
             SET status = ?,
                 approved_at = COALESCE(?, approved_at),
@@ -47,38 +44,22 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
             WHERE id = ?";
 
     $stmt = $this->db->prepare($sql);
-    if (!$stmt) {
-        error_log("DocumentRequest::updateStatus prepare failed: " . $this->db->error);
-        return false;
-    }
+    if (!$stmt) return false;
 
-    // NOTE: adminId should be integer or NULL
     $adminIdParam = ($adminId === null || $adminId === '') ? null : (int)$adminId;
 
-    $stmt->bind_param(
-        "ssissi",
-        $status,
-        $approvedAt,
-        $releasedAt,
-        $adminIdParam,
-        $remarks,
-        $id
-    );
-
+    $stmt->bind_param("ssissi", $status, $approvedAt, $releasedAt, $adminIdParam, $remarks, $id);
     $ok = $stmt->execute();
-    if (!$ok) {
-        error_log("DocumentRequest::updateStatus execute failed: " . $stmt->error);
-        $stmt->close();
-        return false;
-    }
     $stmt->close();
 
-    // 2) AUTO INSERT payment kapag Released
+    if (!$ok) return false;
+
+    // 2) If Released: ensure cert_no + ensure payment with or_no
     if ($status === 'Released') {
 
-        // get fee_snapshot
-        $stmt = $this->db->prepare("SELECT fee_snapshot FROM document_requests WHERE id = ? LIMIT 1");
-        if (!$stmt) return true; // status updated already, don't break
+        // get fee_snapshot + cert_no
+        $stmt = $this->db->prepare("SELECT fee_snapshot, cert_no FROM document_requests WHERE id = ? LIMIT 1");
+        if (!$stmt) return true;
 
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -87,8 +68,20 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
 
         $fee = (float)($req['fee_snapshot'] ?? 0);
 
-        // check existing payment (avoid duplicate)
-        $stmt = $this->db->prepare("SELECT id FROM payments WHERE request_id = ? LIMIT 1");
+        // generate cert_no if empty
+        $certNo = trim((string)($req['cert_no'] ?? ''));
+        if ($certNo === '') {
+            $certNo = $this->generateNextCertNo();
+            $stmt = $this->db->prepare("UPDATE document_requests SET cert_no = ? WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("si", $certNo, $id);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+
+        // check existing payment
+        $stmt = $this->db->prepare("SELECT id, or_no FROM payments WHERE request_id = ? LIMIT 1");
         if (!$stmt) return true;
 
         $stmt->bind_param("i", $id);
@@ -96,13 +89,33 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
         $existing = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
+        // generate OR no
+        $orNo = '';
         if (!$existing) {
+            $orNo = $this->generateNextOrNo();
+
             $stmt = $this->db->prepare("
-                INSERT INTO payments (request_id, amount, status, paid_at, created_at)
-                VALUES (?, ?, 'Paid', NOW(), NOW())
+                INSERT INTO payments (request_id, or_no, amount, status, paid_at, created_at)
+                VALUES (?, ?, ?, 'Paid', NOW(), NOW())
             ");
             if ($stmt) {
-                $stmt->bind_param("id", $id, $fee);
+                $stmt->bind_param("isd", $id, $orNo, $fee);
+                $stmt->execute();
+                $stmt->close();
+            }
+
+        } else {
+            // if payment exists but OR is empty, fill it + update amount
+            $paymentId = (int)$existing['id'];
+            $orNo = trim((string)($existing['or_no'] ?? ''));
+
+            if ($orNo === '') {
+                $orNo = $this->generateNextOrNo();
+            }
+
+            $stmt = $this->db->prepare("UPDATE payments SET or_no = ?, amount = ? WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                $stmt->bind_param("sdi", $orNo, $fee, $paymentId);
                 $stmt->execute();
                 $stmt->close();
             }
@@ -112,69 +125,67 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
     return true;
 }
 
-
 public function findById($id)
 {
     $id = (int)$id;
 
-    $sql = "SELECT 
-                dr.*,
+$sql = "SELECT 
+            dr.*,
 
-                -- dynamic extra data for this request (JSON)
-                dr.extra_data_json,
+            dr.extra_data_json,
 
-                -- Full Name
-                TRIM(CONCAT(
-                    r.first_name, ' ',
-                    IFNULL(r.middle_name, ''), ' ',
-                    r.last_name, ' ',
-                    IFNULL(r.suffix, '')
-                )) AS resident_name,
+            TRIM(CONCAT(
+                r.first_name, ' ',
+                IFNULL(r.middle_name, ''), ' ',
+                r.last_name, ' ',
+                IFNULL(r.suffix, '')
+            )) AS resident_name,
 
-                -- Address (using households + puroks)
-                CONCAT(
-                    h.address_line, ', ',
-                    'Purok ', p.name, ', ',
-                    'Barangay Don Galo'
-                ) AS resident_address,
+            CONCAT(
+                h.address_line, ', ',
+                'Purok ', p.name, ', ',
+                'Barangay Don Galo'
+            ) AS resident_address,
 
-                dt.name AS document_name,
-                dt.category AS document_category,
-                dt.fee AS document_fee,
-                dt.processing_minutes,
+            dt.name AS document_name,
+            dt.category AS document_category,
+            dt.fee AS document_fee,
+            dt.processing_minutes,
 
-                -- template routing + form config (JSON)
-                dt.template_key,
-                dt.extra_fields_json
+            -- ====== PAYMENT / PRINT FIELDS ======
+            dr.fee_snapshot AS fee,
+            COALESCE(pay.amount, dr.fee_snapshot, dt.fee, 0) AS amount_paid,
+            pay.paid_at AS date_paid,
+            COALESCE(dr.cert_no, '') AS cert_no,
+            COALESCE(pay.or_no, dr.or_no, '') AS or_no,
 
-            FROM document_requests dr
+            dt.template_key,
+            dt.extra_fields_json
 
-            LEFT JOIN residents r 
-                ON r.id = dr.resident_id
+        FROM document_requests dr
+        LEFT JOIN residents r ON r.id = dr.resident_id
+        LEFT JOIN households h ON h.id = r.household_id
+        LEFT JOIN puroks p ON p.id = h.purok_id
+        LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+        LEFT JOIN payments pay ON pay.request_id = dr.id
+        WHERE dr.id = ?
+        LIMIT 1";
 
-            LEFT JOIN households h 
-                ON h.id = r.household_id
+$stmt = $this->db->prepare($sql);
+if (!$stmt) {
+    error_log("DocumentRequest::findById prepare failed: " . $this->db->error);
+    return null;
+}
 
-            LEFT JOIN puroks p 
-                ON p.id = h.purok_id
+$stmt->bind_param("i", $id);
+$stmt->execute();
 
-            LEFT JOIN document_types dt 
-                ON dt.id = dr.document_type_id
+$res = $stmt->get_result();
+$row = $res ? $res->fetch_assoc() : null;
 
-            WHERE dr.id = ?
-            LIMIT 1";
+$stmt->close();
 
-    $stmt = $this->db->prepare($sql);
-    if (!$stmt) {
-        error_log("DocumentRequest::findById prepare failed: " . $this->db->error);
-        return null;
-    }
-
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-
-    $res = $stmt->get_result();
-    return $res ? $res->fetch_assoc() : null;
+return $row;
 }
 
 public function search($keyword = '')
@@ -447,7 +458,60 @@ public function releasedTodayList($dateYmd, $limit = 20)
 }
 
 
+private function generateNextCertNo(): string
+{
+    $year = date('Y');
+    $prefix = "DG-$year-";
 
+    $stmt = $this->db->prepare("
+        SELECT cert_no
+        FROM document_requests
+        WHERE cert_no LIKE CONCAT(?, '%')
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param("s", $prefix);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $last = $row['cert_no'] ?? null;
+    $next = 1;
+
+    if ($last) {
+        $num = (int)substr($last, strlen($prefix)); // DG-2026-000100 -> 000100
+        $next = $num + 1;
+    }
+
+    return $prefix . str_pad((string)$next, 6, '0', STR_PAD_LEFT);
+}
+
+private function generateNextOrNo(): string
+{
+    $prefix = "OR-";
+
+    $stmt = $this->db->prepare("
+        SELECT or_no
+        FROM payments
+        WHERE or_no LIKE CONCAT(?, '%')
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param("s", $prefix);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $last = $row['or_no'] ?? null;
+    $next = 1;
+
+    if ($last) {
+        $num = (int)substr($last, strlen($prefix)); // OR-00001 -> 00001
+        $next = $num + 1;
+    }
+
+    return $prefix . str_pad((string)$next, 5, '0', STR_PAD_LEFT);
+}
 
 
 

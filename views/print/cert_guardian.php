@@ -1,5 +1,5 @@
 <?php
-$extra = json_decode($doc['extra_json'] ?? '{}', true) ?: [];
+$extra = json_decode($doc['extra_data_json'] ?? '{}', true) ?: [];
 
 $child_name  = $extra['child_name'] ?? '';
 $child_dob   = $extra['child_dob'] ?? '';

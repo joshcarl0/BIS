@@ -47,13 +47,13 @@ if ($plainLength > 760 || ($isGuardian && $plainLength > 620)) {
 <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></title>
 
 <style>
-@page { size: A4; margin: 14mm 14mm 12mm; }
+@page { size: A4; margin: 18mm 14mm 12mm; }
 *{ box-sizing:border-box; }
 html, body { margin:0; padding:0; }
 
 body.cert-layout{
   font-family: "Times New Roman", serif;
-  font-size: 11pt;
+  font-size: 13pt;   /* from 11pt */
   color:#111;
 }
 
@@ -134,16 +134,16 @@ body.cert-layout{
 
 .doc-title{
   text-align:center;
-  margin-top:8mm;
-  font-size:17.5pt;
+  margin-top:18mm;
+  font-size:20pt;
   letter-spacing:1px;
   font-weight:800;
 }
 
 .content{
-  margin-top:7mm;
+  margin-top:10mm;
   padding:0 7mm;
-  line-height:1.55;
+  line-height:1.65;
   text-align:left;
 }
 .content p{
@@ -172,7 +172,7 @@ body.cert-layout{
 
 .signature{
   text-align:right;
-  margin-top:8mm;
+  margin-top:18mm;
   padding-right:16mm;
   line-height:1.22;
 }
@@ -183,7 +183,7 @@ body.cert-layout{
 }
 
 .receipt{
-  margin-top:5.2mm;
+  margin-top:8mm;
   width:72mm;
   margin-left:auto;
   font-size:10.2pt;
@@ -194,7 +194,7 @@ body.cert-layout{
   border-collapse:collapse;
 }
 .receipt td{
-  padding:1.1mm 0;
+  padding:1.6mm 0;   
   vertical-align:bottom;
 }
 .receipt .label{
@@ -202,9 +202,9 @@ body.cert-layout{
   white-space:nowrap;
 }
 .receipt .value-cell{
-  border-bottom:1px solid #111;
-  text-align:right;
-  min-width:34mm;
+  border-bottom:none;   
+  text-align:left;
+    padding-left:4mm;
 }
 
 .bottom-left{
@@ -310,7 +310,7 @@ body.cert-layout{
     <div class="header-line"></div>
   </div>
 
-  <div class="doc-title"><?= htmlspecialchars($doc_title, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="doc-title">CERTIFICATION</div>
 
   <div class="content">
     <?= $safeContent ?>
