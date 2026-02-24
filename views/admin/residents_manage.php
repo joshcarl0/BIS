@@ -33,9 +33,16 @@
           <div class="text-muted">Manage personal details & demographics.</div>
         </div>
 
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addResidentModal">
-          <i class="bi bi-plus-circle"></i> Add Resident
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-success"
+             href="/BIS/controller/export_residents_csv.php">
+            <i class="bi bi-download"></i> Download Residents CSV
+          </a>
+
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addResidentModal">
+            <i class="bi bi-plus-circle"></i> Add Resident
+          </button>
+        </div>
       </div>
 
       <?php if (!empty($flash)): ?>

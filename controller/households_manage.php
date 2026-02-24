@@ -65,6 +65,10 @@ unset($_SESSION['success'], $_SESSION['error']);
             </div>
 
             <div class="d-flex flex-wrap gap-2">
+                <a href="/BIS/controller/export_households_csv.php" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-download"></i> Download Households CSV
+                </a>
+
                 <a href="/BIS/views/admin/household_add.php" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-lg"></i> Add Household
                 </a>
