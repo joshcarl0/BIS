@@ -45,8 +45,14 @@ $sql = "SELECT id, household_code, address_line, housing_type, monthly_income_ra
 $result = $conn->query($sql);
 
 while ($row = $result->fetch_assoc()) {
+
+    // Protect against CSV/Excel formula injection
+    foreach ($row as $k => $v) {
+        if (is_string($v) && preg_match('/^[=+\-@]/', $v)) {
+            $row[$k] = "'" . $v;
+        }
+    }
+
     fputcsv($output, $row);
 }
-
-fclose($output);
 exit;
