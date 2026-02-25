@@ -1,6 +1,27 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/User.php';
+
+
+function applyNewUserCookieAndFlag(mysqli $conn, int $userId, int $isFirstLogin): void
+{
+    if ($isFirstLogin !== 1) {
+        return;
+    }
+
+    setcookie('bis_new_user', '1', [
+        'expires' => time() + (7 * 24 * 60 * 60),
+        'path' => '/BIS',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
+    $userModel = new User($conn);
+    $userModel->markFirstLoginComplete($userId);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: /BIS/views/login_otp.php');
     exit();
@@ -50,6 +71,8 @@ $_SESSION['role'] = (string) $pending['role'];
 $_SESSION['full_name'] = (string) $pending['full_name'];
 
 unset($_SESSION['pending_login'], $_SESSION['error']);
+
+applyNewUserCookieAndFlag($conn, (int) $pending['user_id'], (int) ($pending['is_first_login'] ?? 0));
 
 switch ($_SESSION['role']) {
     case 'admin':

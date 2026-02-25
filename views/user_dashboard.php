@@ -1,6 +1,16 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+$showNewUserWelcome = isset($_COOKIE['bis_new_user']) && $_COOKIE['bis_new_user'] === '1';
+if ($showNewUserWelcome) {
+    setcookie('bis_new_user', '', [
+        'expires' => time() - 3600,
+        'path' => '/BIS',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
 if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'resident') {
     header("Location: /BIS/views/login.php");
     exit();
@@ -36,6 +46,13 @@ if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'resident') {
     <!-- PAGE CONTENT -->
     <div class="p-3">
       <h1 class="h4 mb-3">Welcome to the User Dashboard</h1>
+
+      <?php if ($showNewUserWelcome): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          Welcome to BIS! Your account setup is complete.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <?php endif; ?>
     </div>
 
   </div>

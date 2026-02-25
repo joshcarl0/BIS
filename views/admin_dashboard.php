@@ -1,6 +1,16 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+$showNewUserWelcome = isset($_COOKIE['bis_new_user']) && $_COOKIE['bis_new_user'] === '1';
+if ($showNewUserWelcome) {
+    setcookie('bis_new_user', '', [
+        'expires' => time() - 3600,
+        'path' => '/BIS',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header("Location: login.php");
     exit();
@@ -42,6 +52,13 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                 $firstName = ucfirst(strtolower($firstName));
             ?>
             <h3>Welcome <?= htmlspecialchars($firstName) ?>, Admin</h3>
+
+            <?php if ($showNewUserWelcome): ?>
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    Welcome to BIS! Your account setup is complete.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
             <p class="text-muted">
                 The Barangay Information System (BIS) is a web-based solution designed to digitize and centralize barangay records.

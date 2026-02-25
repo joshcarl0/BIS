@@ -17,6 +17,7 @@ class User
     public function login($username, $password)
     {
         $sql = "SELECT u.id, u.username, u.password, u.status, u.email, u.full_name,
+                       u.is_first_login,
                        u.role_id, r.role_name AS role
                 FROM {$this->table} u
                 LEFT JOIN roles r ON r.id = u.role_id
@@ -39,8 +40,9 @@ class User
         } else {
             // Fallback for environments without mysqlnd
             $id = $u = $pwd = $status = $email = $full_name = $role = null;
+            $is_first_login = null;
             $role_id = null;
-            $stmt->bind_result($id, $u, $pwd, $status, $email, $full_name, $role_id, $role);
+            $stmt->bind_result($id, $u, $pwd, $status, $email, $full_name, $is_first_login, $role_id, $role);
             if ($stmt->fetch()) {
                 $user = [
                     'id' => $id,
@@ -49,6 +51,7 @@ class User
                     'status' => $status,
                     'email' => $email,
                     'full_name' => $full_name,
+                    'is_first_login' => $is_first_login,
                     'role_id' => $role_id,
                     'role' => $role,
                 ];
@@ -162,6 +165,18 @@ class User
         $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt->bind_param('si', $hashed, $userId);
 
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    public function markFirstLoginComplete(int $userId): bool
+    {
+        $sql = "UPDATE {$this->table} SET is_first_login = 0 WHERE id = ? AND is_first_login = 1 LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+
+        $stmt->bind_param('i', $userId);
         $ok = $stmt->execute();
         $stmt->close();
         return $ok;

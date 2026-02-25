@@ -1,0 +1,3 @@
+ALTER TABLE users
+ADD COLUMN is_first_login TINYINT(1) NOT NULL DEFAULT 1
+AFTER status;

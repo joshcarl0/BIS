@@ -5,7 +5,24 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../models/User.php';
 
-function finalizeLogin(array $user): void
+function applyNewUserCookieAndFlag(mysqli $conn, array $user): void
+{
+    if ((int) ($user['is_first_login'] ?? 0) !== 1) {
+        return;
+    }
+
+    setcookie('bis_new_user', '1', [
+        'expires' => time() + (7 * 24 * 60 * 60),
+        'path' => '/BIS',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
+    $userModel = new User($conn);
+    $userModel->markFirstLoginComplete((int) $user['id']);
+}
+
+function finalizeLogin(mysqli $conn, array $user): void
 {
     session_regenerate_id(true);
 
@@ -15,6 +32,8 @@ function finalizeLogin(array $user): void
     $_SESSION['username'] = (string) $user['username'];
     $_SESSION['role'] = (string) $user['role'];
     $_SESSION['full_name'] = (string) $user['full_name'];
+
+    applyNewUserCookieAndFlag($conn, $user);
 
     switch ($_SESSION['role']) {
         case 'admin':
@@ -62,7 +81,7 @@ if (($user['status'] ?? '') !== 'active') {
 
 // ===== SKIP OTP FOR ADMIN =====
 if (($user['role'] ?? '') === 'admin') {
-    finalizeLogin($user);
+    finalizeLogin($conn, $user);
 }
 
 if (empty($user['email']) || !filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
@@ -79,6 +98,7 @@ $_SESSION['pending_login'] = [
     'role' => (string) $user['role'],
     'full_name' => (string) $user['full_name'],
     'email' => (string) $user['email'],
+    'is_first_login' => (int) ($user['is_first_login'] ?? 0),
     'otp_hash' => hash('sha256', $otp),
     'otp_expires' => time() + 300,
     'otp_attempts' => 0,
