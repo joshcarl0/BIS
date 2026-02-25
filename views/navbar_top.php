@@ -13,3 +13,5 @@
         <?= htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?>
     </div>
 </nav>
+
+<?php include_once __DIR__ . '/../includes/cookie_consent_modal.php'; ?>

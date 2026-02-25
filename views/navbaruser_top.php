@@ -23,3 +23,5 @@ if (empty($_SESSION['role']) || $_SESSION['role'] !== 'resident') {
         <?= htmlspecialchars($_SESSION['username'] ?? 'Resident'); ?>
     </div>
 </nav>
+
+<?php include_once __DIR__ . '/../includes/cookie_consent_modal.php'; ?>
