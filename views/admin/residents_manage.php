@@ -39,6 +39,11 @@
             <i class="bi bi-download"></i> Download Residents CSV
           </a>
 
+                  <a class="btn btn-outline-danger"
+          href="/BIS/controller/export_residents_pdf.php">
+          <i class="bi bi-file-earmark-pdf"></i> Download Residents PDF
+        </a>
+
           <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addResidentModal">
             <i class="bi bi-plus-circle"></i> Add Resident
           </button>
