@@ -162,27 +162,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // DEACTIVATE
-    if ($action === 'deactivate') {
+// DEACTIVATE
+if ($action === 'deactivate') {
     $id = (int)($_POST['id'] ?? 0);
     $ok = ($id > 0) ? $residentModel->deactivate($id) : false;
 
+    if ($ok) {
+        $actorId   = $_SESSION['user_id'] ?? null;
+        $actorRole = $_SESSION['role'] ?? null;
 
-if ($ok) {
-    $actorId   = $_SESSION['user_id'] ?? null;
-    $actorRole = $_SESSION['role'] ?? null;
-
-    $log->add(
-        $actorId,
-        $actorRole,
-        'resident_deactivate',
-        'resident',
-        (int)$id,
-        "Deactivated resident (ID: {$id})"
-    );
-}
+        $log->add($actorId, $actorRole, 'resident_deactivate', 'resident', $id, "Deactivated resident (ID: {$id})");
+        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident deactivated successfully.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to deactivate resident.'];
     }
+
+    header("Location: /BIS/controller/residents_manage.php");
+    exit;
 }
+
+// ACTIVATE
+if ($action === 'activate') {
+    $id = (int)($_POST['id'] ?? 0);
+    $ok = ($id > 0) ? $residentModel->activate($id) : false;
+
+    if ($ok) {
+        $actorId   = $_SESSION['user_id'] ?? null;
+        $actorRole = $_SESSION['role'] ?? null;
+
+        $log->add($actorId, $actorRole, 'resident_activate', 'resident', $id, "Activated resident (ID: {$id})");
+        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident activated successfully.'];
+    } else {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to activate resident.'];
+    }
+
+    header("Location: /BIS/controller/residents_manage.php");
+    exit;
+}
+
+
+}
+
+
+
 
 /* =========================
             LIST
