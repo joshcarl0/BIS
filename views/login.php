@@ -39,6 +39,10 @@
                             </div>
                         <?php endif; ?>
 
+                        <div class="alert alert-warning d-none" id="cookieConsentWarning" role="alert">
+                            You must agree to the Cookie Consent Agreement before signing in.
+                        </div>
+
                         <!-- Login Form -->
                         <form method="POST" action="/BIS/controller/login_process.php" id="loginForm">
                                     <div class="mb-3">
@@ -85,12 +89,45 @@
     <footer class="footer">
         <div class="container">
             &copy; 2026 Barangay Don Galo. All rights reserved.
-            <a href="#" class="text-white text-decoration-none ms-3">Privacy Policy</a>
+            <a href="/BIS/views/privacy_policy.php" class="text-white text-decoration-none ms-3">Privacy Policy</a>
             <a href="#" class="text-white text-decoration-none ms-3">Terms of Service</a>
         </div>    
     </footer>
 
+    <?php include_once __DIR__ . '/../includes/cookie_consent_modal.php'; ?>
+
     <!-- JS Scripts -->
     <script src="/BIS/assets/js/login.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.getElementById('loginForm');
+            const consentWarning = document.getElementById('cookieConsentWarning');
+            const consentKey = 'bis_cookie_consent_v1';
+
+            function hasCookieConsent() {
+                return localStorage.getItem(consentKey) === 'accepted';
+            }
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function (event) {
+                    if (!hasCookieConsent()) {
+                        event.preventDefault();
+                        if (consentWarning) {
+                            consentWarning.classList.remove('d-none');
+                        }
+                        if (typeof window.bisShowCookieConsentModal === 'function') {
+                            window.bisShowCookieConsentModal();
+                        }
+                    }
+                });
+            }
+
+            document.addEventListener('bis-cookie-consent-accepted', function () {
+                if (consentWarning) {
+                    consentWarning.classList.add('d-none');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
