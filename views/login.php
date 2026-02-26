@@ -44,7 +44,10 @@
                         </div>
 
                         <!-- Login Form -->
-                        <form method="POST" action="/BIS/controller/login_process.php" id="loginForm">
+                        <form method="POST" action="/BIS/controller/login_process.php" id="loginForm" >
+                            <input type="hidden" name="cookie_consent" id="cookieConsentInput" value="">
+
+
                                     <div class="mb-3">
                                             <label for="username" class="form-label">Username</label>
                                             <input type="text" class="form-control" id="username" name="username"
@@ -98,36 +101,55 @@
 
     <!-- JS Scripts -->
     <script src="/BIS/assets/js/login.js"></script>
-    <script>
+        <script>
         document.addEventListener('DOMContentLoaded', function () {
             const loginForm = document.getElementById('loginForm');
             const consentWarning = document.getElementById('cookieConsentWarning');
             const consentKey = 'bis_cookie_consent_v1';
+            const hiddenInput = document.getElementById('cookieConsentInput');
 
             function hasCookieConsent() {
                 return localStorage.getItem(consentKey) === 'accepted';
+            }
+
+            //  Set hidden input if already accepted
+            if (hiddenInput && hasCookieConsent()) {
+                hiddenInput.value = 'accepted';
             }
 
             if (loginForm) {
                 loginForm.addEventListener('submit', function (event) {
                     if (!hasCookieConsent()) {
                         event.preventDefault();
+
                         if (consentWarning) {
                             consentWarning.classList.remove('d-none');
                         }
+
                         if (typeof window.bisShowCookieConsentModal === 'function') {
                             window.bisShowCookieConsentModal();
+                        }
+                    } else {
+                        //  ensure value is set before submit
+                        if (hiddenInput) {
+                            hiddenInput.value = 'accepted';
                         }
                     }
                 });
             }
 
+            //  When user clicks "I Agree"
             document.addEventListener('bis-cookie-consent-accepted', function () {
                 if (consentWarning) {
                     consentWarning.classList.add('d-none');
                 }
+
+                if (hiddenInput) {
+                    hiddenInput.value = 'accepted';
+                }
             });
         });
-    </script>
-</body>
+        </script>
+
+    </body>
 </html>

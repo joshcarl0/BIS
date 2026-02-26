@@ -35,6 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// ===== REQUIRE COOKIE CONSENT (SERVER-SIDE) =====
+// Expect hidden input from login form: cookie_consent=accepted
+if (($_POST['cookie_consent'] ?? '') !== 'accepted') {
+    $_SESSION['error'] = 'Please accept the Cookie & Privacy Policy before logging in.';
+    header("Location: /BIS/views/login.php");
+    exit();
+}
+
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
 
