@@ -42,7 +42,7 @@ $userModel = new User($conn);
 
 $conn->begin_transaction();
 try {
-    if (! $userModel->updatePasswordById((int)$row['user_id'], $password)) {
+    if (!$userModel->updatePassword((int)$row['user_id'], $password)) {
         throw new Exception('Failed to update password.');
     }
     if (! $resetModel->markOtpUsed((int)$row['id'])) {
