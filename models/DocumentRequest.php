@@ -48,7 +48,7 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
 
     $adminIdParam = ($adminId === null || $adminId === '') ? null : (int)$adminId;
 
-    $stmt->bind_param("ssissi", $status, $approvedAt, $releasedAt, $adminIdParam, $remarks, $id);
+    $stmt->bind_param("sssisi", $status, $approvedAt, $releasedAt, $adminIdParam, $remarks, $id);
     $ok = $stmt->execute();
     $stmt->close();
 
@@ -132,7 +132,7 @@ public function findById($id)
 $sql = "SELECT 
             dr.*,
 
-            dr.extra_data_json,
+            dr.extra_json AS extra_json,
 
             TRIM(CONCAT(
                 r.first_name, ' ',
