@@ -178,7 +178,5 @@ sel.addEventListener('change', updateInfo);
 </script>
 
 
-                <script src="/BIS/assets/js/document_request_dynamic.js"></script>
-
 </body>
 </html>

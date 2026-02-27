@@ -1,252 +1,173 @@
 <?php
-$title            = $title ?? 'Barangay Document';
-$doc_title        = $doc_title ?? 'BARANGAY DOCUMENT';
-$doc_subtitle     = $doc_subtitle ?? '';
-$content          = $content ?? '';
-$watermark_src    = $watermark_src ?? '/BIS/assets/images/barangay_logo.png';
-$show_left_panel  = $show_left_panel ?? true;
+$title     = $title ?? 'Barangay Clearance';
+$doc_title = $doc_title ?? 'BARANGAY CLEARANCE';
+$doc_subtitle = $doc_subtitle ?? 'TO WHOM IT MAY CONCERN:';
+$show_left_panel = $show_left_panel ?? true;
 
-$officials = $officials ?? [
-  ['name'=>'Hon. Marilyn F. Burgos', 'role'=>'Punong Barangay'],
+/**
+ * DOMPDF + CHROOT SAFE (NO /BIS prefix)
+ * your chroot is BIS root already.
+ */
+$watermark_src = $watermark_src ?? 'assets/images/barangay_logo.png';
+$imgBarangay   = $imgBarangay   ?? 'assets/images/barangay_logo.png';
+$imgCity       = $imgCity       ?? 'assets/images/city_logo.png';
+$imgBagong     = $imgBagong     ?? 'assets/images/bagong_pilipinas.png';
 
-  ['heading'=>'Barangay Kagawad'],
-  ['name'=>'Hon. Rafael Barry B. Cura III', 'committee'=>'Committee on Finance & Appropriation on Traffic Management'],
-  ['name'=>'Hon. Rodluck V. Lacsina', 'committee'=>'Committee on Health and Social Services'],
-  ['name'=>'Hon. Pastor S. Rodriguez', 'committee'=>'Committee on Peace and Order'],
-  ['name'=>'Hon. Reynaldo O. Bumagat', 'committee'=>'Committee on Education and Culture / Cooperative'],
-  ['name'=>'Hon. Eduardo R. Giron Jr.', 'committee'=>'Committee on Environment'],
-  ['name'=>'Hon. Editha U. Jimenez', 'role'=>'Barangay Councilor'],
-  ['name'=>'Hon. Louisse Gabrielle D. Omaña', 'role'=>'Barangay Councilor'],
-  ['name'=>'Hon. Dryn Allison Medina', 'role'=>'SK Chairman'],
-
-  ['heading'=>'Barangay Staff'],
-  ['name'=>'Maria Leticia N. Busa', 'role'=>'Barangay Secretary'],
-  ['name'=>'Luzviminda DG. Aquino', 'role'=>'Barangay Treasurer'],
-];
-
-if (!function_exists('renderOfficials')) {
-  function renderOfficials(array $officials): string {
-    $out = '';
-    foreach ($officials as $o) {
-      if (isset($o['heading'])) {
-        $out .= '<div class="cap">'.htmlspecialchars($o['heading']).'</div>';
-        continue;
-      }
-      $out .= '<div class="person">';
-      $out .= '<div class="name">'.htmlspecialchars($o['name'] ?? '').'</div>';
-      if (!empty($o['role'])) $out .= '<div class="role">'.htmlspecialchars($o['role']).'</div>';
-      if (!empty($o['committee'])) $out .= '<div class="committee">'.htmlspecialchars($o['committee']).'</div>';
-      $out .= '</div>';
-    }
-    return $out;
-  }
-}
+function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title><?= htmlspecialchars($title) ?></title>
+<title><?= h($title) ?></title>
 
 <style>
-  @page { size: A4; margin: 12mm; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: "Times New Roman", serif; color:#111; background:#fff; }
+  @page { size: A4; margin: 0; }
 
-  /* =========================
-     TUNING KNOBS (EDIT HERE)
-  ========================= */
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:0; font-family:"Times New Roman", serif; color:#111; }
+
   :root{
-    --pad-x: 10mm;            /* left/right inner padding */
-    --pad-y: 6mm;             /* body top padding (after header) */
-    --left-col: 55mm;         /* officials width */
-    --gap: 8mm;               /* EXACT GAP between columns */
-    --blue: #1b4f9c;
-    --line-w: 0.8mm;          /* KAPAL ng vertical blue line */
-    --hdr-line-w: 0.5mm;      /* KAPAL ng horizontal header line */
-    --header-h: 55mm;         /* fixed header height para exact alignment */
-    --wm-opacity: 0.10;
+    --gold:#caa33a;
+    --blue:#1b4f9c;
 
-    --photo-box: 40mm;        /* picture/thumb box size */
-    --photo-gap: 22mm;        /* gap between picture & thumb box */
-    --sigline-w: 120mm;       /* signature line width */
+    --padX: 12mm;
+    --padTop: 10mm;
+
+    --headerH: 40mm;
+
+    --leftW: 54mm;
+    --gap: 6mm;
+
+    --dividerW: 1.2mm; /* like sample thick blue */
   }
 
   .page{
-    width: 210mm;
-    height: 297mm;
-    margin: 0 auto;
-    position: relative;
-    background: #fff;
+    position:relative;
+    width:210mm;
+    height:297mm;
+    background:#fff;
   }
 
-  /* borders */
-  .border-outer{ position:absolute; inset:0; border:1.2mm solid #caa33a; pointer-events:none; }
-  .border-inner{ position:absolute; inset:4mm; border:0.25mm solid #caa33a; pointer-events:none; }
+  /* double gold border */
+  .border-outer{ position:absolute; inset:6mm; border:1.3mm solid var(--gold); }
+  .border-inner{ position:absolute; inset:10mm; border:0.35mm solid var(--gold); }
 
-  /* remove bottom arc */
-  .page::after{ content:none !important; display:none !important; }
-
-  /* =========================
-        HEADER (fixed)
-  ========================= */
+  /* HEADER */
   .header{
-    position: relative;
-    height: var(--header-h);
-    padding: 18mm var(--pad-x) 0 var(--pad-x);
-    text-align: center;
-  }
-
-  .hdr-logos{
     position:absolute;
-    left: var(--pad-x);
-    right: var(--pad-x);
-    top: 6mm;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    pointer-events:none;
+    left:10mm; right:10mm;
+    top:10mm;
+    height: var(--headerH);
+    text-align:center;
   }
 
-  .logos-left img{ height: 18mm; width:auto; }
-  .logos-right{ display:flex; gap: 7mm; align-items:center; }
-  .logos-right img{ height: 17mm; width:auto; }
+  .logos{
+    position:absolute;
+    left:0; right:0;
+    top:0;
+    height:18mm;
+  }
+  .logo-left{ position:absolute; left:0; top:0; width:20mm; height:20mm; }
+  .logo-mid { position:absolute; left:50%; top:0; transform:translateX(-50%); width:20mm; height:20mm; }
+  .logo-right{ position:absolute; right:0; top:1mm; width:26mm; height:18mm; }
 
-  .hdr-top{ font-size:13pt; line-height:1.1; margin:0; }
-  .hdr-sub{ font-size:11pt; line-height:1.1; margin:1mm 0 0 0; }
-  .hdr-barangay{
-    font-size:22pt;
-    font-weight:bold;
+  .logos img{ width:100%; height:100%; object-fit:contain; }
+
+  .hdr-top{
+    margin-top: 16mm;
+    font-size: 13pt;
+    letter-spacing: 0.2pt;
+  }
+  .hdr-sub{ font-size: 12pt; margin-top: 0.5mm; }
+  .hdr-brgy{
+    font-size: 23pt;
+    font-weight: 800;
     color: var(--blue);
-    margin: 2mm 0 0 0;
-    line-height:1.1;
+    margin-top: 1mm;
   }
-  .hdr-address{ font-size:9.5pt; margin-top:1mm; line-height:1.2; }
+  .hdr-addr{ font-size: 10pt; margin-top: 0.5mm; line-height:1.2; }
 
-  /* horizontal line at exact bottom of header */
+  /* blue horizontal line below header */
   .hdr-line{
     position:absolute;
-    left: var(--pad-x);
-    right: var(--pad-x);
+    left:0; right:0;
     bottom: 0;
-    border-top: var(--hdr-line-w) solid var(--blue);
+    height:0;
+    border-top: 0.8mm solid var(--blue);
   }
 
-  /* =========================
-      BODY GRID (exact gap)
-  ========================= */
+  /* BODY WRAP */
   .body{
-    position: relative;
-    padding: var(--pad-y) var(--pad-x) 0 var(--pad-x);
-    display:grid;
-    grid-template-columns: <?= $show_left_panel ? 'var(--left-col) 1fr' : '1fr' ?>;
-    column-gap: var(--gap);
-    height: calc(297mm - var(--header-h) - (var(--pad-y) * 2));
+    position:absolute;
+    left:10mm; right:10mm;
+    top: calc(10mm + var(--headerH));
+    bottom: 10mm;
+    padding: 0;
   }
 
-  /* MAIN vertical divider (CONNECTED to hdr-line) */
+  /* vertical blue divider (ABSOLUTE) */
   .v-divider{
     position:absolute;
-    width: var(--line-w);
+    top: 0;
+    bottom: 0;
+    left: calc(var(--leftW) + (var(--gap) / 2));
+    width: var(--dividerW);
     background: var(--blue);
-    /* left edge = page inner padding + left col + half of gap */
-    left: calc(var(--pad-x) + var(--left-col) + (var(--gap) / 2));
-    top: var(--header-h);      /* EXACTLY where hdr-line is */
-    bottom: 18mm;              /* stop before bottom border area */
-    pointer-events:none;
   }
 
   .left{
-    font-size: 9pt;
-    padding-right: 0; /* gap already handled by grid */
+    position:absolute;
+    top: 0;
+    left: 0;
+    width: var(--leftW);
+    bottom: 0;
+    padding-top: 8mm;
+    font-size: 9.2pt;
   }
-  .cap{ font-weight:bold; margin-top:4mm; }
-  .person{ margin:2mm 0; }
-  .name{ font-weight:bold; }
-  .role{ font-style:italic; }
-  .committee{ font-size:8pt; }
+  .right{
+    position:absolute;
+    top: 0;
+    left: calc(var(--leftW) + var(--gap));
+    right: 0;
+    bottom: 0;
+    padding-top: 8mm;
+    padding-left: 2mm;
+    padding-right: 2mm;
+  }
 
-  .right{ position:relative; }
+  .person{ margin: 2.4mm 0; }
+  .name{ font-weight: 800; }
+  .role{ font-style: italic; }
+  .committee{ font-size: 8.2pt; font-style: italic; }
 
-  /* watermark */
+  /* watermark behind content */
   .watermark{
     position:absolute;
-    inset:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    opacity: var(--wm-opacity);
-    pointer-events:none;
+    inset: 0;
+    text-align:center;
+    opacity: 0.10;
     z-index: 0;
   }
-  .watermark img{ width: 150mm; height:auto; }
+  .watermark img{
+    margin-top: 18mm;
+    width: 150mm;
+    height:auto;
+  }
+  .content{ position:relative; z-index: 2; }
 
-  .content-wrap{ position:relative; z-index: 2; }
-
-  /* titles */
+  /* title look same */
   .doc-title{
     text-align:center;
-    font-size:24pt;
-    font-weight:800;
+    font-size: 26pt;
+    font-weight: 900;
     text-decoration: underline;
-    margin-top: 4mm;
+    margin-top: 2mm;
   }
   .doc-subtitle{
-    margin-top: 8mm;
-    font-size: 13pt;
-    font-weight: bold;
-  }
-
-  /* =========================
-     SHARED COMPONENTS
-     (Use these in ALL docs)
-  ========================= */
-
-  /* picture + thumb row */
-  .photo-thumb-row{
-    display:flex;
-    gap: var(--photo-gap);
-    margin-top: 18mm;
-    margin-bottom: 6mm;
-  }
-  .photo-box{
-    width: var(--photo-box);
-    height: var(--photo-box);
-    border: 0.25mm solid #666;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size: 10pt;
-    letter-spacing: 0.5pt;
-  }
-
-  /* signature line centered */
-  .sigline{
-    width: var(--sigline-w);
-    margin: 8mm 0 0 0;
-    border-top: 0.25mm solid #333;
-    padding-top: 2mm;
-    text-align:center;
-    font-size: 10pt;
-  }
-
-  /* receipt/meta block bottom-left look */
-  .receipt-meta{
-    margin-top: 10mm;
-    font-size: 10pt;
-    font-weight: 700;
-  }
-  .receipt-meta .row{ margin: 1mm 0; font-weight:700; }
-  .receipt-meta .row span{ font-weight:400; }
-
-  .note{
     margin-top: 4mm;
-    font-size: 9pt;
-    font-style: italic;
-  }
-
-  @media print{
-    .no-print{ display:none !important; }
+    font-size: 12.5pt;
+    font-weight: 800;
   }
 </style>
 </head>
@@ -256,55 +177,59 @@ if (!function_exists('renderOfficials')) {
   <div class="border-outer"></div>
   <div class="border-inner"></div>
 
-  <!-- HEADER -->
   <div class="header">
-    <div class="hdr-logos">
-      <div class="logos-left">
-        <img src="/BIS/assets/images/barangay_logo.png" alt="Barangay Logo">
-      </div>
-
-      <div class="logos-right">
-        <img src="/BIS/assets/images/city_logo.png" alt="City Logo">
-        <img src="/BIS/assets/images/bagong_pilipinas.png" alt="Bagong Pilipinas">
-      </div>
+    <div class="logos">
+      <div class="logo-left"><img src="<?= h($imgBarangay) ?>" alt="Barangay Logo"></div>
+      <div class="logo-mid"><img src="<?= h($imgCity) ?>" alt="City Logo"></div>
+      <div class="logo-right"><img src="<?= h($imgBagong) ?>" alt="Bagong Pilipinas"></div>
     </div>
 
     <div class="hdr-top">Republic of the Philippines</div>
     <div class="hdr-sub">City of Parañaque</div>
-    <div class="hdr-barangay">Barangay Don Galo</div>
-    <div class="hdr-address">
+    <div class="hdr-brgy">Barangay Don Galo</div>
+    <div class="hdr-addr">
       Dimatimbangan St., Barangay Don Galo, Parañaque City<br>
-      Tel. No. (02) 8812-6383
+      Tel. No. (02) 8812-6512
     </div>
 
     <div class="hdr-line"></div>
   </div>
 
-  <!-- CONNECTED DIVIDER -->
-  <?php if ($show_left_panel): ?>
-    <div class="v-divider"></div>
-  <?php endif; ?>
-
-  <!-- BODY -->
   <div class="body">
     <?php if($show_left_panel): ?>
+      <div class="v-divider"></div>
       <div class="left">
-        <?= renderOfficials($officials) ?>
+        <?php
+          // Use controller-provided officials_list if available
+          if (!empty($officials_list) && is_array($officials_list)) {
+            foreach ($officials_list as $o) {
+              echo '<div class="person">';
+              echo '<div class="name">'.h($o['name'] ?? '').'</div>';
+              if (!empty($o['position'])) echo '<div class="role">'.h($o['position']).'</div>';
+              if (!empty($o['committee'])) echo '<div class="committee">'.h($o['committee']).'</div>';
+              echo '</div>';
+            }
+          } else if (!empty($officials) && is_array($officials)) {
+            foreach ($officials as $o) {
+              echo '<div class="person">';
+              echo '<div class="name">'.h($o['name'] ?? '').'</div>';
+              if (!empty($o['role'])) echo '<div class="role">'.h($o['role']).'</div>';
+              if (!empty($o['committee'])) echo '<div class="committee">'.h($o['committee']).'</div>';
+              echo '</div>';
+            }
+          }
+        ?>
       </div>
     <?php endif; ?>
 
     <div class="right">
-      <div class="watermark">
-        <img src="<?= htmlspecialchars($watermark_src) ?>" alt="Watermark">
-      </div>
+      <div class="watermark"><img src="<?= h($watermark_src) ?>" alt="Watermark"></div>
 
-      <div class="content-wrap">
-        <div class="doc-title"><?= htmlspecialchars($doc_title) ?></div>
+      <div class="content">
+        <div class="doc-title"><?= h($doc_title) ?></div>
+        <div class="doc-subtitle"><?= h($doc_subtitle) ?></div>
 
-        <?php if(!empty($doc_subtitle)): ?>
-          <div class="doc-subtitle"><?= htmlspecialchars($doc_subtitle) ?></div>
-        <?php endif; ?>
-
+        <!-- body content from cert_clearance.php -->
         <?= $content ?>
       </div>
     </div>

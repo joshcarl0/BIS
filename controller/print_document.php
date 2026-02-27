@@ -36,11 +36,11 @@ $resident_photo_url = trim((string)($doc['resident_photo_url'] ?? ''));
 $resident_thumb_url = trim((string)($doc['resident_thumb_url'] ?? ''));
 
 if (empty($resident_photo_url) && !empty($doc['resident_photo'])) {
-    $resident_photo_url = '/BIS/uploads/residents/' . rawurlencode((string)$doc['resident_photo']);
+    $resident_photo_url = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);
 }
 
 if (empty($resident_thumb_url) && !empty($doc['resident_thumbmark'])) {
-    $resident_thumb_url = '/BIS/uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']);
+    $resident_thumb_url = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']);
 }
 
 $officialsModel = new Official($db);
@@ -102,6 +102,13 @@ $content = ob_get_clean();
 // 2) wrap with layout -> $html
 $title = $doc['document_name'] ?? 'Document';
 $doc_title = strtoupper(trim((string)($doc['document_name'] ?? 'CERTIFICATION')));
+
+$doc_subtitle = 'TO WHOM IT MAY CONCERN:';
+$watermark_src = 'assets/images/barangay_logo.png';
+
+// optional aliases (safe)
+$name = $resident_name;
+$address = $resident_address;
 
 ob_start();
 require __DIR__ . '/../views/print/' . $layout;
