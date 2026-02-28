@@ -1,266 +1,316 @@
 <?php
-$title = $title ?? 'Barangay Clearance';
+/**
+ * LAYOUT: BARANGAY CLEARANCE (DOMPDF SAFE) - MATCH SAMPLE STYLE
+ * - Gold outer/inner border
+ * - Left officials panel + fixed blue divider
+ * - Header with 3 logos + Barangay Don Galo styling
+ * - Right content with watermark
+ * - Footer receipt anchored near bottom
+ */
+
+$title     = $title ?? 'Barangay Clearance';
 $doc_title = $doc_title ?? 'BARANGAY CLEARANCE';
+$content   = $content ?? '';
 
-$watermark_src = $watermark_src ?? 'assets/images/barangay_logo.png';
-$imgBarangay = $imgBarangay ?? 'assets/images/barangay_logo.png';
-$imgCity = $imgCity ?? 'assets/images/city_logo.png';
-$imgBagong = $imgBagong ?? 'assets/images/bagong_pilipinas.png';
+$imgBarangay = $imgBarangay ?? '../../BIS/assets/images/barangay_logo.png';
+$imgCity     = $imgCity ?? '../../BIS/assets/images/city_logo.png';
+$imgBagong   = $imgBagong ?? '../../BIS/assets/images/bagong_pilipinas.png';
 
-if (!function_exists('h')) {
-  function h($value) {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-  }
-}
+$watermark_src = $watermark_src ?? $imgBarangay;
+
+$left_officials_html = $left_officials_html ?? '
+  <div class="person">
+    <div class="name">Hon. Marilyn F. Burgos</div>
+    <div class="role">Barangay Captain</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Rafael Barry E. Cura II</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Finance &amp; Appropriation on Traffic Management</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Rodluck V. Lacsina</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Health and Social Services</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Pastor S. Rodriguez</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Peace and Order</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Reynaldo O. Bumagat</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Education and Culture / Committee on Cooperative</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Eduardo R. Giron Jr.</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Environment</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Editha U. Jimenez</div>
+    <div class="role">Barangay Councilor</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Louisse Gabrielle O. Grenada</div>
+    <div class="role">Barangay Councilor</div>
+    <div class="committee">Committee on Health and Sanitation</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Hon. Dryn Allison Medina</div>
+    <div class="role">SK Chairman</div>
+    <div class="committee">Committee on Sports and Youth Development</div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="person">
+    <div class="name">Maria Leticia N. Basa</div>
+    <div class="role">Barangay Secretary</div>
+  </div>
+
+  <div class="person">
+    <div class="name">Lourdes Linda DG. Aquino</div>
+    <div class="role">Barangay Treasurer</div>
+  </div>
+';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title><?= h($title) ?></title>
-  <style>
-    @page { size: A4 portrait; margin: 0; }
+<meta charset="UTF-8">
+<title><?= htmlspecialchars($title) ?></title>
 
-    * { box-sizing: border-box; }
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body { font-family:"Times New Roman", serif; color:#111; font-size: 12pt; }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Times New Roman", serif;
-      color: #111;
-    }
+  /* Full page */
+  .page{
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    background:#fff;
+    padding: 10mm;
+  }
 
-    .page {
-      width: 210mm;
-      height: 297mm;
-      padding: 5mm;
-    }
+  /* GOLD BORDER like sample */
+  .border-outer{
+    position:absolute; left:6mm; top:6mm; right:6mm; bottom:6mm;
+    border: 1.4mm solid #caa33a;
+    pointer-events:none;
+  }
+  .border-inner{
+    position:absolute; left:10mm; top:10mm; right:10mm; bottom:10mm;
+    border: 0.3mm solid #caa33a;
+    pointer-events:none;
+  }
 
-    .border-outer {
-      width: 100%;
-      height: 100%;
-      border: 1mm solid #c79a2b;
-      padding: 2mm;
-    }
+  /* CONTENT AREA inside borders */
+  .sheet{
+    position:absolute;
+    left:12mm; top:12mm; right:12mm; bottom:12mm;
+  }
 
-    .border-inner {
-      width: 100%;
-      height: 100%;
-      border: 0.35mm solid #d7b356;
-      padding: 3mm;
-    }
+  /* HEADER */
+  .header{
+    padding: 0 6mm;
+    text-align:center;
+  }
 
-    .frame-table {
-      width: 100%;
-      height: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
+  .hdr-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
 
-    .frame-table td {
-      padding: 0;
-      vertical-align: top;
-    }
+  .hdr-left, .hdr-right{ width:34mm; vertical-align:top; }
+  .hdr-center{ vertical-align:top; padding: 0 3mm; }
 
-    .header-cell {
-      height: 43mm;
-      padding-bottom: 1.5mm;
-    }
+  .hdr-logo{
+    width:26mm; height:auto; display:block; margin:0 auto;
+  }
 
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
+  .hdr-top{ font-size:12pt; line-height:1.1; margin:0; font-weight:700; }
+  .hdr-sub{ font-size:11pt; line-height:1.1; margin:1mm 0 0 0; font-weight:700; }
+  .hdr-barangay{ font-size:22pt; font-weight:800; color:#1b4f9c; margin:2mm 0 0 0; line-height:1.0; }
+  .hdr-address{ font-size:9.3pt; margin-top:1mm; line-height:1.2; }
 
-    .header-table td {
-      vertical-align: middle;
-      padding: 0;
-    }
+  .hdr-line-wrap{ margin-top:3mm; }
+  .hdr-line-blue{ border-top:2.2px solid #1b4f9c; }
+  .hdr-line-gold{ border-top:1.2px solid #caa33a; margin-top:1mm; }
 
-    .logo-left,
-    .logo-center,
-    .logo-right {
-      text-align: center;
-    }
+  /* BODY layout */
+  .body{
+    position:absolute;
+    left:0; right:0;
+    top: 43mm;   /* under header lines */
+    bottom: 0;
+    padding: 0 6mm 6mm 6mm;
+  }
 
-    .logo-left img,
-    .logo-center img {
-      width: 19mm;
-      height: 19mm;
-    }
+  table.layout{
+    width:100%;
+    height:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
 
-    .logo-right img {
-      width: 28mm;
-      height: 18mm;
-    }
+  td.leftcol{
+    vertical-align:top;
+    padding: 2mm 4mm 0 0;
+    font-size: 8.6pt;
+  }
 
-    .header-text {
-      text-align: center;
-      line-height: 1.1;
-      padding-top: 1mm;
-    }
+  td.divider{
+    width: 2mm;
+    border-left: 2.2px solid #1b4f9c; /* blue divider */
+  }
 
-    .hdr-rp { font-size: 12.5pt; }
-    .hdr-city { font-size: 13pt; }
-    .hdr-brgy {
-      font-size: 20pt;
-      color: #163f86;
-      font-weight: bold;
-    }
-    .hdr-addr {
-      font-size: 9.5pt;
-      margin-top: 0.5mm;
-    }
+  td.rightcol{
+    vertical-align:top;
+    padding: 2mm 0 0 6mm;
+    position:relative;
+  }
 
-    .header-line {
-      border-top: 0.8mm solid #1f5ea8;
-      margin-top: 2mm;
-    }
+  /* LEFT panel styling */
+  .person{ margin: 1.3mm 0; }
+  .name{ font-weight:700; }
+  .role{ font-style:italic; font-size:8.1pt; margin-top:0.2mm; }
+  .committee{ font-size:7.6pt; font-style:italic; margin-top:0.3mm; }
+  .spacer{ height: 3mm; }
 
-    .body-cell {
-      height: 230mm;
-    }
+  /* RIGHT watermark */
+  .watermark{
+    position:absolute;
+    left:0; right:0;
+    top: 15mm;
+    text-align:center;
+    opacity:0.08;
+    z-index:0;
+  }
+  .watermark img{
+    width: 125mm;
+    height:auto;
+  }
 
-    .body-table {
-      width: 100%;
-      height: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
+  .content-wrap{
+    position:relative;
+    z-index:2;
+    min-height: 205mm;
+  }
 
-    .left-panel {
-      width: 50mm;
-      padding: 5mm 2.2mm 2mm 1.2mm;
-      font-size: 9pt;
-      text-align: center;
-    }
+  /* Doc title (match sample) */
+  .doc-title{
+    text-align:center;
+    font-size:18pt;
+    font-weight:800;
+    text-decoration: underline;
+    margin: 2mm 0 3mm 0;
+    letter-spacing: 0.3px;
+  }
 
-    .divider {
-      width: 1mm;
-      background: #1f5ea8;
-    }
+  /* Footer receipt anchored near bottom */
+  .receipt-box{
+    position:absolute;
+    left: 6mm;
+    right: 6mm;
+    bottom: 6mm;
+    font-size: 10.5pt;
+    z-index:2;
+  }
 
-    .content-panel {
-      padding: 4mm 3mm 1mm 4mm;
-      position: relative;
-    }
-
-    .official-item {
-      margin: 0 0 2.5mm 0;
-      line-height: 1.22;
-    }
-
-    .official-name {
-      font-weight: bold;
-      font-style: italic;
-      font-size: 9.6pt;
-    }
-
-    .official-position,
-    .official-committee {
-      font-style: italic;
-      font-size: 8.7pt;
-    }
-
-    .doc-title {
-      text-align: center;
-      font-size: 20pt;
-      font-weight: bold;
-      text-decoration: underline;
-      margin: 0 0 4mm 0;
-      color: #122f66;
-      letter-spacing: 0.2pt;
-    }
-
-    .doc-subtitle {
-      margin: 0 0 3mm 0;
-      font-size: 14pt;
-      font-weight: bold;
-    }
-
-    .watermark {
-      position: absolute;
-      top: 45mm;
-      left: 12mm;
-      right: 12mm;
-      text-align: center;
-      z-index: 0;
-      opacity: 0.08;
-    }
-
-    .watermark img {
-      width: 120mm;
-      height: auto;
-    }
-
-    .content-wrap {
-      position: relative;
-      z-index: 1;
-    }
-  </style>
+  /* Make sure nothing breaks awkwardly */
+  .header, table.layout { page-break-inside: avoid; }
+</style>
 </head>
+
 <body>
   <div class="page">
-    <div class="border-outer">
-      <div class="border-inner">
-        <table class="frame-table">
+    <div class="border-outer"></div>
+    <div class="border-inner"></div>
+
+    <div class="sheet">
+      <!-- HEADER -->
+      <div class="header">
+        <table class="hdr-table" cellspacing="0" cellpadding="0">
           <tr>
-            <td class="header-cell">
-              <table class="header-table">
-                <tr>
-                  <td class="logo-left" style="width:22mm;"><img src="<?= h($imgBarangay) ?>" alt="Barangay Logo"></td>
-                  <td>
-                    <div class="header-text">
-                      <div class="hdr-rp">Republic of the Philippines</div>
-                      <div class="hdr-city">City of Parañaque</div>
-                      <div class="hdr-brgy">Barangay Don Galo</div>
-                      <div class="hdr-addr">Dimatimbangan St., Barangay Don Galo, Parañaque City<br>Tel. No. (02) 8512-6512</div>
-                    </div>
-                  </td>
-                  <td class="logo-center" style="width:22mm;"><img src="<?= h($imgCity) ?>" alt="City Logo"></td>
-                  <td class="logo-right" style="width:30mm;"><img src="<?= h($imgBagong) ?>" alt="Bagong Pilipinas"></td>
-                </tr>
-              </table>
-              <div class="header-line"></div>
+            <td class="hdr-left">
+              <img class="hdr-logo" src="<?= htmlspecialchars($imgBarangay) ?>" alt="Barangay Logo">
+            </td>
+
+            <td class="hdr-center">
+              <p class="hdr-top">Republic of the Philippines</p>
+              <p class="hdr-sub">City of Parañaque</p>
+              <div class="hdr-barangay">Barangay<br>Don Galo</div>
+              <div class="hdr-address">
+                Dimatimbangan St., Barangay Don Galo, Parañaque City<br>
+                Tel. No. (02) 8812-6512
+              </div>
+            </td>
+
+            <td class="hdr-right">
+              <img class="hdr-logo" src="<?= htmlspecialchars($imgCity) ?>" alt="City Logo">
+              <div style="height:2mm;"></div>
+              <img class="hdr-logo" src="<?= htmlspecialchars($imgBagong) ?>" alt="Bagong Pilipinas">
             </td>
           </tr>
+        </table>
+
+        <div class="hdr-line-wrap">
+          <div class="hdr-line-blue"></div>
+          <div class="hdr-line-gold"></div>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="body">
+        <table class="layout">
+          <colgroup>
+            <col style="width:48mm;">
+            <col style="width:2mm;">
+            <col>
+          </colgroup>
           <tr>
-            <td class="body-cell">
-              <table class="body-table">
-                <tr>
-                  <td class="left-panel">
-                    <?php if (!empty($officials_list) && is_array($officials_list)): ?>
-                      <?php foreach ($officials_list as $official): ?>
-                        <div class="official-item">
-                          <div class="official-name"><?= h($official['name'] ?? '') ?></div>
-                          <?php if (!empty($official['position'])): ?>
-                            <div class="official-position"><?= h($official['position']) ?></div>
-                          <?php endif; ?>
-                          <?php if (!empty($official['committee'])): ?>
-                            <div class="official-committee"><?= h($official['committee']) ?></div>
-                          <?php endif; ?>
-                        </div>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                  </td>
-                  <td class="divider"></td>
-                  <td class="content-panel">
-                    <div class="watermark">
-                      <img src="<?= h($watermark_src) ?>" alt="Watermark">
-                    </div>
-                    <div class="content-wrap">
-                      <div class="doc-title"><?= h($doc_title) ?></div>
-                      <div class="doc-subtitle">TO WHOM IT MAY CONCERN:</div>
-                      <?= $content ?>
-                    </div>
-                  </td>
-                </tr>
-              </table>
+            <td class="leftcol">
+              <?= $left_officials_html ?>
+            </td>
+
+            <td class="divider"></td>
+
+            <td class="rightcol">
+              <div class="watermark">
+                <img src="<?= htmlspecialchars($watermark_src) ?>" alt="Watermark">
+              </div>
+
+              <div class="content-wrap">
+                <div class="doc-title"><?= htmlspecialchars($doc_title) ?></div>
+
+                <!-- MAIN BODY CONTENT from cert_clearance.php -->
+                <?= $content ?>
+              </div>
+
+              <!-- RECEIPT FIXED AT BOTTOM (like sample)
+                   NOTE: Kung may receipt na rin sa $content mo, alisin mo doon para di magdoble. -->
+              <div class="receipt-box">
+                <!-- optional: kung gusto mo dito mismo naka-render, sabihin mo para i-Dynamic natin -->
+              </div>
             </td>
           </tr>
         </table>
       </div>
+
     </div>
   </div>
 </body>

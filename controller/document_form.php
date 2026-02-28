@@ -30,6 +30,8 @@ switch ($templateKey) {
     $view = __DIR__ . '/../views/resident/forms/form_soloparent.php';
     break;
   default:
+  case 'certification':
+    $view = __DIR__ . '/../views/resident/forms/form_certification.php';
     // walang extra form
     exit;
 }
