@@ -122,11 +122,11 @@ $officials_list = $officials_list ?? [
                                 </tr>
                             </table>
                             <div class="receipt-info">
-                                <b>BARANGAY CERT. NO.:</b> <span class="fill"><?= $cert_no ?? '_________' ?></span><br>
-                                <b>OFFICIAL RECEIPT:</b> <span class="fill"><?= $or_no ?? '_________' ?></span><br>
-                                <b>AMOUNT:</b> <span class="fill"><?= $amount ?? '_________' ?></span><br>
-                                <b>DATE PAID:</b> <span class="fill"><?= $date_paid ?? '_________' ?></span><br>
-                                <div style="margin-top:2mm; font-size:8.5pt;"><i>NOTE: Not valid without OFFICIAL SEAL.</i></div>
+                                <b>BARANGAY CERT. NO.:</b> <span class="fill"><?= htmlspecialchars($cert_no ?? '') ?></span><br>
+                                <b>OFFICIAL RECEIPT:</b> <span class="fill"><?= htmlspecialchars($or_no ?? '') ?></span><br>
+                                <b>AMOUNT:</b> <span class="fill"><?= htmlspecialchars($amount ?? '') ?></span><br>
+                                <b>DATE PAID:</b> <span class="fill"><?= htmlspecialchars($date_paid ?? '') ?></span><br>
+                                <small><i>OR not valid without OFFICIAL SEAL.</i></small>
                             </div>
                         </div>
                     </td>
