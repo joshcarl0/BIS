@@ -69,6 +69,7 @@ body { font-family: "Times New Roman", serif; color: #111; }
     width: 42mm;
     vertical-align: top;
     position: relative;
+    border-right: none;
     padding-right: 2mm;
     text-align: center;
     padding-bottom: 25mm; /* makes it visually shorter */
@@ -77,6 +78,7 @@ body { font-family: "Times New Roman", serif; color: #111; }
 .sidebar::after {
     content: "";
     position: absolute;
+    display: block;
     top: 20mm;
     right: 0;
     width: 2px;
