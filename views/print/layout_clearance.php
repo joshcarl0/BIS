@@ -68,10 +68,22 @@ body { font-family: "Times New Roman", serif; color: #111; }
 .sidebar {
     width: 42mm;
     vertical-align: top;
-    border-right: 2px solid #1b4f9c;
+    position: relative;
+    border-right: none;
     padding-right: 2mm;
     text-align: center;
     padding-bottom: 25mm; /* makes it visually shorter */
+}
+
+.sidebar::after {
+    content: "";
+    position: absolute;
+    display: block;
+    top: 20mm;
+    right: 0;
+    width: 2px;
+    height: 150mm;
+    background: #1b4f9c;
 }
 
 .person { margin-bottom: 2mm; line-height: 1.1; }
