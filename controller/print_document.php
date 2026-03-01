@@ -128,7 +128,7 @@ $title = (string)($doc['document_name'] ?? 'Document');
 $doc_title = strtoupper(trim((string)($doc['document_name'] ?? 'CERTIFICATION')));
 
 // watermark (DOMPDF-safe path relative to chroot)
-$watermark_src = 'assets/images/barangay_logo.png';
+$watermark_src = $watermark_src ?? '/assets/images/barangay_logo.png';
 
 ob_start();
 require __DIR__ . '/../views/print/' . $layout;
