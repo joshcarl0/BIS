@@ -23,13 +23,21 @@ switch ($templateKey) {
   case 'guardian':
     $view = __DIR__ . '/../views/resident/forms/form_guardian.php';
     break;
+
   case 'livein':
     $view = __DIR__ . '/../views/resident/forms/form_livein.php';
     break;
+
   case 'soloparent':
     $view = __DIR__ . '/../views/resident/forms/form_soloparent.php';
     break;
   default:
+
+  case 'clearance':
+    case 'barangay_clearance':
+    $view = __DIR__ . '/../views/resident/forms/form_clearance_photo.php';
+    break;
+    
   case 'certification':
     $view = __DIR__ . '/../views/resident/forms/form_certification.php';
     // walang extra form

@@ -261,7 +261,7 @@ public function countReleasedToday(): int
     return (int)($res['c'] ?? 0);
 }
 
-public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [])
+public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [], ?string $clearancePhotoPath = null)
 {
     $purpose = trim($purpose);
 
@@ -269,7 +269,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
         return false;
     }
 
-    //  Clean extra (simple sanitize)
+    // Clean extra (simple sanitize)
     $cleanExtra = [];
     foreach ($extra as $k => $v) {
         if (is_array($v) || is_object($v)) continue;
@@ -289,7 +289,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
         ? json_encode($cleanExtra, JSON_UNESCAPED_UNICODE)
         : null;
 
-    //  Fee snapshot from document_types
+    // Fee snapshot from document_types
     $feeSnapshot = 0.00;
     $stmtFee = $this->db->prepare("SELECT fee FROM document_types WHERE id=? LIMIT 1");
     if ($stmtFee) {
@@ -316,9 +316,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
     $stmtLast->bind_param("s", $prefix);
     $stmtLast->execute();
 
-    $lastRef = null;
-    $res = $stmtLast->get_result();
-    $row = $res ? $res->fetch_assoc() : null;
+    $row = $stmtLast->get_result()->fetch_assoc();
     $lastRef = $row['ref_no'] ?? null;
 
     $stmtLast->close();
@@ -331,15 +329,15 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
 
     $refNo = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 
-    // Insert including fee_snapshot + extra_json
+    // Insert including clearance_photo + fee_snapshot + extra_json
     $sql = "INSERT INTO document_requests
-            (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at, extra_json)
-            VALUES (?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
+            (ref_no, resident_id, document_type_id, purpose, clearance_photo, status, fee_snapshot, requested_at, extra_json)
+            VALUES (?, ?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
 
     $stmt = $this->db->prepare($sql);
     if (!$stmt) return false;
 
-    $stmt->bind_param("siisds", $refNo, $residentId, $documentTypeId, $purpose, $feeSnapshot, $extraJson);
+    $stmt->bind_param("siissds", $refNo, $residentId, $documentTypeId, $purpose, $clearancePhotoPath, $feeSnapshot, $extraJson);
 
     $ok = $stmt->execute();
     $stmt->close();

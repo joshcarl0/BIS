@@ -126,7 +126,7 @@ if (!empty($extra['since']) && empty($extra['living_since'])) {
 ========================= */
 $model = new DocumentRequest($mysqli);
 
-$result = $model->createResidentRequest($residentId, $document_type_id, $purpose, $extra);
+$$result = $model->createResidentRequest($residentId, $document_type_id, $purpose, $extra, $clearancePhotoPath);
 
 if (!$result) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to submit request.'];
@@ -137,3 +137,78 @@ if (!$result) {
 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Request submitted! Ref No: ' . $result['ref_no']];
 header("Location: /BIS/views/resident/transaction.php");
 exit;
+
+/* =========================
+   CLEARANCE PHOTO (UPLOAD)
+========================= */
+$clearancePhotoPath = null;
+
+// get doc meta
+$docMeta = null;
+$dt = $mysqli->prepare("SELECT category, name, template_key FROM document_types WHERE id=? LIMIT 1");
+$dt->bind_param("i", $document_type_id);
+$dt->execute();
+$docMeta = $dt->get_result()->fetch_assoc();
+$dt->close();
+
+$isClearance = false;
+if ($docMeta) {
+    $cat  = strtolower(trim((string)($docMeta['category'] ?? '')));
+    $name = strtolower(trim((string)($docMeta['name'] ?? '')));
+    $key  = strtolower(trim((string)($docMeta['template_key'] ?? '')));
+    $isClearance = (strpos($cat, 'clearance') !== false) || (strpos($name, 'clearance') !== false) || ($key === 'clearance');
+}
+
+if ($isClearance) {
+    if (empty($_FILES['clearance_photo']) || $_FILES['clearance_photo']['error'] === UPLOAD_ERR_NO_FILE) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Please attach a photo for Barangay Clearance.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    $f = $_FILES['clearance_photo'];
+
+    if ($f['error'] !== UPLOAD_ERR_OK) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Photo upload failed. Please try again.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    if ($f['size'] > 2 * 1024 * 1024) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Photo must be max 2MB.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    $tmp  = $f['tmp_name'];
+    $info = @getimagesize($tmp);
+    if ($info === false) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid image file.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    $mime = $info['mime'] ?? '';
+    $extMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    if (!isset($extMap[$mime])) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Only JPG/PNG/WEBP allowed.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    $ext = $extMap[$mime];
+
+    $uploadDir = __DIR__ . '/../uploads/clearance_photos';
+    if (!is_dir($uploadDir)) @mkdir($uploadDir, 0775, true);
+
+    $filename = 'clr_' . $residentId . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $destAbs  = $uploadDir . '/' . $filename;
+
+    if (!move_uploaded_file($tmp, $destAbs)) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to save uploaded photo.'];
+        header("Location: /BIS/views/resident/document_request.php");
+        exit;
+    }
+
+    $clearancePhotoPath = 'uploads/clearance_photos/' . $filename;
+}

@@ -59,7 +59,7 @@ if (!$docsRes) {
         <div class="card shadow-sm">
           <div class="card-body">
 
-            <form method="POST" action="/BIS/controller/document_requests.php">
+            <form method="POST" action="/BIS/controller/document_requests.php" enctype="multipart/form-data">
               <!-- CSRF -->
               <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
 
@@ -110,7 +110,7 @@ if (!$docsRes) {
               <!-- PURPOSE -->
                 <div class="mb-3">
                   <label class="form-label">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="purpose" class="form-control" rows="3" required></textarea>
+                  <textarea id="purpose" name="purpose" class="form-control" rows="3" required></textarea>
                 </div>
 
                 <!-- EXTRA FIELDS (dynamic) -->
@@ -170,11 +170,17 @@ function updateInfo() {
   const reqBox = document.getElementById('reqTxt');
   reqBox.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, "<br>") : "-";
 
-  //  load dynamic form
+  //  AUTO PURPOSE
+  const purposeField = document.getElementById('purpose');    // textarea
+  if (purposeField && opt) { // e.g. "Clearance - Barangay Clearance"
+      const fullText = opt.text; // e.g. "Clearance - Barangay Clearance"
+      const parts = fullText.split(" - "); // split by " - "
+      purposeField.value = parts[parts.length - 1]; // last part (document name)
+  }
+
+  // load dynamic form
   loadExtraForm(sel.value);
 }
-
-sel.addEventListener('change', updateInfo);
 </script>
 
 

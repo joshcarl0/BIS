@@ -1,265 +1,91 @@
 <?php
-// fallback safety
-$resident_name    = $resident_name ?? $name ?? '(name)';
-$resident_address = $resident_address ?? $address ?? '(address)';
-$purpose          = $purpose ?? 'LOCAL EMPLOYMENT';
-
-$captain_name = $captain_name ?? 'MARILYN F. BURGOS';
-$month = $month ?? date('F');
-$year  = $year  ?? date('Y');
-$day   = $day   ?? '_____';
-
-$cert_no   = $cert_no ?? '';
-$or_no     = $or_no ?? '';
-$amount    = $amount ?? '';
-$date_paid = $date_paid ?? '';
-
-$imgBarangay   = $imgBarangay   ?? '/assets/images/barangay_logo.png';
-$imgCity       = $imgCity       ?? '/assets/images/city_logo.png';
-$imgBagong     = $imgBagong     ?? '/assets/images/bagong_pilipinas.png';
-$watermark_src = $watermark_src ?? '/assets/images/barangay_logo.png';
-
-// dompdf-safe photos (relative to chroot)
-$photo_src = $photo_src ?? '';
-$thumb_src = $thumb_src ?? '';
+// expected vars: $doc_title, $name, $address, $purpose, $day,$month,$year,
+// $captain_name, $photo_src, $thumb_src, $cert_no,$or_no,$amount,$date_paid
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
 <style>
-@page { size:A4; margin:0; }
-*{ box-sizing:border-box; }
-html,body{ width:210mm; height:297mm; margin:0; padding:0; }
-body{ font-family:"Times New Roman", serif; color:#111; }
+  .title{ text-align:center; font-size:18pt; font-weight:900; text-decoration:underline; margin:2mm 0 3mm 0; }
+  .sub{ font-weight:700; font-size:10.5pt; margin: 0 0 3mm 0; }
+  .p{ font-size:10.5pt; line-height:1.35; text-align:justify; margin: 0 0 3mm 0; }
 
-.page{ position:relative; width:210mm; height:297mm; overflow:hidden; background:#fff; }
+  .sign-name{ margin-top:8mm; text-align:right; font-weight:bold; }
+  .sign-pos{ text-align:right; font-style:italic; margin-top:1mm; }
 
-/* gold borders */
-.border-outer{ position:absolute; left:6mm; top:6mm; right:6mm; bottom:6mm; border:1mm solid #caa33a; }
-.border-inner{ position:absolute; left:9mm; top:9mm; right:9mm; bottom:9mm; border:.35mm solid #caa33a; }
+  .box-row{ width:100%; border-collapse:collapse; margin-top:6mm; }
+  .box{ width:42mm; height:42mm; border:1pt solid #000; text-align:center; vertical-align:middle; font-size:8pt; }
+  .thumb-cap{ font-size:7.5pt; margin-top:1mm; text-align:center; }
 
-/* inner sheet padding */
-.sheet{ position:relative; padding:10mm 16mm 10mm 16mm; z-index:2; }
+  .sigline{ margin-top:4mm; border-top:1pt solid #000; width:90mm; margin-left:auto; text-align:center; font-size:9pt; padding-top:2mm; }
 
-/* header */
-.hdr{ width:100%; border-collapse:collapse; }
-.hdr-mid{ text-align:center; }
-.hdr-title{ font-weight:900; font-size:22pt; color:#1b4f9c; text-transform:uppercase; line-height:1; }
-.hdr-sub{ font-weight:bold; font-size:11pt; }
-.hdr-small{ font-size:8.5pt; }
-.line-blue{ border-top:2.5pt solid #1b4f9c; margin-top:2mm; }
-.line-gold{ border-top:1.2pt solid #caa33a; margin-top:1mm; }
-
-/* watermark */
-.watermark{ position:absolute; left:0; right:0; top:62mm; text-align:center; z-index:1; }
-.watermark img{ width:130mm; opacity:.10; }
-
-/* CONTENT AREA */
-.content{ position:relative; margin-top:6mm; height:190mm; }
-
-/* VERTICAL BLUE LINE (EASY MOVE) */
-.vline{
-  position:absolute;
-  top:0;
-  bottom:0;
-  left:8mm;             /* <<< ITO yung galawin mo to move left/right */
-  width:0;
-  border-left:2pt solid #1b4f9c;
-}
-
-/* body block */
-.body{
-  position:relative;
-  margin-left:18mm;     /* <<< distance from left to start of text */
-  padding-left:10mm;    /* inner spacing from the blue line */
-}
-
-/* titles */
-.doc-title{
-  text-align:center;
-  font-size:20pt;
-  font-weight:bold;
-  text-decoration:underline;
-  letter-spacing:.5px;
-  margin:0 0 3mm 0;
-}
-.to-whom{ font-weight:bold; font-size:11pt; margin:0 0 4mm 0; }
-
-.para{
-  text-align:justify;
-  text-indent:10mm;
-  font-size:11pt;
-  line-height:1.45;
-  margin:0 0 4mm 0;
-}
-
-/* signature block */
-.sig-block{ margin-top:6mm; font-size:11pt; text-align:right; padding-right:6mm; }
-.sig-name{ font-weight:bold; text-decoration:underline; text-transform:uppercase; }
-.sig-pos{ font-style:italic; }
-
-/* bottom area like reference */
-.bottom{
-  position:absolute;
-  left:18mm;
-  right:16mm;
-  bottom:16mm;
-}
-
-.box-row{ width:100%; border-collapse:collapse; }
-.picbox, .thumbbox{
-  width:45mm;
-  height:45mm;
-  border:1pt solid #000;
-  text-align:center;
-  vertical-align:middle;
-  font-size:8pt;
-}
-.thumbcap{ font-size:7pt; margin-top:1mm; text-align:right; padding-right:2mm; }
-
-.sigline{
-  margin-top:4mm;
-  border-top:1pt solid #000;
-  width:95mm;
-  margin-left:auto;
-  text-align:center;
-  font-size:9pt;
-  padding-top:2mm;
-}
-
-/* receipt */
-.receipt{
-  margin-top:6mm;
-  font-size:9pt;
-  line-height:1.35;
-}
-.rtable{ border-collapse:collapse; }
-.rtable td{ padding:.6mm 0; }
-.rlabel{ width:45mm; font-weight:bold; }
-.rcolon{ width:4mm; text-align:center; font-weight:bold; }
-.rline{ border-bottom:.6pt solid #000; width:65mm; height:4mm; }
-
-.note{ margin-top:2mm; font-size:8.5pt; font-style:italic; }
-
-img{ max-width:100%; }
+  .receipt{ margin-top:5mm; font-size:9pt; }
+  .receipt td{ padding:0.5mm 0; }
+  .rlabel{ width:40mm; font-weight:bold; }
+  .rcolon{ width:4mm; text-align:center; font-weight:bold; }
+  .rline{ border-bottom:0.6pt solid #000; width:55mm; height:4mm; }
 </style>
-</head>
 
-<body>
-<div class="page">
-  <div class="border-outer"></div>
-  <div class="border-inner"></div>
+<div class="title">BARANGAY CLEARANCE</div>
+<div class="sub">TO WHOM IT MAY CONCERN:</div>
 
-  <div class="watermark">
-    <img src="<?= htmlspecialchars($watermark_src) ?>" alt="">
-  </div>
+<p class="p">
+  This is to certify that <b><?= htmlspecialchars($name) ?></b>, whose photograph, signature and right thumb mark appears below,
+  is a bonafide resident of <b><?= htmlspecialchars($address) ?></b>, <b>DON GALO, PARAÑAQUE CITY</b>.
+</p>
 
-  <div class="sheet">
-    <table class="hdr">
-      <tr>
-        <td width="80">
-          <img src="<?= htmlspecialchars($imgBarangay) ?>" width="70" alt="">
-        </td>
+<p class="p">
+ This certification is issued upon the request of the above-mentioned individual 
+for the purpose of 
+<?php
+$purposeText = $document_name ?? '';
+$parts = array_map('trim', explode(' - ', $purposeText));
+$last = end($parts);
+if ($last !== false && $last !== '') {
+  $purposeText = $last;
+}
+?>
+<b><?= htmlspecialchars($purposeText) ?></b>
+and valid only for three (3) months from date issued.
+</p>
 
-        <td class="hdr-mid">
-          <div class="hdr-sub">Republic of the Philippines</div>
-          <div class="hdr-sub">City of Parañaque</div>
-          <div class="hdr-title">Barangay Don Galo</div>
-          <div class="hdr-small">Dimatimbang St., Barangay Don Galo, Parañaque City</div>
-          <div class="hdr-small">Tel. No.: (02) 8531-6612</div>
-        </td>
+<p class="p">
+  Issued this <?= htmlspecialchars($day) ?> day of <?= htmlspecialchars($month) ?>, <?= htmlspecialchars($year) ?>
+  in Barangay Don Galo City of Parañaque.
+</p>
 
-        <td width="150" align="right">
-          <img src="<?= htmlspecialchars($imgCity) ?>" width="60" style="margin-right:6px;" alt="">
-          <img src="<?= htmlspecialchars($imgBagong) ?>" width="70" alt="">
-        </td>
-      </tr>
-    </table>
+<div class="sign-name"><?= htmlspecialchars($captain_name) ?></div>
+<div class="sign-pos">Punong Barangay</div>
 
-    <div class="line-blue"></div>
-    <div class="line-gold"></div>
+<table class="box-row">
+  <tr>
+    <td class="box">
+      <?php if (!empty($photo_src)): ?>
+        <img src="<?= htmlspecialchars($photo_src) ?>" style="width:100%; height:100%; object-fit:cover;">
+      <?php else: ?>
+        PICTURE
+      <?php endif; ?>
+    </td>
 
-    <div class="content">
-      <div class="vline"></div>
+    <td class="box">
+      <?php if (!empty($thumb_src)): ?>
+        <img src="<?= htmlspecialchars($thumb_src) ?>" style="width:100%; height:100%; object-fit:contain;">
+      <?php endif; ?>
+    </td>
+  </tr>
 
-      <div class="body">
-        <div class="doc-title">BARANGAY CLEARANCE</div>
-        <div class="to-whom">TO WHOM IT MAY CONCERN:</div>
+  <tr>
+    <td style="text-align:center; font-size:7.5pt;">PICTURE</td>
+    <td></td>
+    <td style="text-align:center; font-size:7.5pt;">RIGHT THUMBMARK</td>
+  </tr>
 
-        <p class="para">
-          This is to certify that <b><?= htmlspecialchars($resident_name) ?></b>, whose photograph,
-          signature and right thumb mark appears below, is a bonafide resident
-          <b><?= htmlspecialchars($resident_address) ?></b>, <b>DON GALO, PARAÑAQUE CITY</b>.
-        </p>
+</table>
 
-        <p class="para">
-          This certification is issued upon the request of the above-mentioned individual for the purpose of
-          <b><?= htmlspecialchars($purpose) ?></b> and valid only for three (3) months from date issued.
-        </p>
+<div class="sigline">Signature over Printed Name</div>
 
-        <p class="para">
-          Issued this <?= htmlspecialchars($day) ?> day of <?= htmlspecialchars($month) ?>, <?= htmlspecialchars($year) ?>
-          in Barangay Don Galo City of Parañaque.
-        </p>
+<table class="receipt">
+  <tr><td class="rlabel">BARANGAY CERT. NO.</td><td class="rcolon">:</td><td><div class="rline"><?= htmlspecialchars($cert_no) ?></div></td></tr>
+  <tr><td class="rlabel">OFFICIAL RECEIPT</td><td class="rcolon">:</td><td><div class="rline"><?= htmlspecialchars($or_no) ?></div></td></tr>
+  <tr><td class="rlabel">AMOUNT</td><td class="rcolon">:</td><td><div class="rline"><?= htmlspecialchars($amount) ?></div></td></tr>
+  <tr><td class="rlabel">DATED PAID</td><td class="rcolon">:</td><td><div class="rline"><?= htmlspecialchars($date_paid) ?></div></td></tr>
+</table>
 
-        <div class="sig-block">
-          <div class="sig-name"><?= htmlspecialchars($captain_name) ?></div>
-          <div class="sig-pos">Punong Barangay</div>
-        </div>
-      </div>
-
-      <div class="bottom">
-        <table class="box-row">
-          <tr>
-            <td class="picbox">
-              <?php if (!empty($photo_src)): ?>
-                <img src="<?= htmlspecialchars($photo_src) ?>" style="width:100%; height:100%; object-fit:cover;" alt="">
-              <?php else: ?>
-                PICTURE
-              <?php endif; ?>
-            </td>
-
-            <td></td>
-
-            <td class="thumbbox">
-              <?php if (!empty($thumb_src)): ?>
-                <img src="<?= htmlspecialchars($thumb_src) ?>" style="width:100%; height:100%; object-fit:cover;" alt="">
-              <?php endif; ?>
-            </td>
-          </tr>
-        </table>
-
-        <div class="thumbcap">RIGHT THUMBMARK</div>
-
-        <div class="sigline">Signature over Printed Name</div>
-
-        <div class="receipt">
-          <table class="rtable">
-            <tr>
-              <td class="rlabel">BARANGAY CERT. NO.</td><td class="rcolon">:</td>
-              <td><div class="rline"><?= htmlspecialchars($cert_no) ?></div></td>
-            </tr>
-            <tr>
-              <td class="rlabel">OFFICIAL RECEIPT</td><td class="rcolon">:</td>
-              <td><div class="rline"><?= htmlspecialchars($or_no) ?></div></td>
-            </tr>
-            <tr>
-              <td class="rlabel">AMOUNT</td><td class="rcolon">:</td>
-              <td><div class="rline"><?= htmlspecialchars($amount) ?></div></td>
-            </tr>
-            <tr>
-              <td class="rlabel">DATED PAID</td><td class="rcolon">:</td>
-              <td><div class="rline"><?= htmlspecialchars($date_paid) ?></div></td>
-            </tr>
-          </table>
-
-          <div class="note">OR not valid without OFFICIAL SEAL.</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-</body>
-</html>
+<div style="margin-top:2mm; font-size:8.5pt;"><i>OR not valid without OFFICIAL SEAL.</i></div>

@@ -6,135 +6,138 @@ require_once __DIR__ . '/../models/DocumentRequest.php';
 require_once __DIR__ . '/../models/Official.php';
 
 $id = (int)($_GET['id'] ?? 0);
-if ($id <= 0) {
-    die("Invalid request.");
-}
+if ($id <= 0) die("Invalid request.");
 
-$docReq = new DocumentRequest($db);
+// SUPPORT BOTH $db and $conn
+$mysqli = $db ?? $conn ?? null;
+if (!$mysqli) die("Database connection not found. Check database.php variable name (\$db or \$conn).");
+
+$docReq = new DocumentRequest($mysqli);
 $doc = $docReq->findById($id);
+if (!$doc) die("Request not found.");
 
-if (!$doc) {
-    die("Request not found.");
-}
-
-// Optional: allow print only if approved/released
+// allow print only if approved/released
 if (!in_array($doc['status'] ?? '', ['Approved', 'Released'], true)) {
     die("This request is not approved yet.");
 }
 
-/* ======= VARIABLES FOR PRINT TEMPLATE ======= */
+/* ===== Variables from DB ===== */
 $resident_name    = (string)($doc['resident_name'] ?? '');
 $resident_address = (string)($doc['resident_address'] ?? '');
-$purpose          = (string)($doc['purpose'] ?? 'LOCAL EMPLOYMENT');
+$document_name =    (string)($doc['document_name'] ?? '');
 
 $cert_no   = (string)($doc['cert_no'] ?? '');
 $or_no     = (string)($doc['or_no'] ?? '');
 $amount    = isset($doc['amount_paid']) ? number_format((float)$doc['amount_paid'], 2) : '';
 $date_paid = !empty($doc['date_paid']) ? date('F d, Y', strtotime($doc['date_paid'])) : '';
 
-/**
- * Photo + thumb sources (DOMPDF-safe relative paths)
- * NOTE: dompdf chroot is BIS root (../)
- */
-$resident_photo_url = trim((string)($doc['resident_photo_url'] ?? ''));
-$resident_thumb_url = trim((string)($doc['resident_thumb_url'] ?? ''));
+/* ===== Photo + Thumb (DOMPDF-safe NO leading slash) ===== */
+$photo = trim((string)($doc['resident_photo_url'] ?? ''));
+$thumb = trim((string)($doc['resident_thumb_url'] ?? ''));
 
-if ($resident_photo_url === '' && !empty($doc['resident_photo'])) {
-    $resident_photo_url = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);
+if ($photo === '' && !empty($doc['resident_photo'])) {
+    $photo = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);
 }
-if ($resident_thumb_url === '' && !empty($doc['resident_thumbmark'])) {
-    $resident_thumb_url = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']);
+if ($thumb === '' && !empty($doc['resident_thumbmark'])) {
+    $thumb = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']);
 }
 
-/**
- * Map to template variable names (IMPORTANT)
- * Your cert_clearance.php uses $photo_src and $thumb_src
- */
-$photo_src = $resident_photo_url;
-$thumb_src = $resident_thumb_url;
+$photo_src = trim((string)($doc['clearance_photo'] ?? ''));
+$thumb_src = trim((string)$thumb);
 
-/* ======= EXTRA CLEARANCE VARIABLES ======= */
-$captain_name = 'MARILYN F. BURGOS'; // change if you make dynamic
-$month = date('F');
-$year  = date('Y');
+/* ===== extra vars ===== */
+$captain_name = 'MARILYN F. BURGOS';
 
-/**
- * Optional aliases (if your template uses $name / $address)
- */
+$issuedDate = $doc['requested_at'] ?? date('Y-m-d');
+
+$day   = date('j', strtotime($issuedDate));
+$month = date('F', strtotime($issuedDate));
+$year  = date('Y', strtotime($issuedDate));
+
+// aliases (in case templates use these)
 $name    = $resident_name;
 $address = $resident_address;
 
-/* ======= OFFICIALS LIST (LEFT PANEL) ======= */
-$officialsModel = new Official($db);
-$officialRows = $officialsModel->all();
-
+/* ===== officials (optional) ===== */
 $officials_list = [];
-foreach ($officialRows as $row) {
-    if (($row['status'] ?? 'Active') !== 'Active') continue;
+try {
+    $officialsModel = new Official($mysqli);
+    $rows = $officialsModel->all();
+    foreach ($rows as $row) {
+        if (isset($row['status']) && $row['status'] !== 'Active') continue;
 
-    $fullName = trim((string)($row['full_name'] ?? ''));
-    $pos      = trim((string)($row['position'] ?? ''));
-    $comm     = trim((string)($row['committee'] ?? ''));
+        $fullName = trim((string)($row['full_name'] ?? ''));
+        $pos      = trim((string)($row['position'] ?? ''));
+        $comm     = trim((string)($row['committee'] ?? ''));
+    
 
-    $officials_list[] = [
-        'name' => ($fullName !== '' ? 'Hon. ' . $fullName : ''),
-        'position' => $pos,
-        'committee' => $comm,
-    ];
+        $officials_list[] = [
+            'name'      => ($fullName !== '' ? 'Hon. ' . $fullName : ''),
+            'position'  => $pos,
+            'committee' => $comm,
+        ];
+    }
+} catch (\Throwable $e) {
+    $officials_list = [];
 }
 
-/* ======= TEMPLATE SELECTION ======= */
+/* ===== Template selection ===== */
 $type = strtolower(trim((string)($doc['document_name'] ?? '')));
 
 if (strpos($type, 'clearance') !== false) {
-    $file   = 'cert_clearance.php';
-    $layout = 'layout_clearance.php';
+    $file    = 'cert_clearance.php';
+    $layout  = 'layout_clearance.php';
     $pdfName = 'barangay_clearance.pdf';
-} elseif (strpos($type, 'cohabitation') !== false || strpos($type, 'live in') !== false) {
-    $file   = 'cert_livein.php';
-    $layout = 'layout_certificate.php';
-    $pdfName = 'cert_livein.pdf';
-} elseif (strpos($type, 'guardian') !== false) {
-    $file   = 'cert_guardian.php';
-    $layout = 'layout_certificate.php';
-    $pdfName = 'cert_guardian.pdf';
 } elseif (strpos($type, 'residency') !== false) {
-    $file   = 'cert_residency.php';
-    $layout = 'layout_certificate.php';
+    $file    = 'cert_residency.php';
+    $layout  = 'layout_certificate.php';
     $pdfName = 'cert_residency.pdf';
-} elseif (strpos($type, 'certification') !== false) {
-    $file   = 'certification.php';
-    $layout = 'layout_certificate.php';
-    $pdfName = 'certification.pdf';
+} elseif (strpos($type, 'guardian') !== false) {
+    $file    = 'cert_guardian.php';
+    $layout  = 'layout_certificate.php';
+    $pdfName = 'cert_guardian.pdf';
+} elseif (strpos($type, 'cohabitation') !== false || strpos($type, 'live in') !== false) {
+    $file    = 'cert_livein.php';
+    $layout  = 'layout_certificate.php';
+    $pdfName = 'cert_livein.pdf';
 } else {
-    $file   = 'certification.php';
-    $layout = 'layout_certificate.php';
+    $file    = 'certification.php';
+    $layout  = 'layout_certificate.php';
     $pdfName = 'certificate.pdf';
 }
 
-/* ======= RENDER HTML THEN PDF ======= */
+/* ===== Validate paths ===== */
+$viewFilePath   = __DIR__ . '/../views/print/' . $file;
+$layoutFilePath = __DIR__ . '/../views/print/' . $layout;
+
+if (!is_file($viewFilePath))   die("Template missing: views/print/" . htmlspecialchars($file));
+if (!is_file($layoutFilePath)) die("Layout missing: views/print/" . htmlspecialchars($layout));
+
+/* ===== DOMPDF render ===== */
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// 1) render content template -> $content
+$title     = (string)($doc['document_name'] ?? 'Document');
+$doc_title = strtoupper(trim((string)($doc['document_name'] ?? 'CERTIFICATE')));
+
+
+$imgBarangay   =  'assets/images/barangay_logo.png';
+$imgCity       = 'assets/images/city_logo.png';
+$imgBagong     = 'assets/images/bagong_pilipinas.png';
+$watermark_src = 'assets/images/barangay_logo.png';
+
+// 1) content
 ob_start();
-require __DIR__ . '/../views/print/' . $file;
+require $viewFilePath;
 $content = ob_get_clean();
 
-// 2) wrap with layout -> $html
-$title = (string)($doc['document_name'] ?? 'Document');
-$doc_title = strtoupper(trim((string)($doc['document_name'] ?? 'CERTIFICATION')));
-
-// watermark (DOMPDF-safe path relative to chroot)
-$watermark_src = $watermark_src ?? '/assets/images/barangay_logo.png';
-
+// 2) layout wrapper (must echo <?= $content )
 ob_start();
-require __DIR__ . '/../views/print/' . $layout;
+require $layoutFilePath;
 $html = ob_get_clean();
 
-// 3) dompdf options
 $chroot = realpath(__DIR__ . '/..'); // BIS root
 
 $options = new Options();
@@ -143,12 +146,14 @@ $options->set('isHtml5ParserEnabled', true);
 $options->setChroot($chroot);
 
 $dompdf = new Dompdf($options);
+
+// IMPORTANT LINE
+$dompdf->setBasePath($chroot);
+
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-// safe cleanup (single level only)
-if (ob_get_length()) { ob_end_clean(); }
-
 $dompdf->stream($pdfName, ['Attachment' => false]);
 exit;
+?>
