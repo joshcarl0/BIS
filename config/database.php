@@ -9,6 +9,7 @@ $database   = "bis_db";
 try {
     $conn = new mysqli($servername, $username, $password, $database);
     $conn->set_charset('utf8mb4');
+    $conn->query("SET time_zone = '+08:00'");
 
     //  ADD THIS LINE:
     $db = $conn;

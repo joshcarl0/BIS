@@ -5,6 +5,21 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header("Location: login.php");
     exit();
 }
+
+if (!function_exists('formatDashboardDateTime')) {
+    function formatDashboardDateTime(?string $dateTime): string {
+        if (empty($dateTime)) {
+            return '—';
+        }
+
+        try {
+            $dt = new DateTimeImmutable($dateTime, new DateTimeZone('Asia/Manila'));
+            return $dt->format('M d, Y h:i A');
+        } catch (Exception $e) {
+            return (string)$dateTime;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,7 +107,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">Today’s Transactions (Released)</h5>
-                    <small class="text-muted"><?= date('Y-m-d') ?></small>
+                    <small class="text-muted">Count: <?= (int)($todaySummary['total_count'] ?? 0) ?> · Collected: ₱<?= number_format((float)($todaySummary['total_amount'] ?? 0), 2) ?></small>
                     </div>
 
                     <div class="table-responsive">
@@ -117,7 +132,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                             <td class="text-end">
                             ₱<?= number_format((float)($r['amount_paid'] ?? 0), 2) ?>
                             </td>
-                            <td><?= htmlspecialchars($r['released_at']) ?></td>
+                            <td><?= htmlspecialchars(formatDashboardDateTime($r['released_at'] ?? null)) ?></td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
@@ -132,7 +147,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">Recent Activity</h5>
-                    <small class="text-muted">Latest 10 updates</small>
+                    <small class="text-muted">Latest 5 updates</small>
                     </div>
 
                     <div class="table-responsive">
@@ -151,7 +166,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
                         <?php else: ?>
                             <?php foreach ($recentLogs as $log): ?>
                             <tr>
-                                <td class="text-nowrap"><?= htmlspecialchars($log['created_at']) ?></td>
+                                <td class="text-nowrap"><?= htmlspecialchars(formatDashboardDateTime($log['created_at'] ?? null)) ?></td>
                                 <td class="text-nowrap"><?= htmlspecialchars($log['action']) ?></td>
                                 <td><?= htmlspecialchars($log['description']) ?></td>
                                 <td class="text-nowrap"><?= htmlspecialchars($log['actor_role'] ?? 'system') ?></td>
