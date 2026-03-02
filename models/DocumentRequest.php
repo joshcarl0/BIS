@@ -430,14 +430,19 @@ public function releasedTodayList($dateYmd, $limit = 20)
             dr.ref_no,
             CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name,'')) AS resident_name,
             dt.name AS document_type,
-            COALESCE(p.amount, dr.fee_snapshot, 0) AS amount_paid,
+            COALESCE(pay.amount, dr.fee_snapshot, 0) AS amount_paid,
             dr.released_at
         FROM document_requests dr
         JOIN residents r ON r.id = dr.resident_id
         LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-        LEFT JOIN payments p ON p.request_id = dr.id
-        WHERE dr.status='Released'
-          AND DATE(dr.released_at)=?
+        LEFT JOIN (
+            SELECT request_id, SUM(amount) AS amount
+            FROM payments
+            GROUP BY request_id
+        ) pay ON pay.request_id = dr.id
+
+        WHERE dr.status = 'Released'
+          AND DATE(dr.released_at) = ?
         ORDER BY dr.released_at DESC
         LIMIT ?
     ";
@@ -453,6 +458,36 @@ public function releasedTodayList($dateYmd, $limit = 20)
     $stmt->close();
 
     return $rows;
+}
+
+public function releasedTodaySummary($dateYmd): array
+{
+    $sql = "
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(COALESCE(pay.amount, dr.fee_snapshot, 0)), 0) AS total_amount
+        FROM document_requests dr
+        LEFT JOIN (
+            SELECT request_id, SUM(amount) AS amount
+            FROM payments
+            GROUP BY request_id
+        ) pay ON pay.request_id = dr.id
+        WHERE dr.status = 'Released'
+          AND DATE(dr.released_at) = ?
+    ";
+
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) return ['total_count' => 0, 'total_amount' => 0];
+
+    $stmt->bind_param("s", $dateYmd);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc() ?: [];
+    $stmt->close();
+
+    return [
+        'total_count'  => (int)($row['total_count'] ?? 0),
+        'total_amount' => (float)($row['total_amount'] ?? 0),
+    ];
 }
 
 

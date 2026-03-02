@@ -16,9 +16,10 @@ $date_paid = $date_paid ?? '';
  * DOMPDF + CHROOT SAFE:
  * Use paths relative to chroot root.
  */
-$imgBarangay = '../../BIS/assets/images/barangay_logo.png';
-$imgCity     = '../../BIS/assets/images/city_logo.png';
-$imgBagong   = '../../BIS/assets/images/bagong_pilipinas.png';
+$imgBarangay   = $imgBarangay   ?? 'assets/images/barangay_logo.png';
+$imgCity       = $imgCity       ?? 'assets/images/city_logo.png';
+$imgBagong     = $imgBagong     ?? 'assets/images/bagong_pilipinas.png';
+$watermark_src = $watermark_src ?? 'assets/images/barangay_logo.png';
 
 // Optional font (place file under /assets/fonts/)
 $fontOldEnglish = '../../BIS/assets/fonts/UnifrakturCook-Bold.ttf';

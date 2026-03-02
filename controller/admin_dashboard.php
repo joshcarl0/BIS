@@ -27,12 +27,18 @@
         // NEW TOTALS
         $totalResidents  = $resModel->countActive();
         $totalHouseholds = $houseModel->countActive();
+                // INCOME & STATS
+                    $today = date('Y-m-d');
 
-        $today = date('Y-m-d');
+                // $incomeTotal = $docReq->incomeTotal();
+            $incomeTotal   = $docReq->incomeTotalReleased();
+            $todayRows     = $docReq->releasedTodayList($today, 20);
 
-        // NEW (needs methods in DocumentRequest)
-        $incomeTotal   = $docReq->incomeTotalReleased();
-        $todayRows     = $docReq->releasedTodayList($today, 20);
+            // Summary for today releases (can be used in dashboard)
+            $releasedTodaySummary = [
+                'total_count'  => count($todayRows),
+                'total_amount' => array_reduce($todayRows, fn($c,$r) => $c + (float)($r['amount_paid'] ?? 0), 0.0),
+            ];
 
         $statusMap     = $docReq->statusCounts();
         $statusLabels  = array_keys($statusMap);
