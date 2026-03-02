@@ -1,0 +1,81 @@
+/* page bg */
+body{
+  background:#f5f6fa;
+}
+
+/* WELCOME */
+.welcome-card{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff, #f2f4f7);
+}
+
+.welcome-watermark{
+  position:absolute;
+  inset:0;
+  background-image: url('/BIS/assets/images/barangay_logo.png');
+  background-repeat:no-repeat;
+  background-position: 85% 50%;
+  background-size: 420px;
+  opacity: .05;
+  pointer-events:none;
+}
+
+.avatar{
+  border-radius: 999px;
+  object-fit: cover;
+  border: 6px solid rgba(255,255,255,.8);
+}
+
+/* search */
+.searchbox{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  padding:6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.04);
+}
+.searchbox i{ opacity:.6; }
+.searchbox input{
+  border:none;
+  outline:none;
+  box-shadow:none;
+  padding:0;
+  width:160px;
+}
+
+/* QUICK CARDS */
+.quick-card{
+  transition: .25s ease;
+}
+.quick-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.08) !important;
+}
+
+.quick-ic{
+  width:44px; height:44px;
+  border-radius: 14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 20px;
+}
+.ic-blue{  background: rgba(13,110,253,.12); color:#0d6efd; }
+.ic-gold{  background: rgba(255,193,7,.18); color:#b8860b; }
+.ic-green{ background: rgba(25,135,84,.14); color:#198754; }
+.ic-sky{   background: rgba(13,202,240,.16); color:#0dcaf0; }
+
+/* BADGES (soft style) */
+.badge-soft-warning{ background: rgba(255,193,7,.18); color:#7a5b00; }
+.badge-soft-success{ background: rgba(25,135,84,.14); color:#0f5132; }
+.badge-soft-danger{  background: rgba(220,53,69,.14); color:#842029; }
+
+/* ANNOUNCEMENT */
+.announcement-card{
+  transition: .25s ease;
+}
+.announcement-card:hover{
+  transform: translateY(-3px);
+}

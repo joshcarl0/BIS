@@ -1,38 +1,34 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// security guard
-if (empty($_SESSION['role'])) {
+// allow resident & admin only
+$role = $_SESSION['role'] ?? '';
+if (!in_array($role, ['resident','admin'], true)) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-$filename = $_GET['file'] ?? '';
-$mode = $_GET['mode'] ?? 'inline'; // inline or download
+$filename = basename($_GET['file'] ?? '');
+$mode = $_GET['mode'] ?? 'inline';
 
-$filename = basename($filename); // protection
-if (!$filename) {
+if ($filename === '') {
     http_response_code(400);
     exit('Bad request');
 }
 
 $path = __DIR__ . '/../uploads/announcements/' . $filename;
 
-if (!file_exists($path)) {
+if (!is_file($path)) {
     http_response_code(404);
     exit('File not found');
 }
 
-// headers
-$type = mime_content_type($path);
+$type = mime_content_type($path) ?: 'application/octet-stream';
 header("Content-Type: $type");
 header("Content-Length: " . filesize($path));
 
-if ($mode === 'download') {
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-} else {
-    header('Content-Disposition: inline; filename="' . $filename . '"');
-}
+$disposition = ($mode === 'download') ? 'attachment' : 'inline';
+header("Content-Disposition: $disposition; filename=\"$filename\"");
 
 readfile($path);
 exit;

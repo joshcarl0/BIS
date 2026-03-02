@@ -28,6 +28,7 @@ if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST[
     exit;
 }
 
+
 /* =========================
    BASIC REQUIRED INPUTS
 ========================= */
@@ -208,8 +209,6 @@ if (!$result) {
     exit;
 }
 
-$_SESSION['flash'] = ['type' => 'success', 'msg' => 'Request submitted! Ref No: ' . $result['ref_no']];
-header("Location: /BIS/views/resident/transaction.php");
+$_SESSION['last_ref_no'] = $result['ref_no'];
+header("Location: /BIS/views/resident/document_request.php?success=1");
 exit;
-
-

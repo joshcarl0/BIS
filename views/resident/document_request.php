@@ -11,6 +11,14 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+/* =========================
+   REF MODAL (ONE-TIME)
+========================= */
+$ref = $_SESSION['last_ref_no'] ?? '';
+if ($ref !== '') {
+    unset($_SESSION['last_ref_no']);
+}
+
 require_once __DIR__ . '/../../config/database.php';
 
 // SUPPORT BOTH $db and $conn (para di ka na malito)
@@ -135,7 +143,45 @@ if (!$docsRes) {
   </div>
 </div>
 
+<?php if ($ref !== ''): ?>
+<div class="modal fade" id="refModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reference Number</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Please save your reference number:</p>
+        <div class="p-3 border rounded bg-light fw-bold fs-4 text-center">
+          <?= htmlspecialchars($ref) ?>
+        </div>
+        <small class="text-muted d-block mt-2">
+          You can also view this in <b>Transaction</b>.
+        </small>
+      </div>
+      <div class="modal-footer">
+        <a href="/BIS/views/resident/transaction.php" class="btn btn-primary">Go to Transactions</a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?php endif; ?>
+<?php if ($ref !== ''): ?>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('refModal');
+  if (el) new bootstrap.Modal(el).show();
+});
+</script>
+<?php endif; ?>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/BIS/assets/js/sidebar_toggle.js"></script>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -194,7 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 </script>
-
 
 </body>
 </html>

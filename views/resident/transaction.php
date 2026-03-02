@@ -124,7 +124,10 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'resident' && 
                       </td>
                       <td class="text-nowrap"><?= htmlspecialchars($r['requested_at']) ?></td>
                       <td class="text-nowrap">
-                        <a class="btn btn-sm btn-outline-primary" href="#">View</a>
+                          <button type="button" class="btn btn-sm btn-outline-primary btn-view"
+                                  data-ref="<?= htmlspecialchars($r['ref_no']) ?>">
+                            View
+                          </button>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -138,14 +141,26 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'resident' && 
     </div>
   </div>
 
+  <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Request Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="viewModalBody">Loading...</div>
+    </div>
+  </div>
+</div>
+
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Sidebar Toggle (if you have toggle button id=toggleSidebar) -->
-  <script>
-  const btn = document.getElementById("toggleSidebar");
-  if (btn) {
-    btn.addEventListener("click", function () {
+<script>
+  const toggleBtn = document.getElementById("toggleSidebar");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function () {
       const sidebar = document.getElementById("sidebar");
       const main = document.getElementById("mainContent");
       const icon = document.getElementById("toggleIcon");
@@ -164,6 +179,28 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'resident' && 
       }
     });
   }
-  </script>
+
+  //  View button click handler
+  document.addEventListener('click', async (e) => {
+    const viewBtn = e.target.closest('.btn-view');
+    if (!viewBtn) return;
+
+    const ref = viewBtn.dataset.ref;
+
+    const modalBody = document.getElementById('viewModalBody');
+    modalBody.textContent = 'Loading...';
+
+    const modalEl = document.getElementById('viewModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    try {
+      const res = await fetch('/BIS/controller/resident_transaction_view.php?ref=' + encodeURIComponent(ref));
+      modalBody.innerHTML = await res.text();
+    } catch (err) {
+      modalBody.innerHTML = '<div class="alert alert-danger">Failed to load details.</div>';
+    }
+  });
+</script>
 </body>
 </html>

@@ -1,4 +1,50 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'resident') {
+    header("Location: /BIS/views/login.php");
+    exit();
+}
+
+require_once __DIR__ . '/../../config/database.php';
+
+$mysqli = $conn ?? $db ?? null;
+if (!$mysqli) {
+    die("Database connection not found.");
+}
+
+// GET ANNOUNCEMENTS
+$sql = "SELECT id, title, details, date_posted
+        FROM announcements
+        WHERE status = 'Active'
+        ORDER BY date_posted DESC";
+
+$result = $mysqli->query($sql);
+$rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+
+// GET ATTACHMENTS FOR ANNOUNCEMENTS
+$attMap = [];
+
+$ids = array_map(fn($r) => (int)$r['id'], $rows);
+$ids = array_values(array_filter($ids));
+
+if (!empty($ids)) {
+    $in = implode(',', $ids);
+
+    $sqlAtt = "SELECT announcement_id, file_path
+                FROM announcement_attachments
+                WHERE announcement_id IN ($in)
+                ORDER BY id DESC";
+
+    $resAtt = $mysqli->query($sqlAtt);
+    $attRows = $resAtt ? $resAtt->fetch_all(MYSQLI_ASSOC) : [];
+
+    foreach ($attRows as $a) {
+        $aid = (int)$a['announcement_id'];
+        $attMap[$aid][] = $a;
+    }
+}
+
 // $rows galing controller
 
 function isImageFile(string $name): bool {
@@ -47,14 +93,14 @@ function isNewPost(?string $dateStr, int $days = 3): bool {
       $postedAt = $row['date_posted'] ?? ($row['created_at'] ?? null);
 
       // attachment fields from your JOIN
-      $attachmentPath = $row['attachment_path'] ?? '';
-      $attachmentName = $row['attachment_name'] ?? '';
-      $file = $attachmentPath ? basename($attachmentPath) : '';
+     // $attachmentPath = $row['attachment_path'] ?? '';
+     // $attachmentName = $row['attachment_name'] ?? '';
+     // $file = $attachmentPath ? basename($attachmentPath) : '';
 
-      $previewUrl  = $file ? ("/BIS/controller/announcement_file.php?mode=inline&file=" . rawurlencode($file)) : '';
-      $downloadUrl = $file ? ("/BIS/controller/announcement_file.php?mode=download&file=" . rawurlencode($file)) : '';
+      //$previewUrl  = $file ? ("/BIS/controller/announcement_file.php?mode=inline&file=" . rawurlencode($file)) : '';
+      //$downloadUrl = $file ? ("/BIS/controller/announcement_file.php?mode=download&file=" . rawurlencode($file)) : '';
 
-      $isImg = $file && isImageFile($file);
+      //$isImg = $file && isImageFile($file);
 
       $timeLabel = $postedAt ? date("M j, Y g:i A", strtotime($postedAt)) : '';
       $details = $row['details'] ?? ($row['description'] ?? '');
