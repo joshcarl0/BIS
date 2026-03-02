@@ -32,14 +32,14 @@ $amount    = isset($doc['amount_paid']) ? number_format((float)$doc['amount_paid
 $date_paid = !empty($doc['date_paid']) ? date('F d, Y', strtotime($doc['date_paid'])) : '';
 
 /* ===== Photo + Thumb (DOMPDF-safe NO leading slash) ===== */
-$photo = trim((string)($doc['resident_photo_url'] ?? ''));
-$thumb = trim((string)($doc['resident_thumb_url'] ?? ''));
+$photo = trim((string)($doc['resident_photo_url'] ?? '')); // kung may resident_photo_url, gamitin yan (preference sa DB field na yan)
+$thumb = trim((string)($doc['resident_thumb_url'] ?? '')); // kung walang resident_photo_url, resident_thumb_url, saka lang gagamit ng default path (uploads/residents/ at uploads/thumbmarks/) base sa resident_photo at resident_thumbmark fields
 
 if ($photo === '' && !empty($doc['resident_photo'])) {
-    $photo = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);
+    $photo = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);// default path kung walang resident_photo_url
 }
 if ($thumb === '' && !empty($doc['resident_thumbmark'])) {
-    $thumb = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']);
+    $thumb = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']); // default path kung walang resident_thumb_url
 }
 
 $photo_src = trim((string)($doc['clearance_photo'] ?? ''));

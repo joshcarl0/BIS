@@ -137,50 +137,62 @@ if (!$docsRes) {
 
 <script src="/BIS/assets/js/sidebar_toggle.js"></script>
 <script>
-const sel = document.getElementById('documentSelect');
+document.addEventListener('DOMContentLoaded', () => {
 
-async function loadExtraForm(docTypeId){
-  const wrap = document.getElementById('extraWrap');
-  const box  = document.getElementById('extraFields');
+  const sel = document.getElementById('documentSelect');
 
-  box.innerHTML = '';
-  wrap.style.display = 'none';
+  async function loadExtraForm(docTypeId){
+    console.log("docTypeId:", docTypeId);
 
-  if(!docTypeId) return;
+    const wrap = document.getElementById('extraWrap');
+    const box  = document.getElementById('extraFields');
 
-  const res = await fetch(`/BIS/controller/document_form.php?document_type_id=${encodeURIComponent(docTypeId)}`);
-  const html = await res.text();
+    box.innerHTML = '';
+    wrap.style.display = 'none';
 
-  if(html.trim() !== ''){
-    box.innerHTML = html;
-    wrap.style.display = 'block';
-  }
-}
+    if(!docTypeId) return;
 
-function updateInfo() {
-  const opt = sel.options[sel.selectedIndex];
-  if (!opt || !opt.dataset) return;
+    const res = await fetch(`/BIS/controller/document_form.php?document_type_id=${encodeURIComponent(docTypeId)}`);
+    console.log("fetch status:", res.status);
 
-  document.getElementById('feeTxt').textContent  = opt.dataset.fee ? opt.dataset.fee : '-';
-  document.getElementById('timeTxt').textContent = opt.dataset.time ? opt.dataset.time : '-';
+    const html = await res.text();
+    console.log("html length:", html.length);
 
-  let req = '-';
-  try { req = JSON.parse(opt.dataset.req || '""') || '-'; } catch(e) { req = '-'; }
-
-  const reqBox = document.getElementById('reqTxt');
-  reqBox.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, "<br>") : "-";
-
-  //  AUTO PURPOSE
-  const purposeField = document.getElementById('purpose');    // textarea
-  if (purposeField && opt) { // e.g. "Clearance - Barangay Clearance"
-      const fullText = opt.text; // e.g. "Clearance - Barangay Clearance"
-      const parts = fullText.split(" - "); // split by " - "
-      purposeField.value = parts[parts.length - 1]; // last part (document name)
+    if(html.trim() !== ''){
+      box.innerHTML = html;
+      wrap.style.display = 'block';
+    }
   }
 
-  // load dynamic form
-  loadExtraForm(sel.value);
-}
+  function updateInfo() {
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.dataset) return;
+
+    document.getElementById('feeTxt').textContent  = opt.dataset.fee || '-';
+    document.getElementById('timeTxt').textContent = opt.dataset.time || '-';
+
+    let req = '-';
+    try { req = JSON.parse(opt.dataset.req || '""') || '-'; } catch(e) { req = '-'; }
+
+    const reqBox = document.getElementById('reqTxt');
+    reqBox.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, "<br>") : "-";
+
+    // AUTO PURPOSE
+    const purposeField = document.getElementById('purpose');
+    if (purposeField && opt) {
+      const fullText = opt.text; // "Clearance - Barangay Clearance"
+      const parts = fullText.split(" - ");
+      purposeField.value = parts[parts.length - 1];
+    }
+
+    // load dynamic form
+    loadExtraForm(sel.value);
+  }
+
+  // IMPORTANT: call updateInfo when changing select
+  sel.addEventListener('change', updateInfo);
+
+});
 </script>
 
 

@@ -20,6 +20,7 @@ $templateKey = strtolower(trim((string)($row['template_key'] ?? '')));
 $view = null;
 
 switch ($templateKey) {
+
   case 'guardian':
     $view = __DIR__ . '/../views/resident/forms/form_guardian.php';
     break;
@@ -31,16 +32,20 @@ switch ($templateKey) {
   case 'soloparent':
     $view = __DIR__ . '/../views/resident/forms/form_soloparent.php';
     break;
-  default:
 
   case 'clearance':
-    case 'barangay_clearance':
+  case 'barangay_clearance':
     $view = __DIR__ . '/../views/resident/forms/form_clearance_photo.php';
     break;
-    
+
   case 'certification':
     $view = __DIR__ . '/../views/resident/forms/form_certification.php';
-    // walang extra form
+    break;
+
+  default:
+    $view = null;
+    break;
+    
     exit;
 }
 

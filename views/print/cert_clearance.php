@@ -3,24 +3,49 @@
 // $captain_name, $photo_src, $thumb_src, $cert_no,$or_no,$amount,$date_paid
 ?>
 <style>
-  .title{ text-align:center; font-size:18pt; font-weight:900; text-decoration:underline; margin:2mm 0 3mm 0; }
-  .sub{ font-weight:700; font-size:10.5pt; margin: 0 0 3mm 0; }
-  .p{ font-size:10.5pt; line-height:1.35; text-align:justify; margin: 0 0 3mm 0; }
+  .title
+  { text-align:center; font-size:18pt; font-weight:900; text-decoration:underline; margin:2mm 0 3mm 0;  }
+  .sub
+  { font-weight:700; font-size:10.5pt; margin: 0 0 3mm 0; }
+  .p
+  { font-size:10.5pt; line-height:1.35; text-align:justify; margin: 0 0 3mm 0; }
 
-  .sign-name{ margin-top:8mm; text-align:right; font-weight:bold; }
-  .sign-pos{ text-align:right; font-style:italic; margin-top:1mm; }
+  .sign-name
+  { margin-top:8mm; text-align:right; font-weight:bold; }
+  .sign-pos
+  { text-align:right; font-style:italic; margin-top:1mm; }
 
-  .box-row{ width:100%; border-collapse:collapse; margin-top:6mm; }
-  .box{ width:42mm; height:42mm; border:1pt solid #000; text-align:center; vertical-align:middle; font-size:8pt; }
-  .thumb-cap{ font-size:7.5pt; margin-top:1mm; text-align:center; }
+.box-wrap
+{width:76mm; margin-top:6mm; }
 
-  .sigline{ margin-top:4mm; border-top:1pt solid #000; width:90mm; margin-left:auto; text-align:center; font-size:9pt; padding-top:2mm; }
+.box-row
+{ table-layout:fixed; width:76mm; border-collapse:collapse;}
 
-  .receipt{ margin-top:5mm; font-size:9pt; }
-  .receipt td{ padding:0.5mm 0; }
-  .rlabel{ width:40mm; font-weight:bold; }
-  .rcolon{ width:4mm; text-align:center; font-weight:bold; }
-  .rline{ border-bottom:0.6pt solid #000; width:55mm; height:4mm; }
+.box
+{ width:38mm; height:38mm; overflow:hidden; border:1pt solid #000; }
+
+.box img{
+  width:38mm;
+  height:38mm;
+  display:block;
+}
+  .thumb-cap
+  { font-size:7.5pt; margin-top:1mm; text-align:center; }
+  
+  .sigline
+  { margin-top:4mm; border-top:1pt solid #000; width:90mm; margin-left:auto; text-align:center; font-size:9pt; padding-top:2mm; }
+
+  .receipt
+  { margin-top:5mm; font-size:9pt; }
+  
+  .receipt td
+  { padding:0.5mm 0; }
+  .rlabel
+  { width:40mm; font-weight:bold; }
+  .rcolon
+  { width:4mm; text-align:center; font-weight:bold; }
+  .rline
+  { border-bottom:0.6pt solid #000; width:55mm; height:4mm; }
 </style>
 
 <div class="title">BARANGAY CLEARANCE</div>
@@ -57,25 +82,26 @@ and valid only for three (3) months from date issued.
 <table class="box-row">
   <tr>
     <td class="box">
-      <?php if (!empty($photo_src)): ?>
-        <img src="<?= htmlspecialchars($photo_src) ?>" style="width:100%; height:100%; object-fit:cover;">
-      <?php else: ?>
+    <?php if (!empty($photo_src)): ?>
+        <img src="<?= htmlspecialchars($photo_src) ?>">
+    <?php else: ?>
         PICTURE
-      <?php endif; ?>
+    <?php endif; ?>
     </td>
 
     <td class="box">
-      <?php if (!empty($thumb_src)): ?>
-        <img src="<?= htmlspecialchars($thumb_src) ?>" style="width:100%; height:100%; object-fit:contain;">
-      <?php endif; ?>
+    <?php if (!empty($thumb_src)): ?>
+        <img class="thumb" src="<?= htmlspecialchars($thumb_src) ?>">
+    <?php else: ?>
+        
+    <?php endif; ?>
     </td>
   </tr>
 
-  <tr>
-    <td style="text-align:center; font-size:7.5pt;">PICTURE</td>
-    <td></td>
-    <td style="text-align:center; font-size:7.5pt;">RIGHT THUMBMARK</td>
-  </tr>
+ <tr>
+  <td style="text-align:center; font-size:7.5pt;">PICTURE</td>
+  <td style="text-align:center; font-size:7.5pt;">RIGHT THUMBMARK</td>
+</tr>
 
 </table>
 
