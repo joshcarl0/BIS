@@ -11,40 +11,85 @@ $displayName = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Resident';
 
 require_once __DIR__ . '/../config/database.php';
 
-$userId = $_SESSION['user_id'];
+/**
+ * Use ONE connection variable consistently.
+ * Supports either $conn or $db from database.php
+ */
+$mysqli = $conn ?? $db ?? null;
+if (!$mysqli) {
+    die("Database connection not found. Check database.php variable name (\$conn or \$db).");
+}
+
+$userId = (int)($_SESSION['user_id'] ?? 0);
 
 /* =========================
-  RECENT REQUESTS (Top 5)
+   GET resident_id (from residents.user_id)
 ========================= */
-  $sql = "SELECT dr.requested_at,
-                dr.purpose,
-                dr.status,
-                dt.name AS document_name
-          FROM document_requests dr
-          JOIN document_types dt 
-              ON dt.id = dr.document_type_id
-          WHERE dr.resident_id = ?
-          ORDER BY dr.requested_at DESC
-          LIMIT 5";
+$residentId = 0;
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$requests = $result->fetch_all(MYSQLI_ASSOC);
+$stmtR = $mysqli->prepare("SELECT id FROM residents WHERE user_id = ? LIMIT 1");
+if (!$stmtR) {
+    die("Prepare failed (resident lookup): " . htmlspecialchars($mysqli->error));
+}
+$stmtR->bind_param("i", $userId);
+$stmtR->execute();
 
+$resR = $stmtR->get_result();
+if ($resR) {
+    $residentRow = $resR->fetch_assoc();
+    $residentId = (int)($residentRow['id'] ?? 0);
+}
+$stmtR->close();
+
+/* =========================
+   MY RECENT REQUESTS (last 5)
+========================= */
+$requests = [];
+
+if ($residentId > 0) {
+    $sqlReq = "SELECT 
+                  dr.id,
+                  dr.purpose,
+                  dr.status,
+                  dr.requested_at,
+                  dt.name AS document_name
+               FROM document_requests dr
+               LEFT JOIN document_types dt 
+                    ON dt.id = dr.document_type_id
+               WHERE dr.resident_id = ?
+               ORDER BY dr.requested_at DESC
+               LIMIT 5";
+
+    $stmtReq = $mysqli->prepare($sqlReq);
+    if (!$stmtReq) {
+        die("Prepare failed (recent requests): " . htmlspecialchars($mysqli->error));
+    }
+
+    $stmtReq->bind_param("i", $residentId);
+    $stmtReq->execute();
+
+    $resReq = $stmtReq->get_result();
+    if ($resReq) {
+        $requests = $resReq->fetch_all(MYSQLI_ASSOC);
+    }
+    $stmtReq->close();
+}
 
 /* =========================
   ANNOUNCEMENTS (Active only)
 ========================= */
-$sql2 = "SELECT title, details, date_posted
-          FROM announcements
-          WHERE status = 'Active'
-          ORDER BY date_posted DESC
-          LIMIT 3";
+$announcements = [];
 
-$res2 = $conn->query($sql2);
-$announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
+$sql2 = "SELECT title, details, date_posted
+         FROM announcements
+         WHERE status = 'Active'
+         ORDER BY date_posted DESC
+         LIMIT 3";
+
+$res2 = $mysqli->query($sql2);
+if ($res2) {
+    $announcements = $res2->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -60,7 +105,7 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
   <!-- Sidebar CSS -->
   <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
 
-  <!-- Dashboard CSS (ADD THIS FILE) -->
+  <!-- Dashboard CSS -->
   <link rel="stylesheet" href="/BIS/assets/css/resident_dashboard.css">
 </head>
 
@@ -116,7 +161,7 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
 
       <div class="row g-3 mb-4">
         <div class="col-12 col-md-6 col-lg-3">
-          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident_document_request.php">
+          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident/document_request.php">
             <div class="d-flex align-items-center gap-3">
               <div class="quick-ic ic-blue"><i class="bi bi-file-earmark-text"></i></div>
               <div>
@@ -128,7 +173,7 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
         </div>
 
         <div class="col-12 col-md-6 col-lg-3">
-          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident_transactions.php">
+          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident/transaction.php">
             <div class="d-flex align-items-center gap-3">
               <div class="quick-ic ic-gold"><i class="bi bi-folder2-open"></i></div>
               <div>
@@ -140,7 +185,7 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
         </div>
 
         <div class="col-12 col-md-6 col-lg-3">
-          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident_announcements.php">
+          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident/user_announcements.php">
             <div class="d-flex align-items-center gap-3">
               <div class="quick-ic ic-green"><i class="bi bi-megaphone"></i></div>
               <div>
@@ -169,7 +214,7 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
         <div class="card-body p-4">
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
             <h5 class="fw-bold mb-0">My Recent Requests</h5>
-            <a class="btn btn-sm btn-outline-primary rounded-pill" href="/BIS/views/resident_transactions.php">
+            <a class="btn btn-sm btn-outline-primary rounded-pill" href="/BIS/views/resident/transaction.php">
               View all
             </a>
           </div>
@@ -186,22 +231,35 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
                 </tr>
               </thead>
               <tbody>
-                <?php foreach ($requests as $r): ?>
+                <?php if (empty($requests)): ?>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      No recent requests found.
+                    </td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($requests as $r): ?>
                     <tr>
                       <!-- Date -->
-                      <td><?= htmlspecialchars(date('M d, Y', strtotime($r['requested_at']))) ?></td>
+                      <td>
+                        <?php
+                          $dateStr = $r['requested_at'] ?? '';
+                          echo $dateStr ? htmlspecialchars(date('M d, Y', strtotime($dateStr))) : '-';
+                        ?>
+                      </td>
 
                       <!-- Document Type -->
-                      <td class="fw-semibold"><?= htmlspecialchars($r['document_name']) ?></td>
+                      <td class="fw-semibold"><?= htmlspecialchars($r['document_name'] ?? '-') ?></td>
 
                       <!-- Purpose -->
-                      <td><?= htmlspecialchars($r['purpose']) ?></td>
+                      <td><?= htmlspecialchars($r['purpose'] ?? '-') ?></td>
 
                       <!-- Status -->
                       <td>
                         <?php
-                          $status = $r['status'];
+                          $status = (string)($r['status'] ?? 'Pending');
                           $badgeClass = 'bg-secondary';
+
                           if ($status === 'Pending')  $badgeClass = 'badge-soft-warning';
                           if ($status === 'Approved') $badgeClass = 'badge-soft-success';
                           if ($status === 'Rejected') $badgeClass = 'badge-soft-danger';
@@ -213,20 +271,21 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
 
                       <!-- Action -->
                       <td>
-                        <?php if ($r['status'] === 'Approved'): ?>
+                        <?php if (($r['status'] ?? '') === 'Approved'): ?>
                           <a class="btn btn-sm btn-primary rounded-pill px-3"
-                            href="/BIS/views/download_document.php?id=<?= (int)$r['id'] ?>">
+                             href="/BIS/views/download_document.php?id=<?= (int)($r['id'] ?? 0) ?>">
                             <i class="bi bi-download me-1"></i> Download
                           </a>
                         <?php else: ?>
                           <a class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                            href="/BIS/views/resident_transactions.php">
+                             href="/BIS/views/resident/transaction.php">
                             View
                           </a>
                         <?php endif; ?>
                       </td>
                     </tr>
-                <?php endforeach; ?>
+                  <?php endforeach; ?>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -243,29 +302,39 @@ $announcements = $res2 ? $res2->fetch_all(MYSQLI_ASSOC) : [];
       </div>
 
       <div class="row g-3">
-        <?php foreach ($announcements as $a): ?>
-          <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 announcement-card">
-              <div class="card-body p-4">
-                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
-                    <?= date('M d', strtotime($a['date_posted'])) ?>
-                </span>
-
-                <h6 class="fw-bold mt-3 mb-2">
-                    <?= htmlspecialchars($a['title']) ?>
-                </h6>
-
-                <p class="text-muted small mb-3">
-                    <?= htmlspecialchars($a['details']) ?>
-                </p>
-
-                <a href="/BIS/views/admin/admin_announcements.php" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                  Read more
-                </a>
+        <?php if (empty($announcements)): ?>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+              <div class="card-body p-4 text-center text-muted">
+                No announcements available.
               </div>
             </div>
           </div>
-        <?php endforeach; ?>
+        <?php else: ?>
+          <?php foreach ($announcements as $a): ?>
+            <div class="col-12 col-lg-4">
+              <div class="card border-0 shadow-sm rounded-4 h-100 announcement-card">
+                <div class="card-body p-4">
+                  <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                    <?= !empty($a['date_posted']) ? htmlspecialchars(date('M d', strtotime($a['date_posted']))) : '-' ?>
+                  </span>
+
+                  <h6 class="fw-bold mt-3 mb-2">
+                    <?= htmlspecialchars($a['title'] ?? '-') ?>
+                  </h6>
+
+                  <p class="text-muted small mb-3">
+                    <?= htmlspecialchars($a['details'] ?? '-') ?>
+                  </p>
+
+                  <a href="/BIS/views/resident/user_announcements.php" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    Read more
+                  </a>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
       </div>
 
     </div>
