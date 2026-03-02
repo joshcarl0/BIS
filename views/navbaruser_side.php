@@ -1,13 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../includes/resident_guard.php';
 
-// USER / RESIDENT GUARD
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'resident') {
-    header("Location: /BIS/views/login.php");
-    exit;
-}
-
-$current = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$current = basename($_SERVER['PHP_SELF']);
 
 function activeMenu($file, $current) {
     return ($file === $current) ? 'active' : '';
@@ -16,6 +10,9 @@ function activeMenu($file, $current) {
 
 <div class="sidebar-left" id="sidebar">
     <div class="sidebar-header">
+        <div class="logo-wrapper">
+            <img src="/BIS/assets/images/barangay_logo.png" alt="Barangay Don Galo Logo">
+        </div>
         <h4>Barangay Don Galo</h4>
         <small>Resident Panel</small>
     </div>
@@ -37,7 +34,7 @@ function activeMenu($file, $current) {
         </li>
 
         <li class="<?= activeMenu('document_request.php', $current) ?>">
-        <a href="/BIS/views/resident/document_request.php">
+            <a href="/BIS/views/resident/document_request.php">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Document Request</span>
             </a>
@@ -50,12 +47,12 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-           <li class="<?= activeMenu('user_announcements.php', $current) ?>">
-    <a href="/BIS/controller/user_announcements.php">
-        <i class="bi bi-newspaper"></i>
-        <span>Announcements</span>
-    </a>
-</li>
+        <li class="<?= activeMenu('user_announcements.php', $current) ?>">
+            <a href="/BIS/controller/user_announcements.php">
+                <i class="bi bi-newspaper"></i>
+                <span>Announcements</span>
+            </a>
+        </li>
 
         <li class="logout">
             <a href="/BIS/views/logout.php">

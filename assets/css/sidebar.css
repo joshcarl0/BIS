@@ -2,59 +2,74 @@
 .sidebar-left{
   width: 260px;
   height: 100vh;
-  background: #dcb611; 
+  background: #dcb611;
   position: fixed;
   left: 0;
   top: 0;
-  color: #1C2E81;      
+  color: #1C2E81;
   overflow-y: auto;
 }
 
-.sidebar-left.collapsed{
-  width: 70px;
+.sidebar-left.collapsed{ width: 70px; }
+
+.sidebar-header{ border-bottom: 1px solid rgba(255,255,255,.08); }
+
+.sidebar-header h4{
+  margin: 0;
+  font-size: 20px;      /* larger font for name */
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .2px;
 }
 
-.sidebar-header{
-  padding: 20px;
-  text-align: center;
-  border-bottom: 1px solid rgba(28,46,129,0.25); 
+.sidebar-header small{
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;      /* smaller font for email */
+  opacity: .9;
 }
 
 /* MENU */
 .sidebar-menu{
   list-style:none;
   padding:0;
-  margin: 15px 0 0;
+  margin: 20px 0 0;
 }
+
+.sidebar-menu li{ margin: 8px 12px; }
 
 .sidebar-menu li a{
   display:flex;
   align-items:center;
-  gap: 12px;
+  gap: 14px;
   padding: 12px 18px;
-  color:#1C2E81;       
-  text-decoration:none;
-  transition: 0.2s;
+  border-radius: 14px;
+  transition: 0.2s ease;
+  color: #1C2E81;
+  text-decoration: none;
 }
 
-/* hover normal items (BLUE) */
+/* ACTIVE */
+.sidebar-menu li.active a{
+  background:#1C2E81;
+  color:#fff;
+}
+
+/* hover */
 .sidebar-menu li a:hover{
-  background:#1C2E81;  
+  background:#1C2E81;
+  color:#fff;
 }
 
-/* icons follow text color */
-.sidebar-menu li a i{
-  color: inherit;
-}
+.sidebar-menu li a i{ color: inherit; }
 
-.sidebar-left.collapsed .sidebar-menu li a span{
-  display:none;
-}
+.sidebar-left.collapsed .sidebar-menu li a span{ display:none; }
 
-/* LOGOUT (keep red) */
+/* LOGOUT (red) */
+.sidebar-menu li.logout{ margin-top: 30px; }
+
 .sidebar-menu li.logout a{
   background:#DC3545;
-  margin-top: 15px;
   color:#fff;
 }
 
@@ -69,21 +84,4 @@
   transition: 0.2s;
 }
 
-.main-content.expanded{
-  margin-left: 70px;
-}
-
-/* ✅ ACTIVE item = BLUE */
-.sidebar-menu li.active a{
-  background:#1C2E81;  
-  color:#fff;
-}
-
-.sidebar-menu li.active a i{
-  color:#fff;
-}
-
-/* when sidebar is collapsed, move content left */
-.sidebar-left.collapsed ~ .main-content {
-  margin-left: 70px;
-}
+.sidebar-left.collapsed ~ .main-content{ margin-left: 70px; }

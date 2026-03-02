@@ -105,7 +105,7 @@ $search = trim($_GET['search'] ?? '');
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                           <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
 
-                          <!-- ✅ preserve search when you click approve/reject/release -->
+                          <!--  preserve search when you click approve/reject/release -->
                           <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
 
                           <input class="form-control form-control-sm" name="remarks" placeholder="Remarks (optional)">
@@ -120,11 +120,15 @@ $search = trim($_GET['search'] ?? '');
                             Reject
                           </button>
 
-                          <button class="btn btn-sm btn-primary" name="action" value="release"
-                            <?= ($status !== 'Approved') ? 'disabled' : '' ?>>
-                            Release
-                          </button>
-
+                            <button
+                              class="btn btn-sm btn-primary"
+                              name="action"
+                              value="release"
+                              <?= ($status !== 'Approved') ? 'disabled' : '' ?>
+                              onclick="return confirm('Mark this request as RELEASED? This will also generate Cert No and OR Payment if needed.');"
+                            >
+                              Release
+                            </button>
                           <?php if (in_array($status, ['Approved','Released'], true)): ?>
                             <a class="btn btn-sm btn-dark"
                               target="_blank"

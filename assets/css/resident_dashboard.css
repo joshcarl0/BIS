@@ -79,3 +79,65 @@ body{
 .announcement-card:hover{
   transform: translateY(-3px);
 }
+
+/*   MAIN CONTENT */
+#mainContent{
+  margin-left: 260px !important;     /* sidebar width */
+  padding-top: 80px !important;      /* space for top navbar */
+  min-height: 100vh;
+}
+
+/* kapag collapsed sidebar */
+.sidebar-left.collapsed ~ #mainContent{
+  margin-left: 70px !important;
+}
+
+:root{
+  --sidebar-w: 260px;
+  --topbar-h: 64px;
+  --gold: #d3b011;
+}
+
+/* TOP NAVBAR */
+.topbar{
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w);
+  width: calc(100% - var(--sidebar-w));
+  height: var(--topbar-h);
+  background: var(--gold);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  z-index: 900;
+}
+
+/* MAIN CONTENT OFFSET */
+#mainContent{
+  margin-left: var(--sidebar-w);
+  padding-top: calc(var(--topbar-h) + 20px);
+  min-height: 100vh;
+}
+
+/* Collapsed Sidebar */
+.sidebar-left.collapsed{
+  width: 70px;
+}
+
+.sidebar-left.collapsed ~ #mainContent{
+  margin-left: 70px;
+}
+
+.sidebar-left.collapsed ~ #mainContent .topbar{
+  left: 70px;
+  width: calc(100% - 70px);
+}
+
+/* Responsive */
+@media (max-width: 992px){
+  .topbar{
+    left: 0;
+    width: 100%;
+  }
+  #mainContent{
+    margin-left: 0;
+  }
+}

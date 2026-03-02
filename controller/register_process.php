@@ -5,6 +5,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/ResidentRegistration.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/register.php");
@@ -103,6 +104,17 @@ try {
         throw new Exception('Registration init failed.');
     }
 
+    $logModel = new ActivityLog($mysqli);
+
+$logModel->add(
+    null, // wala pang login
+    'resident',
+    'registration',
+    'resident_registration',
+    $regId,
+    "New resident registration submitted (Ref No: {$refNo})"
+);
+
     // IMPORTANT: match your OTP controllers
     $_SESSION['register_flow'] = [
         'registration_id' => $regId,
@@ -132,4 +144,5 @@ try {
     header("Location: /BIS/views/register.php");
     exit;
 }
+
 

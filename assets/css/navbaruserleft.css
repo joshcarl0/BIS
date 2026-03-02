@@ -1,0 +1,158 @@
+/* ===== LEFT SIDEBAR ===== */
+.sidebar-left{
+  width: 260px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 18px 16px;
+  color: #fff;
+  background: linear-gradient(180deg, #0c2a52 0%, #0b2346 55%, #091e3b 100%);
+  box-shadow: 0 12px 30px rgba(0,0,0,.18);
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+/* Scrollbar (optional) */
+.sidebar-left::-webkit-scrollbar{ width: 6px; }
+.sidebar-left::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.15);
+  border-radius: 10px;
+}
+
+/* Header */
+.sidebar-header{
+  text-align: center;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.logo-wrapper{
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  border: 3px solid #f1c40f;
+}
+
+.logo-wrapper img{
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+}
+
+.sidebar-header h4{
+  font-weight: 700;
+  margin: 6px 0 2px;
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+
+.sidebar-header small{
+  color: rgba(255,255,255,.75);
+  font-size: 13px;
+}
+
+/* Menu */
+.sidebar-menu{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu li{ margin: 6px 0; }
+
+.sidebar-menu li a{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px;
+  border-radius: 12px;
+  color: rgba(255,255,255,.86);
+  text-decoration: none;
+  transition: .18s ease;
+}
+
+.sidebar-menu li a i{
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
+}
+
+/* Hover */
+.sidebar-menu li a:hover{
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+/* Active */
+.sidebar-menu li.active a{
+  background: #f1c40f;
+  color: #0b2346;
+  font-weight: 700;
+}
+
+.sidebar-menu li.active a i{
+  color: #0b2346;
+}
+
+/* Logout */
+.sidebar-menu li.logout a{
+  margin-top: 12px;
+  background: rgba(255,255,255,.06);
+  color: #ffd6d6;
+}
+
+.sidebar-menu li.logout a:hover{
+  background: rgba(255,0,0,.12);
+  color: #fff;
+}
+
+/* ===== COLLAPSED SIDEBAR (clean icons-only) ===== */
+.sidebar-left.collapsed{
+  width: 70px;
+  padding: 14px 10px;
+}
+
+/* hide title + small text when collapsed */
+.sidebar-left.collapsed .sidebar-header h4,
+.sidebar-left.collapsed .sidebar-header small{
+  display: none;
+}
+
+/* shrink logo */
+.sidebar-left.collapsed .logo-wrapper{
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 6px;
+  border-width: 2px;
+}
+
+.sidebar-left.collapsed .logo-wrapper img{
+  width: 28px;
+  height: 28px;
+}
+
+/* center icons */
+.sidebar-left.collapsed .sidebar-menu li a{
+  justify-content: center;
+  padding: 12px 10px;
+}
+
+/* hide labels (text) */
+.sidebar-left.collapsed .sidebar-menu li a span{
+  display: none;
+}
+
+/* make icons a bit bigger */
+.sidebar-left.collapsed .sidebar-menu li a i{
+  font-size: 20px;
+  width: auto;
+}

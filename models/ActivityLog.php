@@ -30,4 +30,11 @@ class ActivityLog {
         $res = $this->db->query($sql);
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
+
+public function log($action, $description, $actorId = null, $actorRole = 'system', $entityType = null, $entityId = null)
+{
+    return $this->add($actorId, $actorRole, $action, $entityType, $entityId, $description);
+}
+
+
 }

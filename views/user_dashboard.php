@@ -23,23 +23,30 @@ if (!$mysqli) {
 $userId = (int)($_SESSION['user_id'] ?? 0);
 
 /* =========================
-   GET resident_id (from residents.user_id)
+   GET resident_id (user_id OR email fallback)
 ========================= */
 $residentId = 0;
 
-$stmtR = $mysqli->prepare("SELECT id FROM residents WHERE user_id = ? LIMIT 1");
+  $sqlR = "SELECT r.id
+          FROM users u
+          INNER JOIN residents r
+            ON (r.user_id = u.id
+                OR (r.user_id IS NULL AND r.email IS NOT NULL AND r.email <> '' AND r.email = u.email))
+          WHERE u.id = ?
+          ORDER BY (r.user_id = u.id) DESC, r.id DESC
+          LIMIT 1";
+
+$stmtR = $mysqli->prepare($sqlR);
 if (!$stmtR) {
     die("Prepare failed (resident lookup): " . htmlspecialchars($mysqli->error));
 }
+
 $stmtR->bind_param("i", $userId);
 $stmtR->execute();
-
-$resR = $stmtR->get_result();
-if ($resR) {
-    $residentRow = $resR->fetch_assoc();
-    $residentId = (int)($residentRow['id'] ?? 0);
-}
+$residentRow = $stmtR->get_result()->fetch_assoc();
 $stmtR->close();
+
+$residentId = (int)($residentRow['id'] ?? 0);
 
 /* =========================
    MY RECENT REQUESTS (last 5)
@@ -103,7 +110,7 @@ if ($res2) {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <!-- Sidebar CSS -->
-  <link rel="stylesheet" href="/BIS/assets/css/sidebar.css">
+  <link rel="stylesheet" href="/BIS/assets/css/navbaruserleft.css">
 
   <!-- Dashboard CSS -->
   <link rel="stylesheet" href="/BIS/assets/css/resident_dashboard.css">
@@ -271,14 +278,10 @@ if ($res2) {
 
                       <!-- Action -->
                       <td>
-                        <?php if (($r['status'] ?? '') === 'Approved'): ?>
-                          <a class="btn btn-sm btn-primary rounded-pill px-3"
-                             href="/BIS/views/download_document.php?id=<?= (int)($r['id'] ?? 0) ?>">
-                            <i class="bi bi-download me-1"></i> Download
-                          </a>
+                        <?php if (in_array(($r['status'] ?? ''), ['Approved','Released'], true)): ?>
                         <?php else: ?>
                           <a class="btn btn-sm btn-outline-secondary rounded-pill px-3"
-                             href="/BIS/views/resident/transaction.php">
+                            href="/BIS/views/resident/transaction.php">
                             View
                           </a>
                         <?php endif; ?>
@@ -340,7 +343,7 @@ if ($res2) {
     </div>
   </div>
 
-  <script src="/BIS/assets/js/sidebar_toggle.js"></script>
+  <script src="/BIS/assets/js/resident_navbar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

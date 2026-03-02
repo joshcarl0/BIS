@@ -1,27 +1,31 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+<div class="topbar d-flex align-items-center justify-content-between px-4">
 
-// USER / RESIDENT GUARD (adjust kung "user" role mo)
-if (empty($_SESSION['role']) || $_SESSION['role'] !== 'resident') {
-    header("Location: /BIS/views/login.php");
-    exit;
-}
-?>
+    <!-- LEFT SIDE -->
+    <div class="d-flex align-items-center gap-3">
+        <!-- Sidebar Toggle -->
+        <button class="btn btn-link text-dark fs-4 p-0" id="toggleSidebar">
+            <i class="bi bi-list"></i>
+        </button>
 
-<nav class="navbar navbar-expand-lg navbar-dark px-3" style="background:#dcb611;">
-    <button id="toggleSidebar"
-            class="btn p-0 me-3"
-            type="button"
-            aria-label="Toggle sidebar">
-        <i id="toggleIcon" class="bi bi-list fs-2 text-dark"></i>
-    </button>
-
-    <span class="navbar-brand mb-0 h1 text-dark">Resident Dashboard</span>
-
-    <div class="ms-auto text-dark fw-semibold">
-        <i class="bi bi-person-circle me-1"></i>
-        <?= htmlspecialchars($_SESSION['username'] ?? 'Resident'); ?>
+        <h5 class="mb-0 fw-bold text-dark">
+            Resident Dashboard
+        </h5>
     </div>
-</nav>
 
-<?php include_once __DIR__ . '/../includes/cookie_consent_modal.php'; ?>
+    <!-- RIGHT SIDE -->
+    <div class="d-flex align-items-center gap-3">
+
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-circle fs-5"></i>
+            <span class="fw-semibold">
+                <?= htmlspecialchars($_SESSION['username'] ?? 'User') ?>
+            </span>
+        </div>
+
+        <img src="/BIS/assets/images/default-avatar.png"
+             onerror="this.src='https://via.placeholder.com/40'"
+             class="rounded-circle border"
+             width="36" height="36"
+             alt="avatar">
+    </div>
+</div>
