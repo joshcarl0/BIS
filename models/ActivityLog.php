@@ -19,11 +19,20 @@ class ActivityLog {
         return $stmt->execute();
     }
 
-    public function latest($limit = 10) {
+    public function latest($limit = 5) {
         $limit = (int)$limit;
 
-        $sql = "SELECT id, actor_id, actor_role, action, entity_type, entity_id, description, created_at
+        $sql = "SELECT
+                    MAX(id) AS id,
+                    actor_id,
+                    actor_role,
+                    action,
+                    entity_type,
+                    entity_id,
+                    description,
+                    created_at
                 FROM {$this->table}
+                GROUP BY actor_id, actor_role, action, entity_type, entity_id, description, created_at
                 ORDER BY created_at DESC
                 LIMIT $limit";
 

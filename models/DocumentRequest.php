@@ -247,17 +247,16 @@ public function countByStatus(string $status): int
 
 public function countReleasedToday(): int
 {
-
     $sql = "SELECT COUNT(*) AS c
             FROM document_requests
             WHERE status = 'Released'
               AND DATE(released_at) = CURDATE()";
 
     $stmt = $this->db->prepare($sql);
-
-
     $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
     return (int)($res['c'] ?? 0);
 }
 
@@ -423,29 +422,64 @@ public function statusCounts()
     return $out;
 }
 
-public function releasedTodayList($dateYmd, $limit = 20)
+public function releasedTodaySummary(): array
+{
+    $sql = "
+        SELECT
+            COUNT(*) AS total_count,
+            COALESCE(SUM(COALESCE(pay.total_amount, dr.fee_snapshot, 0)), 0) AS total_amount
+        FROM document_requests dr
+        LEFT JOIN (
+            SELECT request_id, SUM(amount) AS total_amount
+            FROM payments
+            GROUP BY request_id
+        ) pay ON pay.request_id = dr.id
+        WHERE dr.status = 'Released'
+          AND DATE(dr.released_at) = CURDATE()
+    ";
+
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) {
+        return ['total_count' => 0, 'total_amount' => 0.0];
+    }
+
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return [
+        'total_count' => (int)($row['total_count'] ?? 0),
+        'total_amount' => (float)($row['total_amount'] ?? 0),
+    ];
+}
+
+public function releasedTodayList($limit = 20)
 {
     $sql = "
         SELECT
             dr.ref_no,
             CONCAT(r.last_name, ', ', r.first_name, ' ', COALESCE(r.middle_name,'')) AS resident_name,
             dt.name AS document_type,
-            COALESCE(p.amount, dr.fee_snapshot, 0) AS amount_paid,
+            COALESCE(pay.total_amount, dr.fee_snapshot, 0) AS amount_paid,
             dr.released_at
         FROM document_requests dr
         JOIN residents r ON r.id = dr.resident_id
         LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-        LEFT JOIN payments p ON p.request_id = dr.id
-        WHERE dr.status='Released'
-          AND DATE(dr.released_at)=?
-        ORDER BY dr.released_at DESC
+        LEFT JOIN (
+            SELECT request_id, SUM(amount) AS total_amount
+            FROM payments
+            GROUP BY request_id
+        ) pay ON pay.request_id = dr.id
+        WHERE dr.status = 'Released'
+          AND DATE(dr.released_at) = CURDATE()
+        ORDER BY dr.released_at DESC, dr.id DESC
         LIMIT ?
     ";
 
     $stmt = $this->db->prepare($sql);
     if (!$stmt) return [];
 
-    $stmt->bind_param("si", $dateYmd, $limit);
+    $stmt->bind_param("i", $limit);
     $stmt->execute();
 
     $res = $stmt->get_result();

@@ -22,17 +22,17 @@
         // COUNTERS (existing)
         $pendingCount  = $docReq->countByStatus('Pending');
         $approvedCount = $docReq->countByStatus('Approved');
-        $releasedToday = $docReq->countReleasedToday();
-
+        
         // NEW TOTALS
         $totalResidents  = $resModel->countActive();
         $totalHouseholds = $houseModel->countActive();
 
-        $today = date('Y-m-d');
+        date_default_timezone_set('Asia/Manila');
 
         // NEW (needs methods in DocumentRequest)
         $incomeTotal   = $docReq->incomeTotalReleased();
-        $todayRows     = $docReq->releasedTodayList($today, 20);
+        $todayRows     = $docReq->releasedTodayList(20);
+        $todaySummary  = $docReq->releasedTodaySummary();
 
         $statusMap     = $docReq->statusCounts();
         $statusLabels  = array_keys($statusMap);
@@ -48,7 +48,7 @@
         }
 
         // RECENT LOGS (existing)
-        $recentLogs = $logModel->latest(10);
+        $recentLogs = $logModel->latest(5);
 
         // VIEW
         require_once __DIR__ . '/../views/admin_dashboard.php';
