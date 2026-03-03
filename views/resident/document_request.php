@@ -27,7 +27,7 @@ if (!$mysqli) {
     die("Database connection not found. Check database.php variable name (\$db or \$conn).");
 }
 
-$sql = "SELECT id, category, name, fee, processing_minutes, requirements
+$sql = "SELECT id, category, name, template_key, fee, processing_minutes, requirements
         FROM document_types
         WHERE is_active = 1
         ORDER BY category, name";
@@ -96,6 +96,9 @@ if (!$docsRes) {
                     data-fee="<?= htmlspecialchars((string)$fee, ENT_QUOTES) ?>"
                     data-time="<?= $mins ?>"
                     data-req='<?= htmlspecialchars($reqJson, ENT_QUOTES) ?>'
+                    data-category="<?= htmlspecialchars((string)($row['category'] ?? ''), ENT_QUOTES) ?>"
+                    data-name="<?= htmlspecialchars((string)($row['name'] ?? ''), ENT_QUOTES) ?>"
+                    data-template-key="<?= htmlspecialchars((string)($row['template_key'] ?? ''), ENT_QUOTES) ?>"
                   >
                     <?= htmlspecialchars($row['category'] . ' - ' . $row['name']) ?>
                   </option>
@@ -125,6 +128,17 @@ if (!$docsRes) {
             <div class="mb-3">
               <label class="form-label">Purpose <span class="text-danger">*</span></label>
               <textarea id="purpose" name="purpose" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <!-- CLEARANCE PHOTO (conditional) -->
+            <div id="clearancePhotoWrap" class="mt-3" style="display:none;">
+              <div class="card border-0 bg-white">
+                <div class="card-body p-3">
+                  <label class="form-label mb-2" for="clearancePhoto">Clearance Photo <span class="text-danger">*</span></label>
+                  <input type="file" id="clearancePhoto" name="clearance_photo" class="form-control" accept="image/jpeg,image/png,image/webp">
+                  <div class="form-text">Required only for Barangay Clearance. Allowed: JPG, PNG, WEBP. Max 2MB.</div>
+                </div>
+              </div>
             </div>
 
             <!-- EXTRA FIELDS (dynamic) -->
@@ -208,6 +222,21 @@ if (!$docsRes) {
       }
     }
 
+    function toggleClearancePhoto(opt) {
+      const wrap = document.getElementById('clearancePhotoWrap');
+      const input = document.getElementById('clearancePhoto');
+      if (!wrap || !input) return;
+
+      const category = String(opt?.dataset?.category || '').toLowerCase();
+      const name = String(opt?.dataset?.name || '').toLowerCase();
+      const key = String(opt?.dataset?.templateKey || '').toLowerCase();
+      const isClearance = category.includes('clearance') || name.includes('clearance') || key === 'clearance';
+
+      wrap.style.display = isClearance ? 'block' : 'none';
+      input.required = isClearance;
+      if (!isClearance) input.value = '';
+    }
+
     function updateInfo() {
       const opt = sel.options[sel.selectedIndex];
       if (!opt || !opt.dataset) return;
@@ -229,12 +258,14 @@ if (!$docsRes) {
         purposeField.value = parts[parts.length - 1];
       }
 
+      toggleClearancePhoto(opt);
       loadExtraForm(sel.value);
     }
 
     sel.addEventListener('change', updateInfo);
 
     //  initial render (in case may preselected in future)
+    toggleClearancePhoto(sel.options[sel.selectedIndex]);
     // updateInfo();
 
   });

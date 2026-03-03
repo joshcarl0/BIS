@@ -16,6 +16,10 @@ if (!$mysqli) {
 }
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
+$lastRefNo = trim((string)($_SESSION['last_ref_no'] ?? ''));
+if ($lastRefNo !== '') {
+    unset($_SESSION['last_ref_no']);
+}
 
 /* =========================
    1) Get resident_id (user_id with email fallback)
@@ -173,6 +177,29 @@ if ($residentId > 0) {
     </div>
   </div>
 
+  <?php if ($lastRefNo !== ''): ?>
+  <div class="modal fade" id="refModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Reference Number</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">Your request was submitted successfully.</p>
+          <div class="p-3 border rounded bg-light fw-bold fs-4 text-center">
+            <?= htmlspecialchars($lastRefNo) ?>
+          </div>
+          <small class="text-muted d-block mt-2">Please save this reference number for tracking.</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
+
   <!-- VIEW MODAL -->
   <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -189,6 +216,17 @@ if ($residentId > 0) {
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/BIS/assets/js/sidebar_toggle.js"></script>
+
+  <?php if ($lastRefNo !== ''): ?>
+  <script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const refEl = document.getElementById('refModal');
+    if (refEl) {
+      new bootstrap.Modal(refEl).show();
+    }
+  });
+  </script>
+  <?php endif; ?>
 
   <script>
   // View details
