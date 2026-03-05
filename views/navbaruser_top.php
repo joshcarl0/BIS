@@ -22,10 +22,17 @@
             </span>
         </div>
 
-        <img src="/BIS/assets/images/default-avatar.png"
-             onerror="this.src='https://via.placeholder.com/40'"
-             class="rounded-circle border"
-             width="36" height="36"
-             alt="avatar">
+<?php
+$avatar = $_SESSION['avatar'] ?? '';
+$avatarPath = $avatar ? "/BIS/" . $avatar : "/BIS/assets/images/default-avatar.png";
+?>
+
+<img 
+    src="<?= htmlspecialchars($avatarPath) ?>" 
+    onerror="this.src='https://via.placeholder.com/40'"
+    class="rounded-circle border"
+    width="36" 
+    height="36"
+    alt="avatar">
     </div>
 </div>

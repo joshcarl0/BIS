@@ -374,7 +374,73 @@ public function createUserFromRegistration(
     return $newId;
 }
 
+/* =========================
+   PROFILE / ACCOUNT
+========================= */
 
+public function updateProfile(int $id, string $username, string $email, string $full_name): bool
+{
+    if ($this->isUsernameTakenExcept($username, $id) || $this->isEmailTakenExcept($email, $id)) {
+        return false;
+    }
+
+    $sql = "UPDATE {$this->table}
+            SET username = ?, email = ?, full_name = ?
+            WHERE id = ? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+
+    $stmt->bind_param("sssi", $username, $email, $full_name, $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+/* =========================
+   verify current password before allowing change
+========================= */
+public function verifyCurrentPassword(int $id, string $currentPassword): bool
+{
+    $sql = "SELECT password FROM {$this->table} WHERE id=? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $hash = '';
+    if (method_exists($stmt, 'get_result')) {
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        $hash = (string)($row['password'] ?? '');
+    } else {
+        $tmp = null;
+        $stmt->bind_result($tmp);
+        if ($stmt->fetch()) $hash = (string)$tmp;
+    }
+    $stmt->close();
+
+    if ($hash === '') return false;
+
+    // supports hashed OR legacy plain
+    return password_verify($currentPassword, $hash) || $currentPassword === $hash;
+}
+
+/* =========================
+   deactivate user (admin)
+========================= */
+
+public function deactivateAccount(int $id): bool
+{
+    $sql = "UPDATE {$this->table} SET status='inactive' WHERE id=? LIMIT 1";
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
+
+    $stmt->bind_param("i", $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
 
 
 }

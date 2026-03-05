@@ -144,6 +144,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (($_POST['purok_id'] ?? 0) <= 0) $errors[] = "Purok is required.";
         if (($_POST['residency_type_id'] ?? 0) <= 0) $errors[] = "Residency type is required.";
         if (($_POST['civil_status_id'] ?? 0) <= 0) $errors[] = "Civil status is required.";
+            // email required
+            if (trim($_POST['email'] ?? '') === '') {
+                $errors[] = "Email is required.";
+}
+
+            // email format validation
+            elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Invalid email format.";
+            }
 
         if (!$errors) {
             $ok = $residentModel->update($id, $_POST);

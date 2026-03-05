@@ -147,13 +147,19 @@ if ($res2) {
             </div>
 
             <!-- avatar -->
-            <img
-              src="/BIS/assets/images/default-avatar.png"
-              onerror="this.src='https://via.placeholder.com/96'"
-              alt="avatar"
-              class="avatar shadow-sm"
-              width="96" height="96"
-            >
+          <?php
+          $avatar = $_SESSION['avatar'] ?? '';
+          $avatarUrl = $avatar ? "/BIS/" . ltrim($avatar, "/") : "/BIS/assets/images/default-avatar.png";
+          ?>
+
+          <img
+            src="<?= htmlspecialchars($avatarUrl) ?>?v=<?= time() ?>"
+            onerror="this.src='/BIS/assets/images/default-avatar.png'"
+            alt="avatar"
+            class="avatar shadow-sm"
+            width="96"
+            height="96"
+          >
           </div>
         </div>
 
@@ -204,7 +210,7 @@ if ($res2) {
         </div>
 
         <div class="col-12 col-md-6 col-lg-3">
-          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident_profile.php">
+          <a class="quick-card card border-0 shadow-sm rounded-4 p-3 text-decoration-none" href="/BIS/views/resident/resident_profile.php">
             <div class="d-flex align-items-center gap-3">
               <div class="quick-ic ic-sky"><i class="bi bi-person"></i></div>
               <div>

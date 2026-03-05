@@ -344,8 +344,8 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label" for="add_email">Email</label>
-            <input type="email" class="form-control" id="add_email" name="email" autocomplete="email">
+            <label class="form-label" for="add_email">Email*</label>
+            <input type="email" class="form-control" id="add_email" name="email" autocomplete="email" required placeholder="example@gmail.com">
           </div>
 
           <div class="col-md-4">

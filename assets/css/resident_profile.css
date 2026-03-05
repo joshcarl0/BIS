@@ -1,0 +1,218 @@
+/* BIS - Resident Profile (Update Profile) */
+
+:root{
+  --bis-primary: #1C2E81;
+  --bis-soft: #f6f8ff;
+  --bis-border: rgba(15, 23, 42, 0.08);
+  --bis-text: #0f172a;
+  --bis-muted: #64748b;
+}
+
+.page-wrap{
+  padding: 26px 18px;
+}
+
+.profile-shell{
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-title h3{
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: var(--bis-text);
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.section-title .btn{
+  border-radius: 999px;
+}
+
+.card-soft{
+  border: 1px solid var(--bis-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  background: #fff;
+}
+
+/* top header */
+.profile-hero{
+  background: linear-gradient(135deg, var(--bis-soft), #ffffff);
+  border-bottom: 1px solid var(--bis-border);
+  padding: 18px 18px;
+}
+
+.hero-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-left{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+}
+
+.avatar{
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(28, 46, 129, 0.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: var(--bis-primary);
+  font-size: 22px;
+  border: 1px solid rgba(28,46,129,.12);
+}
+
+.hero-meta .name{
+  font-weight: 800;
+  color: var(--bis-text);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.hero-meta .sub{
+  margin: 2px 0 0;
+  color: var(--bis-muted);
+  font-size: 13px;
+}
+
+.badge-status{
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid var(--bis-border);
+  background: #fff;
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.badge-dot{
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  display:inline-block;
+}
+
+.dot-active{ background: #22c55e; }
+.dot-inactive{ background: #ef4444; }
+
+/* form section */
+.profile-body{
+  padding: 18px;
+}
+
+.form-label{
+  font-weight: 700;
+  color: var(--bis-text);
+}
+
+.form-control{
+  border-radius: 14px;
+  border: 1px solid var(--bis-border);
+  padding: 11px 12px;
+}
+
+.form-control:focus{
+  border-color: rgba(28,46,129,.35);
+  box-shadow: 0 0 0 .2rem rgba(28,46,129,.10);
+}
+
+.help-mini{
+  color: var(--bis-muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.hr-soft{
+  border: 0;
+  height: 1px;
+  background: var(--bis-border);
+  margin: 14px 0;
+}
+
+/* action bar */
+.action-bar{
+  position: sticky;
+  bottom: 12px;
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid var(--bis-border);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.action-left{
+  color: var(--bis-muted);
+  font-size: 13px;
+}
+
+.btn-pill{
+  border-radius: 999px !important;
+  padding: 10px 16px;
+  font-weight: 800;
+}
+
+.btn-primary{
+  background: var(--bis-primary);
+  border-color: var(--bis-primary);
+}
+
+.btn-primary:hover{
+  filter: brightness(.95);
+}
+
+.avatar-box{
+position: relative;
+width: 80px;
+height: 80px;
+}
+
+.avatar-img{
+width: 80px;
+height: 80px;
+border-radius: 50%;
+object-fit: cover;
+border:3px solid #fff;
+box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.avatar-edit{
+position:absolute;
+bottom:-5px;
+right:-5px;
+background:#1C2E81;
+color:white;
+width:28px;
+height:28px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+font-size:14px;
+}
