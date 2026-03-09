@@ -35,7 +35,6 @@ $search = trim($_GET['search'] ?? '');
         </div>
       <?php endif; ?>
 
-      <!-- ✅ SEARCH BAR -->
       <form class="row g-2 mb-3" method="GET" action="/BIS/controller/admin_document_requests.php">
         <div class="col-md-6">
           <div class="input-group">
@@ -84,12 +83,24 @@ $search = trim($_GET['search'] ?? '');
                   <?php foreach ($rows as $r): ?>
                     <?php
                       $status = $r['status'] ?? 'Pending';
+
                       $badge = 'secondary';
                       if ($status === 'Pending')  $badge = 'warning';
                       if ($status === 'Approved') $badge = 'success';
                       if ($status === 'Rejected') $badge = 'danger';
                       if ($status === 'Released') $badge = 'primary';
+
+                      $docCategory = strtolower(trim((string)($r['document_category'] ?? '')));
+                      $docName     = strtolower(trim((string)($r['document_name'] ?? '')));
+                      $templateKey = strtolower(trim((string)($r['template_key'] ?? '')));
+                      $photoPath   = trim((string)($r['clearance_photo'] ?? ''));
+
+                      $isClearance =
+                        strpos($docCategory, 'clearance') !== false ||
+                        strpos($docName, 'clearance') !== false ||
+                        $templateKey === 'clearance';
                     ?>
+
                     <tr>
                       <td class="fw-semibold"><?= htmlspecialchars($r['ref_no'] ?? '') ?></td>
                       <td><?= htmlspecialchars($r['resident_name'] ?? 'Unknown') ?></td>
@@ -101,14 +112,12 @@ $search = trim($_GET['search'] ?? '');
                       <td><?= htmlspecialchars($r['requested_at'] ?? $r['created_at'] ?? '') ?></td>
 
                       <td>
-                        <form class="d-flex gap-2" method="POST" action="/BIS/controller/admin_document_requests.php">
+                        <form class="d-flex gap-2 flex-wrap" method="POST" action="/BIS/controller/admin_document_requests.php">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                           <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-
-                          <!--  preserve search when you click approve/reject/release -->
                           <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
 
-                          <input class="form-control form-control-sm" name="remarks" placeholder="Remarks (optional)">
+                          <input class="form-control form-control-sm" name="remarks" placeholder="Remarks (optional)" style="max-width: 180px;">
 
                           <button class="btn btn-sm btn-success" name="action" value="approve"
                             <?= ($status !== 'Pending') ? 'disabled' : '' ?>>
@@ -120,21 +129,47 @@ $search = trim($_GET['search'] ?? '');
                             Reject
                           </button>
 
-                            <button
-                              class="btn btn-sm btn-primary"
-                              name="action"
-                              value="release"
-                              <?= ($status !== 'Approved') ? 'disabled' : '' ?>
-                              onclick="return confirm('Mark this request as RELEASED? This will also generate Cert No and OR Payment if needed.');"
-                            >
-                              Release
-                            </button>
-                          <?php if (in_array($status, ['Approved','Released'], true)): ?>
-                            <a class="btn btn-sm btn-dark"
-                              target="_blank"
-                              href="/BIS/controller/print_document.php?id=<?= (int)$r['id'] ?>">
-                              🖨 Print
+                          <button
+                            class="btn btn-sm btn-primary"
+                            name="action"
+                            value="release"
+                            <?= ($status !== 'Approved') ? 'disabled' : '' ?>
+                            onclick="return confirm('Mark this request as RELEASED? This will also generate Cert No and OR Payment if needed.');"
+                          >
+                            Release
+                          </button>
+
+                          <?php if ($isClearance): ?>
+                            <a class="btn btn-sm btn-warning"
+                                href="/BIS/views/admin/upload_clearance_photo.php?id=<?= (int)$r['id'] ?>">
+                                <?= $photoPath !== '' ? 'Change Photo' : 'Add Photo' ?>
                             </a>
+                          <?php endif; ?>
+
+                          <?php if (in_array($status, ['Approved', 'Released'], true)): ?>
+
+                            <?php if ($isClearance): ?>
+
+                              <?php if ($photoPath === ''): ?>
+                                <button class="btn btn-sm btn-secondary" type="button" disabled>
+                                  Add Photo First
+                                </button>
+                              <?php else: ?>
+                                <a class="btn btn-sm btn-dark"
+                                    target="_blank"
+                                    href="/BIS/controller/print_document.php?id=<?= (int)$r['id'] ?>">
+                                    Print
+                                </a>
+                              <?php endif; ?>
+
+                            <?php else: ?>
+                              <a class="btn btn-sm btn-dark"
+                                  target="_blank"
+                                  href="/BIS/controller/print_document.php?id=<?= (int)$r['id'] ?>">
+                                  Print
+                              </a>
+                            <?php endif; ?>
+
                           <?php endif; ?>
                         </form>
                       </td>

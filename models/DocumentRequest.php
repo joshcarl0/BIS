@@ -129,63 +129,63 @@ public function findById($id)
 {
     $id = (int)$id;
 
-$sql = "SELECT 
-            dr.*,
+    $sql = "SELECT 
+                dr.*,
+                dr.extra_json AS extra_json,
+                dr.clearance_photo AS clearance_photo,
 
-            dr.extra_json AS extra_json,
+                TRIM(CONCAT(
+                    COALESCE(r.first_name, ''), ' ',
+                    COALESCE(r.middle_name, ''), ' ',
+                    COALESCE(r.last_name, ''), ' ',
+                    COALESCE(r.suffix, '')
+                )) AS resident_name,
 
-            TRIM(CONCAT(
-                r.first_name, ' ',
-                IFNULL(r.middle_name, ''), ' ',
-                r.last_name, ' ',
-                IFNULL(r.suffix, '')
-            )) AS resident_name,
+                CONCAT(
+                    COALESCE(h.address_line, ''), ', ',
+                    'Purok ', COALESCE(p.name, ''), ', ',
+                    'Barangay Don Galo'
+                ) AS resident_address,
 
-            CONCAT(
-                h.address_line, ', ',
-                'Purok ', p.name, ', ',
-                'Barangay Don Galo'
-            ) AS resident_address,
+                dt.name AS document_name,
+                dt.category AS document_category,
+                dt.fee AS document_fee,
+                dt.processing_minutes,
 
-            dt.name AS document_name,
-            dt.category AS document_category,
-            dt.fee AS document_fee,
-            dt.processing_minutes,
+                -- PAYMENT / PRINT FIELDS
+                dr.fee_snapshot AS fee,
+                COALESCE(pay.amount, dr.fee_snapshot, dt.fee, 0) AS amount_paid,
+                pay.paid_at AS date_paid,
+                COALESCE(dr.cert_no, '') AS cert_no,
+                COALESCE(pay.or_no, dr.or_no, '') AS or_no,
 
-            -- ====== PAYMENT / PRINT FIELDS ======
-            dr.fee_snapshot AS fee,
-            COALESCE(pay.amount, dr.fee_snapshot, dt.fee, 0) AS amount_paid,
-            pay.paid_at AS date_paid,
-            COALESCE(dr.cert_no, '') AS cert_no,
-            COALESCE(pay.or_no, dr.or_no, '') AS or_no,
+                dt.template_key,
+                dt.extra_fields_json
 
-            dt.template_key,
-            dt.extra_fields_json
+            FROM document_requests dr
+            LEFT JOIN residents r ON r.id = dr.resident_id
+            LEFT JOIN households h ON h.id = r.household_id
+            LEFT JOIN puroks p ON p.id = h.purok_id
+            LEFT JOIN document_types dt ON dt.id = dr.document_type_id
+            LEFT JOIN payments pay ON pay.request_id = dr.id
+            WHERE dr.id = ?
+            LIMIT 1";
 
-        FROM document_requests dr
-        LEFT JOIN residents r ON r.id = dr.resident_id
-        LEFT JOIN households h ON h.id = r.household_id
-        LEFT JOIN puroks p ON p.id = h.purok_id
-        LEFT JOIN document_types dt ON dt.id = dr.document_type_id
-        LEFT JOIN payments pay ON pay.request_id = dr.id
-        WHERE dr.id = ?
-        LIMIT 1";
+    $stmt = $this->db->prepare($sql);
+    if (!$stmt) {
+        error_log("DocumentRequest::findById prepare failed: " . $this->db->error);
+        return null;
+    }
 
-$stmt = $this->db->prepare($sql);
-if (!$stmt) {
-    error_log("DocumentRequest::findById prepare failed: " . $this->db->error);
-    return null;
-}
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
 
-$stmt->bind_param("i", $id);
-$stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
 
-$res = $stmt->get_result();
-$row = $res ? $res->fetch_assoc() : null;
+    $stmt->close();
 
-$stmt->close();
-
-return $row;
+    return $row;
 }
 
 public function search($keyword = '')
@@ -261,7 +261,7 @@ public function countReleasedToday(): int
     return (int)($res['c'] ?? 0);
 }
 
-public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [], ?string $clearancePhotoPath = null)
+public function createResidentRequest(int $residentId, int $documentTypeId, string $purpose, array $extra = [])
 {
     $purpose = trim($purpose);
 
@@ -269,10 +269,11 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
         return false;
     }
 
-    // Clean extra (simple sanitize)
+    // Clean extra
     $cleanExtra = [];
     foreach ($extra as $k => $v) {
         if (is_array($v) || is_object($v)) continue;
+
         $key = trim((string)$k);
         if ($key === '') continue;
 
@@ -291,7 +292,7 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
 
     // Fee snapshot from document_types
     $feeSnapshot = 0.00;
-    $stmtFee = $this->db->prepare("SELECT fee FROM document_types WHERE id=? LIMIT 1");
+    $stmtFee = $this->db->prepare("SELECT fee FROM document_types WHERE id = ? LIMIT 1");
     if ($stmtFee) {
         $stmtFee->bind_param("i", $documentTypeId);
         $stmtFee->execute();
@@ -311,40 +312,48 @@ public function createResidentRequest(int $residentId, int $documentTypeId, stri
                 LIMIT 1";
 
     $stmtLast = $this->db->prepare($sqlLast);
-    if (!$stmtLast) return false;
+    if (!$stmtLast) {
+        return false;
+    }
 
     $stmtLast->bind_param("s", $prefix);
     $stmtLast->execute();
-
     $row = $stmtLast->get_result()->fetch_assoc();
     $lastRef = $row['ref_no'] ?? null;
-
     $stmtLast->close();
 
     $next = 1;
     if ($lastRef) {
-        $num  = (int)substr($lastRef, strlen($prefix)); // 0001
+        $num = (int)substr($lastRef, strlen($prefix));
         $next = $num + 1;
     }
 
     $refNo = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 
-    // Insert including clearance_photo + fee_snapshot + extra_json
     $sql = "INSERT INTO document_requests
-            (ref_no, resident_id, document_type_id, purpose, clearance_photo, status, fee_snapshot, requested_at, extra_json)
-            VALUES (?, ?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
+            (ref_no, resident_id, document_type_id, purpose, status, fee_snapshot, requested_at, extra_json)
+            VALUES (?, ?, ?, ?, 'Pending', ?, NOW(), ?)";
 
     $stmt = $this->db->prepare($sql);
-    if (!$stmt) return false;
+    if (!$stmt) {
+        return false;
+    }
 
-    $stmt->bind_param("siissds", $refNo, $residentId, $documentTypeId, $purpose, $clearancePhotoPath, $feeSnapshot, $extraJson);
+    $stmt->bind_param(
+        "siisds",
+        $refNo,
+        $residentId,
+        $documentTypeId,
+        $purpose,
+        $feeSnapshot,
+        $extraJson
+    );
 
     $ok = $stmt->execute();
     $stmt->close();
 
     return $ok ? ['ref_no' => $refNo] : false;
 }
-
 
 
 public function getByResident(int $residentId): array

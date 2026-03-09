@@ -25,25 +25,51 @@ if (!in_array($doc['status'] ?? '', ['Approved', 'Released'], true)) {
 $resident_name    = (string)($doc['resident_name'] ?? '');
 $resident_address = (string)($doc['resident_address'] ?? '');
 $document_name =    (string)($doc['document_name'] ?? '');
+$purpose       =    (string)($doc['purpose'] ?? '');
 
 $cert_no   = (string)($doc['cert_no'] ?? '');
 $or_no     = (string)($doc['or_no'] ?? '');
 $amount    = isset($doc['amount_paid']) ? number_format((float)$doc['amount_paid'], 2) : '';
 $date_paid = !empty($doc['date_paid']) ? date('F d, Y', strtotime($doc['date_paid'])) : '';
 
-/* ===== Photo + Thumb (DOMPDF-safe NO leading slash) ===== */
-$photo = trim((string)($doc['resident_photo_url'] ?? '')); // kung may resident_photo_url, gamitin yan (preference sa DB field na yan)
-$thumb = trim((string)($doc['resident_thumb_url'] ?? '')); // kung walang resident_photo_url, resident_thumb_url, saka lang gagamit ng default path (uploads/residents/ at uploads/thumbmarks/) base sa resident_photo at resident_thumbmark fields
+/* ===== Photo + Thumb (DOMPDF-safe absolute filesystem path) ===== */
+function resolveLocalFilePath(string $path, string $projectRoot): string
+{
+    $path = trim(str_replace('\\', '/', $path));
+    if ($path === '') {
+        return '';
+    }
 
+    // remove leading slash
+    $path = ltrim($path, '/');
+
+    // remove BIS/ if stored in DB like BIS/uploads/...
+    $path = preg_replace('#^BIS/#', '', $path);
+
+    $full = realpath($projectRoot . '/' . $path);
+    return ($full && file_exists($full)) ? $full : '';
+}
+
+$projectRoot = realpath(__DIR__ . '/..');
+
+$photo = trim((string)($doc['resident_photo_url'] ?? ''));
+$thumb = trim((string)($doc['resident_thumb_url'] ?? ''));
+
+// fallback if URL/path fields are empty
 if ($photo === '' && !empty($doc['resident_photo'])) {
-    $photo = 'uploads/residents/' . rawurlencode((string)$doc['resident_photo']);// default path kung walang resident_photo_url
+    $photo = 'uploads/residents/' . (string)$doc['resident_photo'];
 }
 if ($thumb === '' && !empty($doc['resident_thumbmark'])) {
-    $thumb = 'uploads/thumbmarks/' . rawurlencode((string)$doc['resident_thumbmark']); // default path kung walang resident_thumb_url
+    $thumb = 'uploads/thumbmarks/' . (string)$doc['resident_thumbmark'];
 }
 
-$photo_src = trim((string)($doc['clearance_photo'] ?? ''));
-$thumb_src = trim((string)$thumb);
+// if clearance_photo exists and you want it to override resident_photo
+if (!empty($doc['clearance_photo'])) {
+    $photo = (string)$doc['clearance_photo'];
+}
+
+$photo_src = resolveLocalFilePath($photo, $projectRoot);
+$thumb_src = resolveLocalFilePath($thumb, $projectRoot);
 
 /* ===== extra vars ===== */
 $captain_name = 'MARILYN F. BURGOS';
@@ -127,6 +153,8 @@ $imgBarangay   =  'assets/images/barangay_logo.png';
 $imgCity       = 'assets/images/city_logo.png';
 $imgBagong     = 'assets/images/bagong_pilipinas.png';
 $watermark_src = 'assets/images/barangay_logo.png';
+
+
 
 // 1) content
 ob_start();

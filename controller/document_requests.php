@@ -10,11 +10,6 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'resident')) {
     exit;
 }
 
-// CSRF token create
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
 // Only POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: /BIS/views/resident/document_request.php");
@@ -22,12 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // CSRF check
-if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+if (empty($_POST['csrf_token']) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid request (CSRF).'];
     header("Location: /BIS/views/resident/document_request.php");
     exit;
 }
-
 
 /* =========================
    BASIC REQUIRED INPUTS
@@ -43,7 +37,6 @@ if ($document_type_id <= 0 || $purpose === '') {
 
 /* =========================
    FIND RESIDENT ID
-   (user_id or email fallback)
 ========================= */
 $mysqli = $db ?? $conn ?? null;
 if (!$mysqli) {
@@ -53,8 +46,10 @@ if (!$mysqli) {
 $sql = "SELECT r.id
         FROM users u
         INNER JOIN residents r
-            ON (r.user_id = u.id
-                OR (r.user_id IS NULL AND r.email IS NOT NULL AND r.email <> '' AND r.email = u.email))
+            ON (
+                r.user_id = u.id
+                OR (r.user_id IS NULL AND r.email IS NOT NULL AND r.email <> '' AND r.email = u.email)
+            )
         WHERE u.id = ?
         ORDER BY (r.user_id = u.id) DESC, r.id DESC
         LIMIT 1";
@@ -66,17 +61,10 @@ if (!$stmt) {
     exit;
 }
 
-$stmt->bind_param("i", $_SESSION['user_id']);
+$userId = (int)$_SESSION['user_id'];
+$stmt->bind_param("i", $userId);
 $stmt->execute();
-
-$row = null;
-if (method_exists($stmt, 'get_result')) {
-    $row = $stmt->get_result()->fetch_assoc();
-} else {
-    // fallback (rare)
-    $res = $stmt->get_result();
-    $row = $res ? $res->fetch_assoc() : null;
-}
+$row = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$row) {
@@ -89,16 +77,12 @@ $residentId = (int)$row['id'];
 
 /* =========================
    EXTRA FIELDS (DYNAMIC)
-   Supports:
-   1) extra[field] format
-   2) direct POST fields fallback
 ========================= */
-
-// Prefer "extra" array (recommended)
 $extra = $_POST['extra'] ?? [];
-if (!is_array($extra)) $extra = [];
+if (!is_array($extra)) {
+    $extra = [];
+}
 
-// If you used direct inputs (name="child_name"), auto-pick them up too
 $directKeys = [
     'child_name', 'child_dob', 'child_pob',
     'mother_name', 'father_name',
@@ -111,97 +95,29 @@ foreach ($directKeys as $k) {
     }
 }
 
-// Normalize + trim values
 foreach ($extra as $k => $v) {
-    if (is_array($v)) continue;
+    if (is_array($v) || is_object($v)) {
+        unset($extra[$k]);
+        continue;
+    }
     $extra[$k] = trim((string)$v);
 }
 
-// Normalize date key: if form uses "since", map to "living_since"
 if (!empty($extra['since']) && empty($extra['living_since'])) {
     $extra['living_since'] = $extra['since'];
 }
 
 /* =========================
-   CLEARANCE PHOTO (UPLOAD) - MUST BE BEFORE CREATE
-========================= */
-$clearancePhotoPath = null;
-
-// get doc meta
-$dt = $mysqli->prepare("SELECT category, name, template_key FROM document_types WHERE id=? LIMIT 1");
-$dt->bind_param("i", $document_type_id);
-$dt->execute();
-$docMeta = $dt->get_result()->fetch_assoc();
-$dt->close();
-
-$isClearance = false;
-if ($docMeta) {
-    $cat  = strtolower(trim((string)($docMeta['category'] ?? '')));
-    $name = strtolower(trim((string)($docMeta['name'] ?? '')));
-    $key  = strtolower(trim((string)($docMeta['template_key'] ?? '')));
-    $isClearance = (strpos($cat, 'clearance') !== false)
-                || (strpos($name, 'clearance') !== false)
-                || ($key === 'clearance');
-}
-
-if ($isClearance) {
-
-    if (empty($_FILES['clearance_photo']) || $_FILES['clearance_photo']['error'] === UPLOAD_ERR_NO_FILE) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Please attach a photo for Barangay Clearance.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    $f = $_FILES['clearance_photo'];
-
-    if ($f['error'] !== UPLOAD_ERR_OK) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Photo upload failed. Please try again.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    if ($f['size'] > 2 * 1024 * 1024) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Photo must be max 2MB.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    $info = @getimagesize($f['tmp_name']);
-    if ($info === false) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid image file.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    $extMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    $mime = $info['mime'] ?? '';
-    if (!isset($extMap[$mime])) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Only JPG/PNG/WEBP allowed.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    $uploadDir = __DIR__ . '/../uploads/clearance_photos';
-    if (!is_dir($uploadDir)) @mkdir($uploadDir, 0775, true);
-
-    $ext = $extMap[$mime];
-    $filename = 'clr_' . $residentId . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-
-    if (!move_uploaded_file($f['tmp_name'], $uploadDir . '/' . $filename)) {
-        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to save uploaded photo.'];
-        header("Location: /BIS/views/resident/document_request.php");
-        exit;
-    }
-
-    $clearancePhotoPath = 'uploads/clearance_photos/' . $filename;
-}
-
-/* =========================
-   CREATE REQUEST (AFTER UPLOAD)
+   CREATE REQUEST
 ========================= */
 $model = new DocumentRequest($mysqli);
 
-$result = $model->createResidentRequest($residentId, $document_type_id, $purpose, $extra, $clearancePhotoPath);
+$result = $model->createResidentRequest(
+    $residentId,
+    $document_type_id,
+    $purpose,
+    $extra
+);
 
 if (!$result) {
     $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Failed to submit request.'];
@@ -209,6 +125,8 @@ if (!$result) {
     exit;
 }
 
-$_SESSION['last_ref_no'] = $result['ref_no'];
+$_SESSION['last_ref_no'] = $result['ref_no'] ?? null;
+$_SESSION['flash'] = ['type' => 'success', 'msg' => 'Request submitted successfully. Reference No: ' . ($result['ref_no'] ?? '')];
+
 header("Location: /BIS/views/resident/document_request.php?success=1");
 exit;

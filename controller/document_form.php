@@ -35,7 +35,7 @@ switch ($templateKey) {
 
   case 'clearance':
   case 'barangay_clearance':
-    $view = __DIR__ . '/../views/resident/forms/form_clearance_photo.php';
+    $view = null; // handled separately in document_request.php (because of photo upload)
     break;
 
   case 'certification':

@@ -33,60 +33,59 @@ if (empty($_SESSION['csrf_token'])) {
                         <p class="text-muted">Register to access the Community Portal</p>
                     </div>
 
-                    <!-- Alerts -->
-                    <?php if (!empty($_SESSION['error'])): ?>
-                        <div class="alert alert-danger">
-                            <?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-                        </div>
-                    <?php endif; ?>
+                                <!-- Alerts -->
+                                <?php if (!empty($_SESSION['error'])): ?>
+                                    <div class="alert alert-danger">
+                                        <?= htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                                    </div>
+                                <?php endif; ?>
 
-                    <?php if (!empty($_SESSION['success'])): ?>
-                        <div class="alert alert-success">
-                            <?= htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
-                        </div>
-                    <?php endif; ?>
+                                <?php if (!empty($_SESSION['success'])): ?>
+                                    <div class="alert alert-success">
+                                        <?= htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+                                    </div>
+                                <?php endif; ?>
 
-                    <!-- Registration Form -->
-                    <form method="POST" action="/BIS/controller/register_process.php" id="registerForm">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
-        <div class="mb-3">
-            <label for="fullname" class="form-label">Full Name</label>
-            <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Enter your full name" autocomplete="name" required>
-        </div>
+                                            <!-- Registration Form -->
+                                            <form method="POST" action="/BIS/controller/register_process.php" id="registerForm">
+                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                <div class="mb-3">
+                                    <label for="fullname" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Enter your full name" autocomplete="name" required>
+                                </div>
 
-        <div class="mb-3">
-            <label for="username" class="form-label">Username</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" autocomplete="username" required>
-        </div>
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" autocomplete="username" required>
+                                </div>
 
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" autocomplete="email" required>
-        </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" autocomplete="email" required>
+                                </div>
 
-        <div class="password-container mb-3">
-            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" autocomplete="new-password" required>
-            <button type="button" class="password-toggle" id="toggle-password">
-                <i class="bi bi-eye-slash"></i>
-            </button>
-        </div>
+                                <div class="password-container mb-3">
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" autocomplete="new-password" required>
+                                    <button type="button" class="password-toggle" id="toggle-password">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
 
-        <div class="password-container mb-3">
-            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password" autocomplete="new-password" required>
-            <button type="button" class="password-toggle" id="toggle-confirm-password">
-                <i class="bi bi-eye-slash"></i>
-            </button>
-        </div>
+                                <div class="password-container mb-3">
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password" autocomplete="new-password" required>
+                                    <button type="button" class="password-toggle" id="toggle-confirm-password">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
 
-        <div class="d-grid mb-3">
-            <button type="submit" class="btn btn-primary btn-lg">Register</button>
-        </div>
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-primary btn-lg">Register</button>
+                                </div>
 
-        <div class="text-center">
-            Already have an account? <a href="login.php" class="text-decoration-none">Login</a>
-        </div>
-</form>
-
+                                <div class="text-center">
+                                    Already have an account? <a href="login.php" class="text-decoration-none">Login</a>
+                                </div>
+                        </form>
 
                 </div>
             </div>

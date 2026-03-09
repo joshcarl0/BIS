@@ -12,6 +12,12 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 /* =========================
+   FLASH MESSAGE
+========================= */
+$flash = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
+
+/* =========================
    REF MODAL (ONE-TIME)
 ========================= */
 $ref = $_SESSION['last_ref_no'] ?? '';
@@ -48,20 +54,20 @@ if (!$docsRes) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-  <!-- SAME CSS AS RESIDENT DASHBOARD (IMPORTANT) -->
+  <!-- SAME CSS AS RESIDENT DASHBOARD -->
   <link rel="stylesheet" href="/BIS/assets/css/navbaruserleft.css">
   <link rel="stylesheet" href="/BIS/assets/css/resident_dashboard.css">
 </head>
 
 <body class="bis-body">
 
-  <!-- SIDEBAR FIRST -->
+  <!-- SIDEBAR -->
   <?php require_once __DIR__ . '/../navbaruser_side.php'; ?>
 
-  <!-- MAIN CONTENT WRAPPER -->
+  <!-- MAIN CONTENT -->
   <div id="mainContent" class="main-content p-0">
 
-    <!-- TOP NAVBAR INSIDE MAIN CONTENT -->
+    <!-- TOP NAVBAR -->
     <?php require_once __DIR__ . '/../navbaruser_top.php'; ?>
 
     <!-- PAGE CONTENT -->
@@ -71,10 +77,18 @@ if (!$docsRes) {
         <h3 class="mb-0">Request a Document</h3>
       </div>
 
+      <?php if (!empty($flash)): ?>
+        <div class="alert alert-<?= htmlspecialchars($flash['type'] ?? 'info') ?> alert-dismissible fade show rounded-3" role="alert">
+          <?= htmlspecialchars($flash['msg'] ?? '') ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php endif; ?>
+
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
 
           <form method="POST" action="/BIS/controller/document_requests.php" enctype="multipart/form-data">
+            
             <!-- CSRF -->
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
 
@@ -82,7 +96,7 @@ if (!$docsRes) {
             <div class="mb-3">
               <label class="form-label">Select Service <span class="text-danger">*</span></label>
 
-              <select name="document_type_id" id="documentSelect" class="form-select" required> 
+              <select name="document_type_id" id="documentSelect" class="form-select" required>
                 <option value="" selected disabled>Select document</option>
 
                 <?php while ($row = $docsRes->fetch_assoc()): ?>
@@ -127,7 +141,7 @@ if (!$docsRes) {
               <textarea id="purpose" name="purpose" class="form-control" rows="3" required></textarea>
             </div>
 
-            <!-- EXTRA FIELDS (dynamic) -->
+            <!-- EXTRA FIELDS -->
             <div id="extraWrap" class="mt-3" style="display:none;">
               <div class="card border-0 bg-white">
                 <div class="card-body p-3">
@@ -137,7 +151,11 @@ if (!$docsRes) {
               </div>
             </div>
 
-            <button class="btn btn-primary rounded-pill px-4">Submit Request</button>
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary rounded-pill px-4">
+                Submit Request
+              </button>
+            </div>
           </form>
 
         </div>
@@ -150,7 +168,7 @@ if (!$docsRes) {
   <?php if ($ref !== ''): ?>
   <div class="modal fade" id="refModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+      <div class="modal-content rounded-4 border-0 shadow">
         <div class="modal-header">
           <h5 class="modal-title">Reference Number</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -173,71 +191,82 @@ if (!$docsRes) {
   </div>
   <?php endif; ?>
 
-  <!-- JS ORDER (important) -->
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/BIS/assets/js/sidebar_toggle.js"></script>
 
   <?php if ($ref !== ''): ?>
   <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('refModal');
-    if (el) new bootstrap.Modal(el).show();
-  });
+    window.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('refModal');
+      if (el) {
+        new bootstrap.Modal(el).show();
+      }
+    });
   </script>
   <?php endif; ?>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const sel = document.getElementById('documentSelect');
-
-    async function loadExtraForm(docTypeId){
-      const wrap = document.getElementById('extraWrap');
-      const box  = document.getElementById('extraFields');
-
-      box.innerHTML = '';
-      wrap.style.display = 'none';
-
-      if(!docTypeId) return;
-
-      const res = await fetch(`/BIS/controller/document_form.php?document_type_id=${encodeURIComponent(docTypeId)}`);
-      const html = await res.text();
-
-      if(html.trim() !== ''){
-        box.innerHTML = html;
-        wrap.style.display = 'block';
-      }
-    }
-
-    function updateInfo() {
-      const opt = sel.options[sel.selectedIndex];
-      if (!opt || !opt.dataset) return;
-
-      document.getElementById('feeTxt').textContent  = opt.dataset.fee || '-';
-      document.getElementById('timeTxt').textContent = opt.dataset.time || '-';
-
-      let req = '-';
-      try { req = JSON.parse(opt.dataset.req || '""') || '-'; } catch(e) { req = '-'; }
-
-      const reqBox = document.getElementById('reqTxt');
-      reqBox.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, "<br>") : "-";
-
-      // AUTO PURPOSE
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('documentSelect');
+      const feeTxt = document.getElementById('feeTxt');
+      const timeTxt = document.getElementById('timeTxt');
+      const reqTxt = document.getElementById('reqTxt');
       const purposeField = document.getElementById('purpose');
-      if (purposeField && opt) {
-        const fullText = opt.text;
-        const parts = fullText.split(" - ");
-        purposeField.value = parts[parts.length - 1];
+      const extraWrap = document.getElementById('extraWrap');
+      const extraFields = document.getElementById('extraFields');
+
+      async function loadExtraForm(docTypeId) {
+        extraFields.innerHTML = '';
+        extraWrap.style.display = 'none';
+
+        if (!docTypeId) return;
+
+        try {
+          const res = await fetch(`/BIS/controller/document_form.php?document_type_id=${encodeURIComponent(docTypeId)}`);
+          const html = await res.text();
+
+          if (html.trim() !== '') {
+            extraFields.innerHTML = html;
+            extraWrap.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Failed to load extra form:', error);
+        }
       }
 
-      loadExtraForm(sel.value);
-    }
+      function updateInfo() {
+        const opt = sel.options[sel.selectedIndex];
+        if (!opt || !opt.dataset) return;
 
-    sel.addEventListener('change', updateInfo);
+        feeTxt.textContent = opt.dataset.fee || '-';
+        timeTxt.textContent = opt.dataset.time || '-';
 
-    //  initial render (in case may preselected in future)
-    // updateInfo();
+        let req = '-';
+        try {
+          req = JSON.parse(opt.dataset.req || '""') || '-';
+        } catch (e) {
+          req = '-';
+        }
 
-  });
+        reqTxt.innerHTML = (req && req !== '-') ? String(req).replace(/\n/g, '<br>') : '-';
+
+        // AUTO PURPOSE
+        const fullText = opt.text || '';
+        const parts = fullText.split(' - ');
+        const docName = parts.length > 1 ? parts[parts.length - 1] : fullText;
+
+        if (purposeField && purposeField.value.trim() === '') {
+          purposeField.value = docName;
+        } else {
+          purposeField.value = docName;
+        }
+
+        loadExtraForm(sel.value);
+      }
+
+      sel.addEventListener('change', updateInfo);
+    });
   </script>
 
 </body>
