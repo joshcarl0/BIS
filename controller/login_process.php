@@ -4,9 +4,11 @@ session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 function finalizeLogin(array $user): void
 {
+        global $conn; // support $conn from database.php for ActivityLog
     session_regenerate_id(true);
 
     unset($_SESSION['error']);
@@ -15,6 +17,17 @@ function finalizeLogin(array $user): void
     $_SESSION['username'] = (string) $user['username'];
     $_SESSION['role'] = (string) $user['role'];
     $_SESSION['full_name'] = (string) $user['full_name'];
+
+     // ACTIVITY LOG
+    $logModel = new ActivityLog($conn);
+    $logModel->log(
+        'login',
+        'User logged in',
+        $_SESSION['user_id'],
+        $_SESSION['role'],
+        'user',
+        $_SESSION['user_id']
+    );
 
     switch ($_SESSION['role']) {
         case 'admin':

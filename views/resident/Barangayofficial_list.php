@@ -20,13 +20,13 @@
 
 <body class="bis-body">
 
-  <!-- ✅ SIDEBAR FIRST -->
+  <!--  SIDEBAR FIRST -->
   <?php require_once __DIR__ . '/../navbaruser_side.php'; ?>
 
-  <!-- ✅ MAIN CONTENT WRAPPER (same as dashboard) -->
+  <!--  MAIN CONTENT WRAPPER (same as dashboard) -->
   <div id="mainContent" class="main-content p-0">
     
-    <!-- ✅ TOPBAR INSIDE MAIN CONTENT -->
+    <!--  TOPBAR INSIDE MAIN CONTENT -->
     <?php require_once __DIR__ . '/../navbaruser_top.php'; ?>
 
     <!-- PAGE CONTENT -->
@@ -50,18 +50,19 @@
         </div>
       </div>
 
+      <!--  OFFICIAL CARDS -->
       <?php if (empty($officials)): ?>
         <div class="alert alert-warning">No officials found.</div>
       <?php else: ?>
         <div class="row g-3" id="officialGrid">
           <?php foreach ($officials as $o): ?>
             <?php
-              $fullName  = $o['full_name'] ?? '';
-              $position  = $o['position'] ?? '';
-              $committee = $o['committee'] ?? '';
-              $termStart = $o['term_start'] ?? '';
-              $termEnd   = $o['term_end'] ?? '';
-              $photoFile = $o['photo'] ?? '';
+              $fullName  = $o['full_name'] ?? ''; // e.g. "Juan Dela Cruz"
+              $position  = $o['position'] ?? ''; // e.g. "Captain", "Kagawad", "Secretary"
+              $committee = $o['committee'] ?? ''; // e.g. "Health, Education", may be empty
+              $termStart = $o['term_start'] ?? ''; // e.g. "2023-06-30"
+              $termEnd   = $o['term_end'] ?? ''; // e.g. "2026-06-30"
+              $photoFile = $o['photo'] ?? ''; // e.g. "uploads/officials/juan.jpg", may be empty
 
               $photoUrl = ($photoFile !== '')
                 ? "/BIS/uploads/officials/" . rawurlencode($photoFile)
@@ -79,6 +80,7 @@
                  data-role="<?= htmlspecialchars($roleTag) ?>"
                  data-search="<?= htmlspecialchars($searchHaystack) ?>">
 
+                  <!-- this is a single official card -->
               <button type="button"
                       class="card shadow-sm h-100 text-start w-100 p-0 border-0 bg-white officialBtn"
                       data-bs-toggle="modal"
@@ -167,17 +169,18 @@
     </div>
   </div>
 
-  <!-- ✅ JS (use absolute path) -->
+  <!--  JS (use absolute path) -->
   <script src="/BIS/assets/js/resident_navbar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- PAGE-SPECIFIC JS -->
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const roleFilter = document.getElementById("roleFilter");
-    const searchBox  = document.getElementById("searchBox");
-    const cards      = document.querySelectorAll(".official-card");
+  document.addEventListener("DOMContentLoaded", () => { // wait for DOM to load before attaching event listeners
+    const roleFilter = document.getElementById("roleFilter"); // filter by position (captain/kagawad)
+    const searchBox  = document.getElementById("searchBox"); // filter by text (name/position/committee)
+    const cards      = document.querySelectorAll(".official-card"); // all official cards
 
-    function applyFilters() {
+    function applyFilters() { // get current filter values
       const role = (roleFilter?.value || "all").toLowerCase();
       const q    = (searchBox?.value || "").trim().toLowerCase();
 
@@ -199,7 +202,7 @@
     modal?.addEventListener("show.bs.modal", (event) => {
       const btn = event.relatedTarget;
       if (!btn) return;
-
+                      // get data attributes from the clicked button
       const name      = btn.getAttribute("data-name") || "Official";
       const position  = btn.getAttribute("data-position") || "-";
       const committee = btn.getAttribute("data-committee") || "-";
@@ -207,6 +210,7 @@
       const termEnd   = btn.getAttribute("data-termend") || "";
       const photo     = btn.getAttribute("data-photo") || "/BIS/assets/images/default-user.png";
 
+      // populate modal fields with the data
       document.getElementById("mName").textContent = name;
       document.getElementById("mPosition").textContent = position;
       document.getElementById("mCommittee").textContent = committee;
@@ -217,7 +221,7 @@
       document.getElementById("mPhoto").src = photo;
     });
 
-    applyFilters();
+    applyFilters(); // apply initial filters (in case of pre-filled search or role)
   });
   </script>
 

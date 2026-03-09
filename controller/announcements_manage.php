@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Announcement.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 // ADMIN GUARD
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -23,6 +24,7 @@ function check_csrf(): void {
 
 
 $ann = new Announcement($db);
+$log = new ActivityLog($db);
 
 $action = $_POST['action'] ?? '';
 $adminId = (int)($_SESSION['user_id'] ?? $_SESSION['id'] ?? 0);
@@ -97,6 +99,15 @@ try {
 
         $newId = $ann->create($title, $details, $adminId, $status);
 
+        //` Log activity
+            $log->add(
+                $_SESSION['user_id'] ?? null,
+                $_SESSION['role'] ?? null,
+                'announcement_update',
+                'announcement',
+                $id,
+                "Updated announcement: {$title}"
+            );
         // attachments
         $files = upload_multiple_files('attachments', $uploadDirAbs, $uploadDirWeb);
         foreach ($files as $f) {
@@ -108,6 +119,7 @@ try {
         exit;
     }
 
+    //UPDATE and DELETE below...
     if ($action === 'update') {
         check_csrf();
 
@@ -124,6 +136,17 @@ try {
 
         $ann->update($id, $title, $details, $status);
 
+        // Log activity
+        $log->add(
+            $_SESSION['user_id'] ?? null,
+            $_SESSION['role'] ?? null,
+            'announcement_update',
+            'announcement',
+            $id,
+            "Updated announcement: {$title}"
+        );
+
+
         // optional: add more attachments on edit
         $files = upload_multiple_files('attachments', $uploadDirAbs, $uploadDirWeb);
         foreach ($files as $f) {
@@ -135,37 +158,55 @@ try {
         exit;
     }
 
-    if ($action === 'delete') {
-        check_csrf();
+if ($action === 'delete') {
+    check_csrf();
 
-        $id = (int)($_POST['id'] ?? 0);
-        if ($id <= 0) {
-            $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid delete request.'];
-            header("Location: /BIS/views/admin/admin_announcements.php");
-            exit;
-        }
-
-        // delete physical files first
-        $atts = $ann->attachments($id);
-        $webPrefix = $a['file_path'];
-
-        foreach ($atts as $a) {
-            $webPath = $a['file_path']; // e.g. /BIS/uploads/announcements/xxx.png
-            if (strpos($webpath, $webPrefix) === 0) {
-                $fileName = substr($webPath, strlen($webPrefix));
-                $absPath = $uploadDirAbs . $fileName;
-                if (is_file($absPath)) @unlink($absPath);
-
-            }
-        }
-
-        // DB delete (attachments rows cascade)
-        $ann->delete($id);
-
-        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Announcement deleted successfully.'];
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) {
+        $_SESSION['flash'] = ['type' => 'danger', 'msg' => 'Invalid delete request.'];
         header("Location: /BIS/views/admin/admin_announcements.php");
         exit;
     }
+
+                // optional: kunin title bago delete
+                $title = trim($_POST['title'] ?? ('Announcement #' . $id));
+
+                // delete physical files first
+                $atts = $ann->attachments($id);
+                $webPrefix = $uploadDirWeb;
+
+                foreach ($atts as $a) {
+                    $webPath = $a['file_path']; // e.g. /BIS/uploads/announcements/xxx.png
+                    if (strpos($webPath, $webPrefix) === 0) {
+                        $fileName = substr($webPath, strlen($webPrefix));
+                        $absPath = $uploadDirAbs . $fileName;
+                        if (is_file($absPath)) {
+                            @unlink($absPath);
+                        }
+                    }
+                }
+
+                // DB delete
+                $ok = $ann->delete($id);
+
+                if ($ok) {
+                    $log->add(
+                        $_SESSION['user_id'] ?? null,
+                        $_SESSION['role'] ?? null,
+                        'announcement_delete',
+                        'announcement',
+                        $id,
+                        "Deleted announcement: {$title}"
+                    );
+                }
+
+                $_SESSION['flash'] = [
+                    'type' => $ok ? 'success' : 'danger',
+                    'msg'  => $ok ? 'Announcement deleted successfully.' : 'Failed to delete announcement.'
+                ];
+                header("Location: /BIS/views/admin/admin_announcements.php");
+                exit;
+            }
 
     // fallback
     header("Location: /BIS/views/admin_announcements.php");

@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/DocumentRequest.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 // RESIDENT GUARD
 if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'resident')) {
@@ -125,6 +126,22 @@ if (!$result) {
     exit;
 }
 
+    /* =========================
+   ACTIVITY LOG
+========================= */
+
+$logModel = new ActivityLog($mysqli);
+
+$logModel->log(
+    'document_request',
+    'Resident requested document (Ref No: ' . ($result['ref_no'] ?? '') . ')',
+    $_SESSION['user_id'],
+    $_SESSION['role'],
+    'document_request',
+    $result['id'] ?? null
+);
+
+    // Success Message with Reference No
 $_SESSION['last_ref_no'] = $result['ref_no'] ?? null;
 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Request submitted successfully. Reference No: ' . ($result['ref_no'] ?? '')];
 

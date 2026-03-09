@@ -160,6 +160,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($ok) {
                 //  update special groups
                 $residentModel->updateSpecialGroups($id, $selectedGroups);
+                // ACTIVITY LOG
+                $actorId   = $_SESSION['user_id'] ?? null;
+                $actorRole = $_SESSION['role'] ?? null;
+                $fullName  = buildFullName($_POST);
+
+                $log->add(
+                    $actorId,
+                    $actorRole,
+                    'resident_update',
+                    'resident',
+                    $id,
+                    "Updated resident: {$fullName} (ID: {$id})"
+                );
 
                 $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Resident updated successfully.'];
             } else {

@@ -13,11 +13,31 @@
             exit;
         }
 
-        // MODELS ( create first)
-        $docReq     = new DocumentRequest($db);
-        $logModel   = new ActivityLog($db);
-        $resModel   = new Resident($db);
-        $houseModel = new Household($db);
+            // MODELS ( create first)
+            $docReq     = new DocumentRequest($db);
+            $logModel   = new ActivityLog($db);
+            $resModel   = new Resident($db);
+            $houseModel = new Household($db);
+
+        //Login
+        $logModel->Log(
+            'login',
+            'User logged in',
+            $_SESSION['user_id'] ,
+            $_SESSION['role'] ,
+            'auth' ,
+            $_SESSION['user_id']
+        );
+
+        //Logout
+                $logModel->Log(
+            'logout',
+            'User logged out',
+            $_SESSION['user_id'] ,
+            $_SESSION['role'] ,
+            'auth' ,
+            $_SESSION['user_id']
+        );
 
         // COUNTERS (existing)
         $pendingCount  = $docReq->countByStatus('Pending');

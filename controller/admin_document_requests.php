@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/DocumentRequest.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 // ADMIN GUARD
 if (empty($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -49,9 +50,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($id > 0 && isset($map[$action])) {
         $ok = $docReq->updateStatus($id, $map[$action], $adminId, ($remarks !== '' ? $remarks : null));
 
-        $_SESSION['flash'] = $ok
-            ? ['type'=>'success','msg'=>"Request updated: {$map[$action]}"]
-            : ['type'=>'danger','msg'=>"Failed to update request."];
+        if ($ok) {
+
+        $request = $docReq->findById($id);
+
+        $refNo = $request['ref_no'] ?? ('ID-' . $id);
+        // Log activity
+        $log = new ActivityLog($mysqli);
+
+        if ($action === 'approve') {
+            $logModel-> log(
+                'document_approved',
+                'Approved document request (Ref No: ' . $refNo . ')',
+                $_SESSION['user_id'],
+                $_SESSION['role'],
+                'document_request',
+                $id
+            );
+        } 
+
+        else if ($action === 'reject') {
+            $logModel->log(
+                'document_rejected',
+                'Rejected document request (Ref No: ' . $refNo . ')',
+                $_SESSION['user_id'],
+                $_SESSION['role'],
+                'document_request',
+                $id
+            );
+        }
+
+        else if ($action === 'release') {
+            $logModel->log(
+                'document_released',
+                'Released document request (Ref No: ' . $refNo . ')',
+                $_SESSION['user_id'],
+                $_SESSION['role'],
+                'document_request',
+                $id
+            );
+        }
+    } 
+
+$_SESSION['flash'] = $ok
+        ? ['type'=>'success','msg'=>"Request updated: {$map[$action]}"]
+        : ['type'=>'danger','msg'=>"Failed to update request."];
     }
 
     // preserve search after action
@@ -66,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ========= LIST ========= */
 if ($search !== '') {
-    // ✅ Make it ARRAY (same like all())
+    //  Make it ARRAY (same like all())
     $res  = $docReq->search($search);
     $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
 } else {

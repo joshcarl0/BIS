@@ -64,19 +64,19 @@ function activeMenu($file, $current) {
             </a>
         </li>
 
-        <li class="<?= activeMenu('admin_announcements.php', $current) ?>">
-            <a href="/BIS/views/admin/admin_announcements.php">
-                <i class="bi bi-newspaper"></i>
-                <span>Announcement</span>
-            </a>
-        </li>
-
-                    <li class="nav-item">
-            <a class="nav-link" href="/BIS/views/admin/admin_resident_registrations.php">
-                <i class="bi bi-person-check"></i>
-                <span>Registration Manage</span>
-            </a>
+            <li class="<?= activeMenu('admin_announcements.php', $current) ?>">
+                <a href="/BIS/views/admin/admin_announcements.php">
+                    <i class="bi bi-newspaper"></i>
+                    <span>Announcement</span>
+                </a>
             </li>
+
+                <li class="<?= activeMenu('admin_resident_registrations.php', $current) ?>">
+                    <a href="/BIS/controller/admin_resident_registrations.php">
+                        <i class="bi bi-person-check"></i>
+                        <span>Registration Manage</span>
+                    </a>
+                </li>
 
 
                 <li class="<?= activeMenu('admin_usermanagement.php', $current) ?>">

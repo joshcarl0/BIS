@@ -224,6 +224,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script src="/BIS/assets/js/sidebar_toggle.js"></script>
   <script src="/BIS/assets/js/dashboard_chart.js"></script>
 
 

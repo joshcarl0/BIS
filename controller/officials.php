@@ -8,8 +8,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Official.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 $officialModel = new Official($conn);
+$log = new ActivityLog($conn);
 
 $action = $_POST['action'] ?? ($_GET['action'] ?? 'list');
 
@@ -79,6 +81,22 @@ if ($action === 'store' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $_POST['photo'] = $up['photo']; // pass filename to model
     $result = $officialModel->create($_POST);
 
+    // Log activity
+    if ($result['ok']) {
+         $fullName = trim($_POST['full_name'] ?? '');
+    $position = trim($_POST['position'] ?? '');
+    $newId = $result['id'] ?? null;
+
+    $log->add(
+        $_SESSION['user_id'] ?? null,
+        $_SESSION['role'] ?? null,
+        'official_add',
+        'official',
+        $newId,
+        "Added official: {$position} - {$fullName}"
+    );
+}
+
     $_SESSION[$result['ok'] ? 'success' : 'error'] = $result['ok'] ? 'Official added.' : ($result['msg'] ?? 'Failed.');
     header("Location: /BIS/controller/officials.php");
     exit;
@@ -108,6 +126,21 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $_POST['photo'] = $up['photo']; // new filename or old if not replaced
     $result = $officialModel->update($id, $_POST);
 
+    // Log activity
+    if ($result['ok']) {
+        $fullName = trim($_POST['full_name'] ?? '');
+        $position = trim($_POST['position'] ?? '');
+
+        $log->add(
+            $_SESSION['user_id'] ?? null,
+            $_SESSION['role'] ?? null,
+            'official_update',
+            'official',
+            $id,
+            "Updated official: {$position} - {$fullName}"
+        );
+    }
+
     $_SESSION[$result['ok'] ? 'success' : 'error'] = $result['ok'] ? 'Official updated.' : ($result['msg'] ?? 'Failed.');
     header("Location: /BIS/controller/officials.php");
     exit;
@@ -129,6 +162,22 @@ if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $ok = $officialModel->delete($id);
+
+        // Log activity
+    if ($ok) {
+    $fullName = trim($row['full_name'] ?? '');
+    $position = trim($row['position'] ?? '');
+
+    $log->add(
+        $_SESSION['user_id'] ?? null,
+        $_SESSION['role'] ?? null,
+        'official_delete',
+        'official',
+        $id,
+        "Deleted official: {$position} - {$fullName}"
+    );
+}
+
     $_SESSION[$ok ? 'success' : 'error'] = $ok ? 'Official deleted.' : 'Delete failed.';
     header("Location: /BIS/controller/officials.php");
     exit;
