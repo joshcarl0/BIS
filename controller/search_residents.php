@@ -49,7 +49,12 @@ if ($res) {
 }
 
 // Get special group IDs for each resident
-$residentIds = array_map(fn($row) => (int)$row['id'], $results['rows']);
+$residentIds = [];
+
+foreach ($results['rows'] as $row) {
+    $residentIds[] = (int)$row['id'];
+}
+
 $specialGroupsMap = [];
 
 if (!empty($residentIds)) {

@@ -89,63 +89,33 @@
   $qv = $data['q'] ?? '';
 ?>
 
-<!-- SEARCH + STATUS DROPDOWN -->
+<!-- LIVE SEARCH -->
 <div class="card shadow-sm mb-3">
   <div class="card-body">
-    <form class="row g-2 align-items-center"
-          method="GET"
-          action="/BIS/controller/residents_manage.php">
+    <div class="row g-2 align-items-center">
 
-      
-
-      <!-- SEARCH INPUT -->
       <div class="col-md-5">
         <input class="form-control"
-               name="q"
-               value="<?= htmlspecialchars($qv) ?>"
-               placeholder="Search ID, name, email, contact...">
+               id="liveResidentSearch"
+               placeholder="Search ID, name, email, contact, special group..."
+               autocomplete="off">
       </div>
 
-      <!-- STATUS DROPDOWN -->
       <div class="col-md-3">
-        <select class="form-select"
-                name="status"
-                onchange="this.form.submit()">
-
-          <option value="active"
-            <?= $status === 'active' ? 'selected' : '' ?>>
-            Active
-          </option>
-
-          <option value="inactive"
-            <?= $status === 'inactive' ? 'selected' : '' ?>>
-            Deactivated
-          </option>
-
-          <option value="all"
-            <?= $status === 'all' ? 'selected' : '' ?>>
-            All
-          </option>
-
+        <select class="form-select" id="liveResidentStatus">
+          <option value="active">Active</option>
+          <option value="inactive">Deactivated</option>
+          <option value="all">All</option>
         </select>
       </div>
 
-      <!-- SEARCH BUTTON -->
       <div class="col-md-2">
-        <button class="btn btn-primary w-100">
-          <i class="bi bi-search"></i> Search
+        <button type="button" class="btn btn-outline-secondary w-100" id="resetResidentSearch">
+          Reset
         </button>
       </div>
 
-      <!-- RESET -->
-      <div class="col-md-2">
-        <a class="btn btn-outline-secondary w-100"
-           href="/BIS/controller/residents_manage.php?status=all">
-          Reset
-        </a>
-      </div>
-
-    </form>
+    </div>
   </div>
 </div>
 
@@ -368,10 +338,6 @@
             </select>
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label" for="add_household_id">Household ID</label>
-            <input class="form-control" id="add_household_id" name="household_id" placeholder="numeric id (optional)" autocomplete="off">
-          </div>
 
           <div class="col-md-4">
             <label class="form-label" for="add_is_active">Active</label>
@@ -509,10 +475,6 @@
             </select>
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label" for="edit_household_id">Household ID</label>
-            <input class="form-control" name="household_id" id="edit_household_id" autocomplete="off">
-          </div>
 
           <div class="col-md-4">
             <label class="form-label" for="edit_is_active">Active</label>
@@ -552,14 +514,6 @@
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary" type="submit">Update</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 
         <div class="modal-footer">
           <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
@@ -592,7 +546,6 @@
         document.getElementById('edit_purok_id').value = r.purok_id || '';
         document.getElementById('edit_residency_type_id').value = r.residency_type_id || '';
 
-        document.getElementById('edit_household_id').value = r.household_id || '';
         document.getElementById('edit_is_active').value = (parseInt(r.is_active || 0) === 1) ? '1' : '0';
         document.getElementById('edit_hoh').checked = (parseInt(r.is_head_of_household || 0) === 1);
 
@@ -629,6 +582,55 @@
         }
       });
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+  const searchInput = document.getElementById("liveResidentSearch");
+  const statusSelect = document.getElementById("liveResidentStatus");
+  const tableBody = document.getElementById("residentTableBody");
+  const resetBtn = document.getElementById("resetResidentSearch");
+
+  let timer;
+
+  function loadResidents() {
+
+    const keyword = searchInput.value.trim();
+    const status = statusSelect.value;
+
+    fetch("/BIS/controller/search_residents.php?search=" 
+          + encodeURIComponent(keyword) 
+          + "&status=" + encodeURIComponent(status))
+
+      .then(response => response.text())
+      .then(data => {
+        tableBody.innerHTML = data;
+      })
+      .catch(error => console.error("Search error:", error));
+  }
+
+  searchInput.addEventListener("keyup", function () {
+
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      loadResidents();
+    }, 300);
+
+  });
+
+  statusSelect.addEventListener("change", loadResidents);
+
+  resetBtn.addEventListener("click", function () {
+
+    searchInput.value = "";
+    statusSelect.value = "all";
+
+    loadResidents();
+
+  });
+
+});
+
   </script>
 </body>
 </html>
