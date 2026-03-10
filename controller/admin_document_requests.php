@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $log = new ActivityLog($mysqli);
 
         if ($action === 'approve') {
-            $logModel-> log(
+            $log->log(
                 'document_approved',
                 'Approved document request (Ref No: ' . $refNo . ')',
                 $_SESSION['user_id'],
@@ -69,8 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         } 
 
+        // log muna i'll fix you later
         else if ($action === 'reject') {
-            $logModel->log(
+            $log->log(
                 'document_rejected',
                 'Rejected document request (Ref No: ' . $refNo . ')',
                 $_SESSION['user_id'],
@@ -81,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         else if ($action === 'release') {
-            $logModel->log(
+            $log->log(
                 'document_released',
                 'Released document request (Ref No: ' . $refNo . ')',
                 $_SESSION['user_id'],
