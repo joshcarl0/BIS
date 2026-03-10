@@ -115,7 +115,6 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
     $perPage = max(1, min(100, $perPage));
     $offset = ($page - 1) * $perPage;
 
-    // status: active | inactive | all
     $status = in_array($status, ['active', 'inactive', 'all'], true) ? $status : 'all';
 
     $where = " WHERE 1=1 ";
@@ -127,7 +126,7 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
         $where .= " AND r.is_active = 1 ";
     } elseif ($status === 'inactive') {
         $where .= " AND r.is_active = 0 ";
-    } // all = no filter
+    }
 
     // SEARCH
     if ($q !== '') {
@@ -135,20 +134,31 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
             CAST(r.id AS CHAR) LIKE ?
             OR r.last_name LIKE ?
             OR r.first_name LIKE ?
+            OR r.middle_name LIKE ?
             OR r.email LIKE ?
             OR r.contact_number LIKE ?
+            OR sg.name LIKE ?
         ) ";
+
         $like = "%{$q}%";
-        $params = [$like, $like, $like, $like, $like];
-        $types = "sssss";
+        $params = [$like, $like, $like, $like, $like, $like, $like];
+        $types = "sssssss";
     }
 
-    // COUNT (IMPORTANT: count distinct residents, because joins can duplicate)
-    $sqlCount = "SELECT COUNT(DISTINCT r.id) as total FROM {$this->table} r {$where}";
+    // COUNT DISTINCT residents
+    $sqlCount = "SELECT COUNT(DISTINCT r.id) as total
+                 FROM {$this->table} r
+                 LEFT JOIN {$this->tblResidentSpecialGroups} rsg ON rsg.resident_id = r.id
+                 LEFT JOIN {$this->tblSpecialGroups} sg ON sg.id = rsg.group_id
+                 {$where}";
+
     $stmt = $this->conn->prepare($sqlCount);
     if (!$stmt) return $this->emptyList();
 
-    if ($types) $stmt->bind_param($types, ...$params);
+    if ($types) {
+        $stmt->bind_param($types, ...$params);
+    }
+
     $stmt->execute();
     $total = (int)($stmt->get_result()->fetch_assoc()['total'] ?? 0);
     $stmt->close();
@@ -156,7 +166,8 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
     // ROWS + groups
     $sql = "SELECT
                 r.*,
-                GROUP_CONCAT(sg.name ORDER BY sg.name SEPARATOR ', ') AS special_groups
+                GROUP_CONCAT(DISTINCT sg.name ORDER BY sg.name SEPARATOR ', ') AS special_groups,
+                GROUP_CONCAT(DISTINCT sg.id ORDER BY sg.id SEPARATOR ',') AS special_group_ids_csv
             FROM {$this->table} r
             LEFT JOIN {$this->tblResidentSpecialGroups} rsg ON rsg.resident_id = r.id
             LEFT JOIN {$this->tblSpecialGroups} sg ON sg.id = rsg.group_id
@@ -190,7 +201,6 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
         "pages" => max(1, $pages)
     ];
 }
-
     private function emptyList(): array
     {
         return ["rows" => [], "total" => 0, "page" => 1, "perPage" => 10, "pages" => 1];

@@ -139,7 +139,7 @@
           </tr>
         </thead>
 
-        <tbody>
+        <tbody id="residentTableBody">
           <?php if (empty($data['list']['rows'])): ?>
             <tr>
               <td colspan="10" class="text-center text-muted py-4">
@@ -526,40 +526,49 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const r = JSON.parse(btn.getAttribute('data-resident'));
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('.btn-edit');
+  if (!btn) return;
 
-        document.getElementById('edit_id').value = r.id || '';
-        document.getElementById('edit_last_name').value = r.last_name || '';
-        document.getElementById('edit_first_name').value = r.first_name || '';
-        document.getElementById('edit_middle_name').value = r.middle_name || '';
-        document.getElementById('edit_suffix').value = r.suffix || '';
-        document.getElementById('edit_birthdate').value = r.birthdate || '';
+  let r = {};
+  try {
+    r = JSON.parse(btn.getAttribute('data-resident') || '{}');
+  } catch (err) {
+    console.error('Invalid resident JSON:', err);
+    return;
+  }
 
-        document.getElementById('edit_sex').value = r.sex || '';
-        document.getElementById('edit_civil_status_id').value = r.civil_status_id || '';
+  document.getElementById('edit_id').value = r.id || '';
+  document.getElementById('edit_last_name').value = r.last_name || '';
+  document.getElementById('edit_first_name').value = r.first_name || '';
+  document.getElementById('edit_middle_name').value = r.middle_name || '';
+  document.getElementById('edit_suffix').value = r.suffix || '';
+  document.getElementById('edit_birthdate').value = r.birthdate || '';
 
-        document.getElementById('edit_contact').value = r.contact_number || '';
-        document.getElementById('edit_email').value = r.email || '';
+  document.getElementById('edit_sex').value = r.sex || '';
+  document.getElementById('edit_civil_status_id').value = r.civil_status_id || '';
 
-        document.getElementById('edit_purok_id').value = r.purok_id || '';
-        document.getElementById('edit_residency_type_id').value = r.residency_type_id || '';
+  document.getElementById('edit_contact').value = r.contact_number || '';
+  document.getElementById('edit_email').value = r.email || '';
 
-        document.getElementById('edit_is_active').value = (parseInt(r.is_active || 0) === 1) ? '1' : '0';
-        document.getElementById('edit_hoh').checked = (parseInt(r.is_head_of_household || 0) === 1);
+  document.getElementById('edit_purok_id').value = r.purok_id || '';
+  document.getElementById('edit_residency_type_id').value = r.residency_type_id || '';
 
-        //  Special groups auto-check
-        document.querySelectorAll('.edit-special-group').forEach(cb => cb.checked = false);
+  document.getElementById('edit_is_active').value = parseInt(r.is_active || 0) === 1 ? '1' : '0';
+  document.getElementById('edit_hoh').checked = parseInt(r.is_head_of_household || 0) === 1;
 
-        const csv = btn.getAttribute('data-groups') || '';
-        const ids = csv ? csv.split(',').map(x => parseInt(x.trim())).filter(Boolean) : [];
-        ids.forEach(id => {
-          const el = document.getElementById('edit_sg_' + id);
-          if (el) el.checked = true;
-        });
-      });
-    });
+  document.querySelectorAll('.edit-special-group').forEach(cb => cb.checked = false);
+
+  const csv = btn.getAttribute('data-groups') || '';
+  const ids = csv
+    ? csv.split(',').map(x => parseInt(x.trim())).filter(Boolean)
+    : [];
+
+  ids.forEach(id => {
+    const el = document.getElementById('edit_sg_' + id);
+    if (el) el.checked = true;
+  });
+});
 
     const toggleBtn = document.getElementById("toggleSidebar");
     if (toggleBtn) {
