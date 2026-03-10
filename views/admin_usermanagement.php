@@ -254,12 +254,13 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
               <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Resident List</h5>
 
-                <form class="d-flex gap-2" method="GET">
-                  <input class="form-control" name="search" placeholder="Search name, username, email"
-                         value="<?= htmlspecialchars($search) ?>" autocomplete="off">
-                  <button class="btn btn-primary">Search</button>
-                </form>
-              </div>
+                <!-- LIVE SEARCH -->
+                <input type="text"
+                id="liveSearch"
+                class="form-control"
+                placeholder="Search name, username, email"
+                style="max-width: 352px"
+                >
 
               <div class="table-responsive">
                 <table class="table table-hover align-middle">
@@ -275,7 +276,7 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
                       <th style="width: 230px;">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody id="UsersTableBody">
                     <?php if (!$users): ?>
                       <tr><td colspan="8" class="text-center text-muted py-4">No residents found.</td></tr>
                     <?php endif; ?>
@@ -414,6 +415,35 @@ $editUser = $editId > 0 ? $userModel->getUserByIdAdmin($editId) : null;
       }
     });
   }
+
+  // live search
+document.addEventListener("DOMContentLoaded", function(){
+
+const searchInput = document.getElementById("liveSearch");
+const tableBody = document.getElementById("UsersTableBody");
+
+let timer;
+
+searchInput.addEventListener("keyup", function(){
+
+clearTimeout(timer);
+
+timer = setTimeout(function(){
+
+let keyword = searchInput.value;
+
+fetch("/BIS/controller/search_users.php?search=" + encodeURIComponent(keyword))
+.then(response => response.text())
+.then(data => {
+tableBody.innerHTML = data;
+});
+
+},300);
+
+});
+
+});
+
   </script>
 
 </body>

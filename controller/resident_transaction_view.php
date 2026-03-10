@@ -12,7 +12,7 @@ if (!$mysqli) {
     exit('<div class="alert alert-danger">Database connection not found.</div>');
 }
 
-/* ✅ MUST match the JS param name: ref_no */
+/*  MUST match the JS param name: ref_no */
 $refNo = trim((string)($_GET['ref_no'] ?? ''));
 if ($refNo === '') {
     exit('<div class="alert alert-danger">Invalid reference.</div>');
@@ -20,7 +20,7 @@ if ($refNo === '') {
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
 
-/* ✅ Get resident_id (same logic as transaction.php) */
+/*  Get resident_id (same logic as transaction.php) */
 $stmt = $mysqli->prepare("
     SELECT r.id
     FROM users u

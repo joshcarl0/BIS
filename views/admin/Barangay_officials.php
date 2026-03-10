@@ -305,58 +305,9 @@
       </div>
     </div>
 
-        <!-- PHOTO (EDIT) -->
-        <div class="col-md-8">
-          <label for="edit_photo" class="form-label">Photo</label>
-          <input type="file"
-                id="edit_photo"
-                class="form-control"
-                name="photo"
-                accept="image/*"
-                onchange="previewEditPhoto(event)">
-          <div class="form-text">Leave blank if you don’t want to change the photo.</div>
-        </div>
-
-        <div class="col-md-4 text-center">
-          <img id="editPhotoPreview"
-              src="/BIS/assets/images/default-avatar.png"
-              width="120"
-              height="120"
-              style="object-fit:cover; border-radius:50%;">
-        </div>
-
-        <div class="col-md-6">
-          <label for="edit_contact" class="form-label">Contact</label>
-          <input class="form-control" name="contact" id="edit_contact" autocomplete="tel">
-        </div>
-
-        <div class="col-md-6">
-          <label for="edit_email" class="form-label">Email</label>
-          <input type="email" name="email" id="edit_email" class="form-control" autocomplete="email">
-        </div>
-
-        <div class="col-md-4">
-          <label for="edit_status" class="form-label">Status</label>
-          <select class="form-select" name="status" id="edit_status">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
-
-      </div>
 
 
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-          <button class="btn btn-primary">Update</button>
-        </div>
-
-      </form>
-    </div>
-  </div>
-
-                         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
   document.querySelectorAll('.btn-edit').forEach(btn => {

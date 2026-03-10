@@ -99,14 +99,14 @@ try {
 
         $newId = $ann->create($title, $details, $adminId, $status);
 
-        //` Log activity
+            // Log activity
             $log->add(
                 $_SESSION['user_id'] ?? null,
                 $_SESSION['role'] ?? null,
-                'announcement_update',
+                'announcement_add',
                 'announcement',
-                $id,
-                "Updated announcement: {$title}"
+                $newId,
+                "Added announcement: {$title}"
             );
         // attachments
         $files = upload_multiple_files('attachments', $uploadDirAbs, $uploadDirWeb);
