@@ -49,4 +49,14 @@
 <input type="text" name="extra[business_address]" class="form-control" required>
 </div>
 
+<div class="col-md-6">
+<label class="form-label">Owner / Operator</label>
+<input type="text" name="extra[owner_operator]" class="form-control">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Association Name</label>
+<input type="text" name="extra[association_name]" class="form-control">
+</div>
+
 </div>

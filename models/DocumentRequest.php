@@ -54,11 +54,16 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
 
     if (!$ok) return false;
 
-    // 2) If Released: ensure cert_no + ensure payment with or_no
+    // 2) If Released: ensure cert_no + permit nos + payment with or_no
     if ($status === 'Released') {
 
-        // get fee_snapshot + cert_no
-        $stmt = $this->db->prepare("SELECT fee_snapshot, cert_no FROM document_requests WHERE id = ? LIMIT 1");
+        // get needed fields from request
+        $stmt = $this->db->prepare("
+            SELECT fee_snapshot, cert_no, form_no, business_plate_no, sticker_no
+            FROM document_requests
+            WHERE id = ?
+            LIMIT 1
+        ");
         if (!$stmt) return true;
 
         $stmt->bind_param("i", $id);
@@ -72,12 +77,44 @@ public function updateStatus($id, $status, $adminId = null, $remarks = null)
         $certNo = trim((string)($req['cert_no'] ?? ''));
         if ($certNo === '') {
             $certNo = $this->generateNextCertNo();
+
             $stmt = $this->db->prepare("UPDATE document_requests SET cert_no = ? WHERE id = ? LIMIT 1");
             if ($stmt) {
                 $stmt->bind_param("si", $certNo, $id);
                 $stmt->execute();
                 $stmt->close();
             }
+        }
+
+        // generate business permit numbers if empty
+        $formNo = trim((string)($req['form_no'] ?? ''));
+        $businessPlateNo = trim((string)($req['business_plate_no'] ?? ''));
+        $stickerNo = trim((string)($req['sticker_no'] ?? ''));
+
+        if ($formNo === '') {
+            $formNo = $this->generateNextFormNo();
+        }
+
+        if ($businessPlateNo === '') {
+            $businessPlateNo = $this->generateNextBusinessPlateNo();
+        }
+
+        if ($stickerNo === '') {
+            $stickerNo = $this->generateNextStickerNo();
+        }
+
+        $stmt = $this->db->prepare("
+            UPDATE document_requests
+            SET form_no = ?,
+                business_plate_no = ?,
+                sticker_no = ?
+            WHERE id = ?
+            LIMIT 1
+        ");
+        if ($stmt) {
+            $stmt->bind_param("sssi", $formNo, $businessPlateNo, $stickerNo, $id);
+            $stmt->execute();
+            $stmt->close();
         }
 
         // check existing payment
@@ -141,6 +178,8 @@ public function findById($id)
                     COALESCE(r.suffix, '')
                 )) AS resident_name,
 
+                COALESCE(r.contact_no, '') AS contact_no,
+
                 CONCAT(
                     COALESCE(h.address_line, ''), ', ',
                     'Purok ', COALESCE(p.name, ''), ', ',
@@ -158,7 +197,10 @@ public function findById($id)
                 pay.paid_at AS date_paid,
                 COALESCE(dr.cert_no, '') AS cert_no,
                 COALESCE(pay.or_no, dr.or_no, '') AS or_no,
-
+                COALESCE(dr.form_no, '') AS form_no,
+                COALESCE(dr.business_plate_no, '') AS business_plate_no,
+                COALESCE(dr.sticker_no, '') AS sticker_no,
+                
                 dt.template_key,
                 dt.extra_fields_json
 
@@ -555,6 +597,95 @@ private function generateNextOrNo(): string
     return $prefix . str_pad((string)$next, 5, '0', STR_PAD_LEFT);
 }
 
+private function generateNextFormNo(): string
+{
+    $prefix = "FORM-" . date('Y') . "-";
+
+    $stmt = $this->db->prepare("
+        SELECT form_no
+        FROM document_request
+        WHERE form_no LIKE CONCAT(?, '&')
+        ORDER BY DESC
+        LIMIT 1
+    ");
+
+    $stmt->bind_param("s", $prefix);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $last = $row['form_no'] ?? null;
+    $next = 1;
+
+    if ($last) {
+        $num = (int)substr($last, strlen($prefix));
+        $next = $num + 1;
+    }
+
+    return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+
+
+}
+
+private function generateNextBusinessPlateNo(): string
+{
+    $prefix = "FORM-" . date('Y') . "-";
+
+    $stmt = $this->db->prepare("
+        SELECT business_plate_no
+        FROM document_request
+        WHERE form_no LIKE CONCAT(?, '&')
+        ORDER BY DESC
+        LIMIT 1
+    ");
+
+    $stmt->bind_param("s", $prefix);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $last = $row['business_plate_no'] ?? null;
+    $next = 1;
+
+    if ($last) {
+        $num = (int)substr($last, strlen($prefix));
+        $next = $num + 1;
+    }
+
+    return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+
+
+}
+
+private function generateNextStickerNo(): string
+{
+    $prefix = "FORM-" . date('Y') . "-";
+
+    $stmt = $this->db->prepare("
+        SELECT sticker_no
+        FROM document_request
+        WHERE form_no LIKE CONCAT(?, '&')
+        ORDER BY DESC
+        LIMIT 1
+    ");
+
+    $stmt->bind_param("s", $prefix);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $last = $row['sticker_no'] ?? null;
+    $next = 1;
+
+    if ($last) {
+        $num = (int)substr($last, strlen($prefix));
+        $next = $num + 1;
+    }
+
+    return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+
+
+}
 
 
 }

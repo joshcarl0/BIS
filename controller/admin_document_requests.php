@@ -41,13 +41,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarks = trim($_POST['remarks'] ?? '');
     $adminId = $_SESSION['user_id'] ?? null;
 
+    // Business Permit specific fields
+    $formNo = trim($_POST['form_no'] ?? '');
+    $businessPlateNo = trim($_POST['business_plate_no'] ?? '');
+    $stickerNo = trim($_POST['sticker_no'] ?? '');
+
     $map = [
         'approve' => 'Approved',
         'reject'  => 'Rejected',
         'release' => 'Released'
     ];
 
-    if ($id > 0 && isset($map[$action])) {
+if ($id > 0 && isset($map[$action])) {
+
+    // Save business permit fields only if provided
+    if ($formNo !== '' || $businessPlateNo !== '' || $stickerNo !== '') {
+        $stmt = $mysqli->prepare("
+            UPDATE document_requests
+            SET form_no = COALESCE(?, form_no),
+                business_plate_no = COALESCE(?, business_plate_no),
+                sticker_no = COALESCE(?, sticker_no)
+            WHERE id = ?
+        ");
+
+        if ($stmt) {
+            $formNoParam = ($formNo !== '') ? $formNo : null;
+            $businessPlateNoParam = ($businessPlateNo !== '') ? $businessPlateNo : null;
+            $stickerNoParam = ($stickerNo !== '') ? $stickerNo : null;
+
+            $stmt->bind_param("sssi", $formNoParam, $businessPlateNoParam, $stickerNoParam, $id);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
+    
+
         $ok = $docReq->updateStatus($id, $map[$action], $adminId, ($remarks !== '' ? $remarks : null));
 
         if ($ok) {
