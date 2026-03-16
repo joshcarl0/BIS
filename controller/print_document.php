@@ -16,6 +16,33 @@ $docReq = new DocumentRequest($mysqli);
 $doc = $docReq->findById($id);
 if (!$doc) die("Request not found.");
 
+/* ===== Decode extra JSON for dynamic document fields ===== */
+$extra = [];
+
+// primary: extra_json
+if (!empty($doc['extra_json'])) {
+    $decoded = json_decode((string)$doc['extra_json'], true);
+    if (is_array($decoded)) {
+        $extra = $decoded;
+    }
+}
+
+// fallback: extra_data
+if (empty($extra) && !empty($doc['extra_data'])) {
+    $decoded = json_decode((string)$doc['extra_data'], true);
+    if (is_array($decoded)) {
+        $extra = $decoded;
+    }
+}
+
+// fallback: extra
+if (empty($extra) && !empty($doc['extra'])) {
+    $decoded = json_decode((string)$doc['extra'], true);
+    if (is_array($decoded)) {
+        $extra = $decoded;
+    }
+}
+
 // allow print only if approved/released
 if (!in_array($doc['status'] ?? '', ['Approved', 'Released'], true)) {
     die("This request is not approved yet.");
@@ -114,6 +141,13 @@ if (strpos($type, 'clearance') !== false) {
     $file    = 'cert_clearance.php';
     $layout  = 'layout_clearance.php';
     $pdfName = 'barangay_clearance.pdf';
+} elseif (
+    strpos($type, 'business permit') !== false ||
+    strpos($type, 'permit') !== false
+) {
+    $file    = 'permit_business.php';
+    $layout  = 'layout_permit.php'; 
+    $pdfName = 'business_permit.pdf';
 } elseif (strpos($type, 'residency') !== false) {
     $file    = 'cert_residency.php';
     $layout  = 'layout_certificate.php';

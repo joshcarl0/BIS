@@ -178,7 +178,7 @@ public function findById($id)
                     COALESCE(r.suffix, '')
                 )) AS resident_name,
 
-                COALESCE(r.contact_no, '') AS contact_no,
+                COALESCE(r.contact_number, '') AS contact_no,
 
                 CONCAT(
                     COALESCE(h.address_line, ''), ', ',
@@ -603,11 +603,17 @@ private function generateNextFormNo(): string
 
     $stmt = $this->db->prepare("
         SELECT form_no
-        FROM document_request
-        WHERE form_no LIKE CONCAT(?, '&')
-        ORDER BY DESC
+        FROM document_requests
+        WHERE form_no IS NOT NULL
+          AND form_no <> ''
+          AND form_no LIKE CONCAT(?, '%')
+        ORDER BY form_no DESC
         LIMIT 1
     ");
+
+    if (!$stmt) {
+        throw new \Exception("Prepare failed in generateNextFormNo(): " . $this->db->error);
+    }
 
     $stmt->bind_param("s", $prefix);
     $stmt->execute();
@@ -617,27 +623,33 @@ private function generateNextFormNo(): string
     $last = $row['form_no'] ?? null;
     $next = 1;
 
-    if ($last) {
+    if ($last && str_starts_with($last, $prefix)) {
         $num = (int)substr($last, strlen($prefix));
-        $next = $num + 1;
+        if ($num > 0) {
+            $next = $num + 1;
+        }
     }
 
     return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
-
-
 }
 
 private function generateNextBusinessPlateNo(): string
 {
-    $prefix = "FORM-" . date('Y') . "-";
+    $prefix = "BPLATE-" . date('Y') . "-";
 
     $stmt = $this->db->prepare("
         SELECT business_plate_no
-        FROM document_request
-        WHERE form_no LIKE CONCAT(?, '&')
-        ORDER BY DESC
+        FROM document_requests
+        WHERE business_plate_no IS NOT NULL
+          AND business_plate_no <> ''
+          AND business_plate_no LIKE CONCAT(?, '%')
+        ORDER BY business_plate_no DESC
         LIMIT 1
     ");
+
+    if (!$stmt) {
+        throw new \Exception("Prepare failed in generateNextBusinessPlateNo(): " . $this->db->error);
+    }
 
     $stmt->bind_param("s", $prefix);
     $stmt->execute();
@@ -647,27 +659,33 @@ private function generateNextBusinessPlateNo(): string
     $last = $row['business_plate_no'] ?? null;
     $next = 1;
 
-    if ($last) {
+    if ($last && str_starts_with($last, $prefix)) {
         $num = (int)substr($last, strlen($prefix));
-        $next = $num + 1;
+        if ($num > 0) {
+            $next = $num + 1;
+        }
     }
 
     return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
-
-
 }
 
 private function generateNextStickerNo(): string
 {
-    $prefix = "FORM-" . date('Y') . "-";
+    $prefix = "STICKER-" . date('Y') . "-";
 
     $stmt = $this->db->prepare("
         SELECT sticker_no
-        FROM document_request
-        WHERE form_no LIKE CONCAT(?, '&')
-        ORDER BY DESC
+        FROM document_requests
+        WHERE sticker_no IS NOT NULL
+        AND sticker_no <> ''
+        AND sticker_no LIKE CONCAT(?, '%')
+        ORDER BY sticker_no DESC
         LIMIT 1
     ");
+
+    if (!$stmt) {
+        throw new \Exception("Prepare failed in generateNextStickerNo(): " . $this->db->error);
+    }
 
     $stmt->bind_param("s", $prefix);
     $stmt->execute();
@@ -677,15 +695,14 @@ private function generateNextStickerNo(): string
     $last = $row['sticker_no'] ?? null;
     $next = 1;
 
-    if ($last) {
+    if ($last && str_starts_with($last, $prefix)) {
         $num = (int)substr($last, strlen($prefix));
-        $next = $num + 1;
+        if ($num > 0) {
+            $next = $num + 1;
+        }
     }
 
     return $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
-
-
 }
-
 
 }

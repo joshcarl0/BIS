@@ -1,5 +1,7 @@
 <div class="row g-3">
 
+<div class="alert alert-info">BUSINESS PERMIT FORM LOADED</div>
+
 <div class="col-md-6">
 <label class="form-label">Business Name *</label>
 <input type="text" name="extra[business_name]" class="form-control" required>
