@@ -16,7 +16,6 @@
     <div class="d-flex align-items-center gap-3">
 
         <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-person-circle fs-5"></i>
             <span class="fw-semibold">
                 <?= htmlspecialchars($_SESSION['username'] ?? 'User') ?>
             </span>

@@ -48,6 +48,12 @@ switch ($templateKey) {
           $view = __DIR__ . '/../views/resident/forms/form_business_permit.php';
           break;
 
+    case 'construction_permit':
+      case 'permit_construction':
+        case 'construction':
+          $view = __DIR__ . '/../views/resident/forms/form_construction_permit.php';
+          break;
+
   default:
     $view = null;
     break;

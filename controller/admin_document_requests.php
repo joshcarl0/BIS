@@ -72,7 +72,7 @@ if ($id > 0 && isset($map[$action])) {
             );
         } 
 
-        // log muna i'll fix you later
+        // log is the true var for connecting 
         else if ($action === 'reject') {
             $log->log(
                 'document_rejected',

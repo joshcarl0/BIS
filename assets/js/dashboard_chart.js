@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ✅ REQUIRED: register datalabels plugin (Chart.js v3/v4)
+  //  REQUIRED: register datalabels plugin (Chart.js v3/v4)
   if (window.Chart && window.ChartDataLabels) {
     Chart.register(ChartDataLabels);
   }
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ✅ SES PIE (with % labels like your sample)
+  //  SES PIE (with % labels like your sample)
   if (el("sesPie")) {
     const labels = d.ses?.labels || [];
     const values = (d.ses?.data || []).map(v => Number(v) || 0);
