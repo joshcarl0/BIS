@@ -7,16 +7,11 @@ function bis_to_data_uri($src) {
 
     $candidate = str_replace('\\', '/', (string)$src);
 
-    // kung full Windows path na
     if (preg_match('/^[A-Za-z]:[\/\\\\]/', $candidate)) {
         $absPath = $candidate;
-    }
-    // kung /BIS/uploads/...
-    elseif (strpos($candidate, '/BIS/') === 0) {
+    } elseif (strpos($candidate, '/BIS/') === 0) {
         $absPath = $_SERVER['DOCUMENT_ROOT'] . $candidate;
-    }
-    // kung uploads/...
-    else {
+    } else {
         $absPath = $_SERVER['DOCUMENT_ROOT'] . '/BIS/' . ltrim($candidate, '/');
     }
 
@@ -26,13 +21,12 @@ function bis_to_data_uri($src) {
 
     $ext = strtolower(pathinfo($absPath, PATHINFO_EXTENSION));
 
-    // DOMPDF mas safe sa jpg/png
     if ($ext === 'png') {
         $mime = 'image/png';
     } elseif ($ext === 'jpg' || $ext === 'jpeg') {
         $mime = 'image/jpeg';
     } else {
-        return ''; // unsupported format
+        return '';
     }
 
     $data = @file_get_contents($absPath);
@@ -43,6 +37,28 @@ function bis_to_data_uri($src) {
 
 $photoFile = bis_to_data_uri($photo_src ?? '');
 $thumbFile = bis_to_data_uri($thumb_src ?? '');
+
+$rawAddress = trim((string)($address ?? ''));
+
+
+if (strcasecmp($rawAddress, 'Purok') === 0) {
+    $rawAddress = '';
+}
+
+
+$cleanAddress = preg_replace('/\bBarangay Don Galo\b/i', '', $rawAddress);
+$cleanAddress = preg_replace('/\bDon Galo\b/i', '', $cleanAddress);
+$cleanAddress = preg_replace('/\bParañaque City\b/i', '', $cleanAddress);
+$cleanAddress = preg_replace('/\bParanaque City\b/i', '', $cleanAddress);
+
+
+$cleanAddress = preg_replace('/\s*,\s*/', ', ', $cleanAddress);
+$cleanAddress = preg_replace('/,+/', ',', $cleanAddress);
+$cleanAddress = trim($cleanAddress, " ,");
+
+$fullAddress = $cleanAddress !== ''
+    ? $cleanAddress . ', Barangay Don Galo, Parañaque City'
+    : 'Barangay Don Galo, Parañaque City';
 ?>
 <style>
   .title { text-align:center; font-size:18pt; font-weight:900; text-decoration:underline; margin:2mm 0 3mm 0; }
@@ -83,8 +99,9 @@ $thumbFile = bis_to_data_uri($thumb_src ?? '');
 <div class="sub">TO WHOM IT MAY CONCERN:</div>
 
 <p class="p">
-  This is to certify that <b><?= htmlspecialchars($name ?? '') ?></b>, whose photograph, signature and right thumb mark appears below,
-  is a bonafide resident of <b><?= htmlspecialchars($address ?? '') ?></b>, <b>DON GALO, PARAÑAQUE CITY</b>.
+  This is to certify that <b><?= htmlspecialchars($name ?? '') ?></b>,
+  whose photograph, signature and right thumb mark appears below,
+  is a bonafide resident of <b><?= htmlspecialchars($fullAddress) ?></b>.
 </p>
 
 <p class="p">

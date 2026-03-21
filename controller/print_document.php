@@ -141,31 +141,37 @@ if (strpos($type, 'clearance') !== false) {
     $file    = 'cert_clearance.php';
     $layout  = 'layout_clearance.php';
     $pdfName = 'barangay_clearance.pdf';
-} elseif (
-    strpos($type, 'business permit') !== false ||
-    strpos($type, 'permit') !== false
-) {
+
+} elseif (strpos($type, 'construction') !== false) {
+    $file    = 'permit_construction.php';
+    $layout  = 'layout_permit.php';
+    $pdfName = 'construction_permit.pdf';
+
+} elseif (strpos($type, 'business permit') !== false) {
     $file    = 'permit_business.php';
-    $layout  = 'layout_permit.php'; 
+    $layout  = 'layout_permit.php';
     $pdfName = 'business_permit.pdf';
+
 } elseif (strpos($type, 'residency') !== false) {
     $file    = 'cert_residency.php';
     $layout  = 'layout_certificate.php';
     $pdfName = 'cert_residency.pdf';
+
 } elseif (strpos($type, 'guardian') !== false) {
     $file    = 'cert_guardian.php';
     $layout  = 'layout_certificate.php';
     $pdfName = 'cert_guardian.pdf';
+
 } elseif (strpos($type, 'cohabitation') !== false || strpos($type, 'live in') !== false) {
     $file    = 'cert_livein.php';
     $layout  = 'layout_certificate.php';
     $pdfName = 'cert_livein.pdf';
+
 } else {
     $file    = 'certification.php';
     $layout  = 'layout_certificate.php';
     $pdfName = 'certificate.pdf';
 }
-
 /* ===== Validate paths ===== */
 $viewFilePath   = __DIR__ . '/../views/print/' . $file;
 $layoutFilePath = __DIR__ . '/../views/print/' . $layout;

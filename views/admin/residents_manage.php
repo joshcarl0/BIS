@@ -318,6 +318,11 @@
             <input type="email" class="form-control" id="add_email" name="email" autocomplete="email" required placeholder="example@gmail.com">
           </div>
 
+                    <div class="col-md-12">
+            <label class="form-label" for="add_address">Address *</label>
+            <input type="text" class="form-control" id="add_address" name="address" required>
+          </div>
+
           <div class="col-md-4">
             <label class="form-label" for="add_purok_id">Purok *</label>
             <select class="form-select" id="add_purok_id" name="purok_id" required>
@@ -455,6 +460,11 @@
             <input type="email" class="form-control" name="email" id="edit_email" autocomplete="email">
           </div>
 
+                    <div class="col-md-12">
+            <label class="form-label" for="edit_address">Address *</label>
+            <input type="text" class="form-control" name="address" id="edit_address">
+          </div>
+
           <div class="col-md-4">
             <label class="form-label" for="edit_purok_id">Purok *</label>
             <select class="form-select" name="purok_id" id="edit_purok_id" required>
@@ -550,6 +560,7 @@ document.addEventListener('click', function (e) {
 
   document.getElementById('edit_contact').value = r.contact_number || '';
   document.getElementById('edit_email').value = r.email || '';
+  document.getElementById('edit_address').value = r.address || '';
 
   document.getElementById('edit_purok_id').value = r.purok_id || '';
   document.getElementById('edit_residency_type_id').value = r.residency_type_id || '';

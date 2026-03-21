@@ -180,11 +180,7 @@ public function findById($id)
 
                 COALESCE(r.contact_number, '') AS contact_no,
 
-                CONCAT(
-                    COALESCE(h.address_line, ''), ', ',
-                    'Purok ', COALESCE(p.name, ''), ', ',
-                    'Barangay Don Galo'
-                ) AS resident_address,
+                COALESCE(NULLIF(TRIM(r.address), ''), '') AS resident_address,
 
                 dt.name AS document_name,
                 dt.category AS document_category,

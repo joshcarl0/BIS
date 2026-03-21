@@ -14,7 +14,7 @@ function getMailer(): PHPMailer
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
     $mail->Username   = 'fernanjoshcarl7@gmail.com';
-    $mail->Password   = 'pskbsvrgpavhxanh'; // no spaces
+    $mail->Password   = 'tqcg tfeu mtou nzza'; // no spaces
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 

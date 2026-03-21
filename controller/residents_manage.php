@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_POST['purok_id'] = ($_POST['purok_id'] ?? '') !== '' ? (int)$_POST['purok_id'] : 0;
     $_POST['residency_type_id'] = ($_POST['residency_type_id'] ?? '') !== '' ? (int)$_POST['residency_type_id'] : 0;
     $_POST['civil_status_id'] = ($_POST['civil_status_id'] ?? '') !== '' ? (int)$_POST['civil_status_id'] : 0;
+    $_POST['address'] = trim($_POST['address'] ?? '');
 
            $hid = (int)($_POST['household_id'] ?? 0);
 
@@ -100,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (($_POST['purok_id'] ?? 0) <= 0) $errors[] = "Purok is required.";
         if (($_POST['residency_type_id'] ?? 0) <= 0) $errors[] = "Residency type is required.";
         if (($_POST['civil_status_id'] ?? 0) <= 0) $errors[] = "Civil status is required.";
+        if (trim($_POST['address'] ?? '') === '') $errors[] = "Address is required.";
 
         if (!$errors) {
             $newId = $residentModel->createReturnId($_POST);
@@ -144,6 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (($_POST['purok_id'] ?? 0) <= 0) $errors[] = "Purok is required.";
         if (($_POST['residency_type_id'] ?? 0) <= 0) $errors[] = "Residency type is required.";
         if (($_POST['civil_status_id'] ?? 0) <= 0) $errors[] = "Civil status is required.";
+        if (trim($_POST['address'] ?? '') === '') $errors[] = "Address is required.";
+
             // email required
             if (trim($_POST['email'] ?? '') === '') {
                 $errors[] = "Email is required.";

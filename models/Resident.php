@@ -51,18 +51,18 @@ class Resident
         $stmt->close();
 
         // ROWS
-        $sql = "SELECT
-                    id, household_id, purok_id, residency_type_id,
-                    first_name, middle_name, last_name, suffix,
-                    sex, birthdate, civil_status_id,
-                    contact_number, email, occupation,
-                    education_level_id, employment_status_id,
-                    voter_status, is_head_of_household, is_active,
-                    created_at, updated_at
-                FROM {$this->table}
-                {$where}
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?";
+$sql = "SELECT
+            id, household_id, purok_id, residency_type_id,
+            first_name, middle_name, last_name, suffix,
+            sex, birthdate, civil_status_id,
+            contact_number, email, address, occupation,
+            education_level_id, employment_status_id,
+            voter_status, is_head_of_household, is_active,
+            created_at, updated_at
+        FROM {$this->table}
+        {$where}
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?";
 
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) return $this->emptyList();
@@ -223,78 +223,80 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
     /* =========================
        CREATE
     ========================= */
-    public function create(array $data): bool
-    {
-        $sql = "INSERT INTO {$this->table} (
-                    household_id, purok_id, residency_type_id,
-                    first_name, middle_name, last_name, suffix,
-                    sex, birthdate, civil_status_id,
-                    contact_number, email, occupation,
-                    education_level_id, employment_status_id,
-                    voter_status, is_head_of_household, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+public function create(array $data): bool
+{
+    $sql = "INSERT INTO {$this->table} (
+                household_id, purok_id, residency_type_id,
+                first_name, middle_name, last_name, suffix,
+                sex, birthdate, civil_status_id,
+                contact_number, email, address, occupation,
+                education_level_id, employment_status_id,
+                voter_status, is_head_of_household, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return false;
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
 
-        $get = fn($k, $def='') => trim((string)($data[$k] ?? $def));
-        $getInt = function($k, $def = null) use ($data) {
-            if (!isset($data[$k]) || $data[$k] === '') return $def;
-            return (int)$data[$k];
-        };
+    $get = fn($k, $def='') => trim((string)($data[$k] ?? $def));
+    $getInt = function($k, $def = null) use ($data) {
+        if (!isset($data[$k]) || $data[$k] === '') return $def;
+        return (int)$data[$k];
+    };
 
-        $household_id = $getInt("household_id", null);
-        $purok_id = $getInt("purok_id", 0);
-        $residency_type_id = $getInt("residency_type_id", 0);
+    $household_id = $getInt("household_id", null);
+    $purok_id = $getInt("purok_id", 0);
+    $residency_type_id = $getInt("residency_type_id", 0);
 
-        $first_name = $get("first_name");
-        $middle_name = $get("middle_name");
-        $last_name = $get("last_name");
-        $suffix = $get("suffix");
+    $first_name = $get("first_name");
+    $middle_name = $get("middle_name");
+    $last_name = $get("last_name");
+    $suffix = $get("suffix");
 
-        $sex = $get("sex");
-        $birthdate = $get("birthdate");
+    $sex = $get("sex");
+    $birthdate = $get("birthdate");
 
-        $civil_status_id = $getInt("civil_status_id", 0);
+    $civil_status_id = $getInt("civil_status_id", 0);
 
-        $contact_number = $get("contact_number");
-        $email = $get("email");
-        $occupation = $get("occupation");
+    $contact_number = $get("contact_number");
+    $email = $get("email");
+    $address = $get("address");
+    $occupation = $get("occupation");
 
-        $education_level_id = $getInt("education_level_id", null);
-        $employment_status_id = $getInt("employment_status_id", null);
+    $education_level_id = $getInt("education_level_id", null);
+    $employment_status_id = $getInt("employment_status_id", null);
 
-        $voter_status = isset($data["voter_status"]) ? (int)$data["voter_status"] : 0;
-        $is_head_of_household = !empty($data["is_head_of_household"]) ? 1 : 0;
-        $is_active = isset($data["is_active"]) ? (int)$data["is_active"] : 1;
+    $voter_status = isset($data["voter_status"]) ? (int)$data["voter_status"] : 0;
+    $is_head_of_household = !empty($data["is_head_of_household"]) ? 1 : 0;
+    $is_active = isset($data["is_active"]) ? (int)$data["is_active"] : 1;
 
-        $stmt->bind_param(
-            "iiissssssisssiiiii",
-            $household_id,
-            $purok_id,
-            $residency_type_id,
-            $first_name,
-            $middle_name,
-            $last_name,
-            $suffix,
-            $sex,
-            $birthdate,
-            $civil_status_id,
-            $contact_number,
-            $email,
-            $occupation,
-            $education_level_id,
-            $employment_status_id,
-            $voter_status,
-            $is_head_of_household,
-            $is_active
-        );
+    $stmt->bind_param(
+        "iiissssssissssiiiii",
+        $household_id,
+        $purok_id,
+        $residency_type_id,
+        $first_name,
+        $middle_name,
+        $last_name,
+        $suffix,
+        $sex,
+        $birthdate,
+        $civil_status_id,
+        $contact_number,
+        $email,
+        $address,
+        $occupation,
+        $education_level_id,
+        $employment_status_id,
+        $voter_status,
+        $is_head_of_household,
+        $is_active
+    );
 
-        $ok = $stmt->execute();
-        $stmt->close();
+    $ok = $stmt->execute();
+    $stmt->close();
 
-        return $ok;
-    }
+    return $ok;
+}
 
     public function createReturnId(array $data)
     {
@@ -306,97 +308,98 @@ public function getPaginatedWithGroups(string $q = '', int $page = 1, int $perPa
     /* =========================
        UPDATE (FIXED types)
     ========================= */
-    public function update(int $id, array $data): bool
-    {
-        $sql = "UPDATE {$this->table} SET
-                    household_id=?,
-                    purok_id=?,
-                    residency_type_id=?,
-                    first_name=?,
-                    middle_name=?,
-                    last_name=?,
-                    suffix=?,
-                    sex=?,
-                    birthdate=?,
-                    civil_status_id=?,
-                    contact_number=?,
-                    email=?,
-                    occupation=?,
-                    education_level_id=?,
-                    employment_status_id=?,
-                    voter_status=?,
-                    is_head_of_household=?,
-                    is_active=?
-                WHERE id=?";
+ public function update(int $id, array $data): bool
+{
+    $sql = "UPDATE {$this->table} SET
+                household_id=?,
+                purok_id=?,
+                residency_type_id=?,
+                first_name=?,
+                middle_name=?,
+                last_name=?,
+                suffix=?,
+                sex=?,
+                birthdate=?,
+                civil_status_id=?,
+                contact_number=?,
+                email=?,
+                address=?,
+                occupation=?,
+                education_level_id=?,
+                employment_status_id=?,
+                voter_status=?,
+                is_head_of_household=?,
+                is_active=?
+            WHERE id=?";
 
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return false;
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) return false;
 
-        $get = fn($k, $def='') => trim((string)($data[$k] ?? $def));
-        $getInt = function($k, $def = null) use ($data) {
-            if (!isset($data[$k]) || $data[$k] === '') return $def;
-            return (int)$data[$k];
-        };
+    $get = fn($k, $def='') => trim((string)($data[$k] ?? $def));
+    $getInt = function($k, $def = null) use ($data) {
+        if (!isset($data[$k]) || $data[$k] === '') return $def;
+        return (int)$data[$k];
+    };
 
-        $household_id = $getInt("household_id", null);
-
-            if ($household_id !== null && $household_id <= 0) {
-                $household_id = null;
-            }
-
-        $purok_id = $getInt("purok_id", 0);
-        $residency_type_id = $getInt("residency_type_id", 0);
-
-        $first_name = $get("first_name");
-        $middle_name = $get("middle_name");
-        $last_name = $get("last_name");
-        $suffix = $get("suffix");
-
-        $sex = $get("sex");
-        $birthdate = $get("birthdate");
-
-        $civil_status_id = $getInt("civil_status_id", 0);
-
-        $contact_number = $get("contact_number");
-        $email = $get("email");
-        $occupation = $get("occupation");
-
-        $education_level_id = $getInt("education_level_id", null);
-        $employment_status_id = $getInt("employment_status_id", null);
-
-        $voter_status = isset($data["voter_status"]) ? (int)$data["voter_status"] : 0;
-        $is_head_of_household = !empty($data["is_head_of_household"]) ? 1 : 0;
-        $is_active = isset($data["is_active"]) ? (int)$data["is_active"] : 1;
-
-        //  19 params -> 19 types
-        $stmt->bind_param(
-            "iiissssssisssiiiiii",
-            $household_id,
-            $purok_id,
-            $residency_type_id,
-            $first_name,
-            $middle_name,
-            $last_name,
-            $suffix,
-            $sex,
-            $birthdate,
-            $civil_status_id,
-            $contact_number,
-            $email,
-            $occupation,
-            $education_level_id,
-            $employment_status_id,
-            $voter_status,
-            $is_head_of_household,
-            $is_active,
-            $id
-        );
-
-        $ok = $stmt->execute();
-        $stmt->close();
-
-        return $ok;
+    $household_id = $getInt("household_id", null);
+    if ($household_id !== null && $household_id <= 0) {
+        $household_id = null;
     }
+
+    $purok_id = $getInt("purok_id", 0);
+    $residency_type_id = $getInt("residency_type_id", 0);
+
+    $first_name = $get("first_name");
+    $middle_name = $get("middle_name");
+    $last_name = $get("last_name");
+    $suffix = $get("suffix");
+
+    $sex = $get("sex");
+    $birthdate = $get("birthdate");
+
+    $civil_status_id = $getInt("civil_status_id", 0);
+
+    $contact_number = $get("contact_number");
+    $email = $get("email");
+    $address = $get("address"); 
+    $occupation = $get("occupation");
+
+    $education_level_id = $getInt("education_level_id", null);
+    $employment_status_id = $getInt("employment_status_id", null);
+
+    $voter_status = isset($data["voter_status"]) ? (int)$data["voter_status"] : 0;
+    $is_head_of_household = !empty($data["is_head_of_household"]) ? 1 : 0;
+    $is_active = isset($data["is_active"]) ? (int)$data["is_active"] : 1;
+
+    $stmt->bind_param(
+        "iiissssssissssiiiiii",
+        $household_id,
+        $purok_id,
+        $residency_type_id,
+        $first_name,
+        $middle_name,
+        $last_name,
+        $suffix,
+        $sex,
+        $birthdate,
+        $civil_status_id,
+        $contact_number,
+        $email,
+        $address, 
+        $occupation,
+        $education_level_id,
+        $employment_status_id,
+        $voter_status,
+        $is_head_of_household,
+        $is_active,
+        $id
+    );
+
+    $ok = $stmt->execute();
+    $stmt->close();
+
+    return $ok;
+}
 
     public function deactivate(int $id): bool
     {
