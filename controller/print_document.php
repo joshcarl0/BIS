@@ -147,6 +147,11 @@ if (strpos($type, 'clearance') !== false) {
     $layout  = 'layout_permit.php';
     $pdfName = 'construction_permit.pdf';
 
+    } elseif (strpos($type, 'excavation') !== false) {
+    $file    = 'permit_excavation.php';
+    $layout  = 'layout_permit.php';
+    $pdfName = 'excavation_permit.pdf';
+
 } elseif (strpos($type, 'business permit') !== false) {
     $file    = 'permit_business.php';
     $layout  = 'layout_permit.php';
